@@ -1,0 +1,69 @@
+# School Portal
+
+**Resuming work?** Start with [the saved progress checkpoint](docs/RESUME.md).
+
+A single-school portal with school-aware ownership and access boundaries, built with Next.js, TypeScript, Tailwind and Supabase. This repository and all future cloud resources belong only to School Portal.
+
+## Current milestone
+
+The current Phase 1 increments include:
+- A responsive public foundation preview: overview, module roadmap, roles, settings preview and setup guide.
+- Password sign-in and sign-out wiring, cookie refresh, and a protected school workspace.
+- A school-settings form restricted to active school administrators.
+- A versioned database migration for schools, profiles, school memberships, multiple roles and audit events.
+- Automated tests executing the migration and access policies against two fictional schools in embedded PostgreSQL.
+- Administrator member management, versioned role/status edits, last-admin protection and access audit details.
+- Prepared/revocable invitations, recipient acceptance, password recovery and password-setting screens.
+- An isolated Supabase invitation-email function (not yet deployed); email flags are off until SMTP setup.
+
+**The dedicated backend is now configured locally.** On 2026-09-30, read-only checks confirmed Supabase connectivity, denied anonymous database reads, and a signed-out dashboard redirect to login. The user confirmed that School Admin sign-in, dashboard and settings work. A subsequent check confirmed public sign-ups are disabled. Preview pages contain no school data and do not bypass authentication. Full hosted permission, session lifecycle, email and deployment testing remains outstanding; see [verification](docs/VERIFICATION.md).
+
+Public sign-ups have now been independently verified disabled. The new account-management migration must be applied before **People & access** works. SMTP is not configured, so recovery and invitation emails remain disabled. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). MFA and academic modules are not implemented. Phase 1 is not complete and this is not ready for real learner data.
+
+## Run locally
+
+Use Node.js 22 or later (Node 24 was used for this milestone).
+
+```powershell
+npm ci
+npm run dev
+```
+
+Open http://127.0.0.1:3000. With no backend configuration, the root opens `/preview`. The app binds to localhost by default.
+
+```powershell
+npm run check
+npm run test:e2e
+```
+
+`check` runs ESLint, TypeScript, unit/database tests and a production build. Browser tests use installed Microsoft Edge on Windows, or Playwright Chromium on other platforms. They run one worker to limit memory usage. They start a local development server on port 3001 and explicitly clear backend configuration so tests never access a real school.
+
+## Connect a dedicated backend
+
+Follow [Supabase setup](docs/SUPABASE_SETUP.md). Do not reuse another project's database, storage, keys or business rules. Configure only the dedicated project URL, publishable key and school UUID in `.env.local`. No service-role key is needed by this app.
+
+## Project map
+
+| Location | Purpose |
+| --- | --- |
+| `src/app/preview` | Public, static design preview with no backend reads |
+| `src/app/login` | Server-side sign-in and sign-out |
+| `src/app/dashboard` | Protected workspace and school-settings action |
+| `src/lib/auth-context.ts` | Server-verified identity and active school context |
+| `src/proxy.ts` | Session-cookie refresh for authenticated routes |
+| `supabase/migrations` | Versioned schema, policies and audit triggers |
+| `tests` | Foundation permission and database tests |
+| `e2e` | Browser checks for local preview and unconfigured access |
+| `docs` | Decisions, architecture, setup and remaining work |
+
+## Planning documents
+
+- [Project decisions](docs/PROJECT_CONTEXT.md)
+- [Architecture and access model](docs/ARCHITECTURE.md)
+- [Supabase setup and live verification](docs/SUPABASE_SETUP.md)
+- [Account management, SMTP and invitation setup](docs/ACCOUNT_MANAGEMENT.md)
+- [Roadmap and remaining Phase 1 work](docs/ROADMAP.md)
+
+## Scope
+
+One school first; school-aware data ownership from the beginning. No SaaS subscription billing, self-service school registration, custom domains, platform dashboard, AI or n8n in this milestone. Future academic features will receive their own relationship checks, policies and tests; the foundation tests do not establish that those unbuilt modules are secure.

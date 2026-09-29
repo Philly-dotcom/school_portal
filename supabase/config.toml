@@ -1,0 +1,6 @@
+project_id = "school-portal"
+
+# JWTs are validated in the handler with Auth getUser, then again by database RPC.
+# Disable only the legacy gateway JWT verifier; this does not make sending public.
+[functions.invite-school-user]
+verify_jwt = false
