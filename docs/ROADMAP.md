@@ -23,6 +23,18 @@ Still required before Phase 1 can be called complete:
 
 ## Phase 2: academic setup
 
+Authorized to proceed without email. Invitations/recovery stay disabled; Phase 1 delivery and readiness items remain open.
+
+- [x] Local admin creation/listing of academic years, terms, grades, subjects and year-specific classes; migration, audit and boundary tests.
+- [ ] Apply migration 003 and validate the signed-in hosted workflow. See `docs/ACADEMIC_SETUP.md`.
+- [ ] Registers, guardian links, enrollment, teaching assignments, lifecycle edits and timetable structure.
+- [x] Local student, teacher and guardian register creation/listing, guardian links and initial dated class enrollment, with administrator-only RLS and audit.
+- [ ] Apply migration 004 and verify School registers in the hosted signed-in workflow. See `docs/SCHOOL_REGISTERS.md`.
+- Migration 004 is now user-reported applied; register workflow testing is still pending.
+- [x] Local teaching assignment creation/listing with dates, composite school/year relationships, RLS and audit.
+- [ ] Apply migration 005 and verify Teaching assignments. See `docs/TEACHING_ASSIGNMENTS.md`.
+- [ ] Record corrections, transfers/withdrawals, teaching assignments, pagination/imports and timetable foundations.
+
 Students, teachers, guardians, grades, classes, subjects, academic years/terms, dated enrollment, teaching assignments and timetable foundations. CSV imports with validation. Each relationship requires school ownership and appropriate database constraints.
 
 ## Phase 3: daily operations

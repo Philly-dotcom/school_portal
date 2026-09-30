@@ -17,7 +17,7 @@ export function PortalShell({ children, view = "overview", preview = true, schoo
   children: React.ReactNode; view?: string; preview?: boolean; schoolName?: string; admin?: boolean;
 }) {
   const base = preview ? "/preview" : "/dashboard";
-  const items = preview ? navigation : [navigation[0], ...(admin ? [{ view: "people", label: "People & access", icon: Users }, navigation[3]] : [])];
+  const items = preview ? navigation : [navigation[0], ...(admin ? [{ view: "academic", label: "Academic setup", icon: BookOpen }, { view: "registers", label: "School registers", icon: GraduationCap }, { view: "teaching", label: "Teaching assignments", icon: BookOpen }, { view: "people", label: "People & access", icon: Users }, navigation[3]] : [])];
   return <div className="app-shell">
     <a href="#main" className="skip-link">Skip to content</a>
     <aside className="sidebar">

@@ -49,3 +49,24 @@ The actual migration was executed inside embedded PostgreSQL with simulated Auth
 - The public preview describes future modules; it does not claim they are working features.
 
 This is a local Phase 1 increment, not a production readiness approval.
+## Resume update
+
+The user confirmed that the account-management migration was applied and People & access lists their administrator. Hosted role/status writes, audit effects and cross-school access checks remain unverified. The user later clarified that no domain is registered; Resend SMTP settings are saved but delivery is unverified. Email is deferred by user decision and both local flags are false. No email was sent.
+
+## Phase 2 academic structure increment
+
+`npm run check` passed: ESLint, TypeScript, 51 tests across nine files and the production build. The new migration was executed together with the two earlier migrations in embedded PostgreSQL. Tests cover academic creation/audit, cross-school and teacher read/write denial, composite ownership references, dates/duplicates, suspension, inactive schools and anonymous access. Server-action tests cover authorization, forged school IDs, invalid input and database errors.
+
+At that checkpoint migration 003 had not been applied to hosted Supabase. The user subsequently reported activation and viewing the academic forms. This was user-reported, not an agent-driven signed-in browser check. Next.js regenerated its type-reference file during the build.
+
+## Phase 2 school registers increment
+
+`npm run check` passed: lint, TypeScript, 60 tests across eleven files and production build. The new migration was executed after all previous migrations in embedded PostgreSQL. Two populated fictional schools prove read isolation in both directions. Tests check denied writes with permission error codes, teacher/guardian/student/outsider restrictions, suspension/inactive-school/anonymous denial, cross-school references, class/year matching, enrollment dates, duplicates, audit actors and no Auth account creation. Action tests verify trusted school context, discarded injected identity fields, validation and safe errors.
+
+Creation/listing of students, teachers and guardians, guardian links and initial class enrollment are local. The user subsequently reported migration 004 applied, but explicitly has not tested School registers. Hosted RLS checks and signed-in browser validation remain pending. No emails, cloud resources, commits or deployments were made by this increment.
+
+## Phase 2 teaching assignments increment
+
+`npm run check` passed: lint, TypeScript, 65 tests across twelve files and production build. Migration 005 was executed after migrations 001–004 in embedded PostgreSQL. Tests cover both schools' read isolation, permission-denied writes, non-admin and suspended/inactive/anonymous access, cross-school teacher/subject/class references, date limits, duplicate assignment rejection, co-teaching and audit actors. Action tests cover verified ownership, forged fields, invalid selections/dates and safe error messages.
+
+Teaching assignment creation/listing is local only. Migration 005 has not been applied to hosted Supabase. No new signed-in browser or hosted RLS verification was performed; existing tests do not prove hosted behavior. Email remains disabled. Editing, ending/replacing assignments, timetable scheduling, pagination and account-to-record links remain outstanding.

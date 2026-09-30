@@ -1,10 +1,10 @@
 # School Portal — resume checkpoint
 
-Saved 2026-09-30 at the user's explicit request to pause and continue later.
+Saved at the user's request after the teaching-assignment increment. Development is paused while the user tests. Wait for their results and instruction to continue.
 
 ## Start here next time
 
-Work only in `C:\Users\moses\Documents\School_portal`. Read `AGENTS.md`, this checkpoint and `docs/ACCOUNT_MANAGEMENT.md` before changing anything. Keep all code, credentials, schema and decisions isolated from other projects. Earlier planning-only instructions were superseded by the user's explicit authorization to build Phase 1; work is now paused until the user resumes.
+Work only in `C:\Users\moses\Documents\School_portal`. Read `AGENTS.md`, this checkpoint and relevant setup guides before changing anything. Keep all code, credentials, schema and decisions isolated from other projects. The user resumed development and authorized Phase 2 without email. No hosted test success should be inferred from migration application alone.
 
 ## Product decisions
 
@@ -13,9 +13,14 @@ Work only in `C:\Users\moses\Documents\School_portal`. Read `AGENTS.md`, this ch
 - An authorized person reviews marks; School Admin publishes results. Whether the admin may also review is not yet settled.
 - Homework is view-only for learners; no learner submissions.
 - PDF documents only initially. Exact upload permissions need confirmation before that module.
-- Broader notification channels are undecided. Custom SMTP has not been configured for authentication emails.
+- Broader notification channels are undecided. Resend SMTP settings are saved (user-reported), but the user owns no registered domain. Email remains disabled and delivery unverified.
 
 ## Implemented locally
+
+- Academic years, terms, grades, subjects and classes, with specific form labels and examples.
+- Student, teacher and guardian registers; guardian links; initial dated class enrollment.
+- Teaching assignments connecting teacher records, subjects and year-specific classes with dates, RLS and audit.
+- These Phase 2 modules support creation/listing. Editing, transfers, replacement periods, pagination and timetables remain pending.
 
 - Next.js/TypeScript/Tailwind responsive shell, public static preview, login, protected dashboard and school settings.
 - First migration: schools, profiles, memberships, roles, RLS and audit events.
@@ -33,13 +38,21 @@ Work only in `C:\Users\moses\Documents\School_portal`. Read `AGENTS.md`, this ch
 
 ## Immediate next step
 
-The user was asked to apply `supabase/migrations/202609300002_account_management.sql` once in the dedicated project's SQL editor. **No confirmation that this second migration was applied has been received.** Check that status before retrying it; do not rerun the first migration.
+The user is now testing and will report back. Do not continue development or start a server until requested. Migration 004 is user-reported applied; School registers had not yet been tested at that report. Migration 005 application has not been confirmed. Do not rerun migrations 001–004. Record actual test outcomes when supplied, then prioritize fixes before the next feature increment.
 
-Then verify People & access against hosted Supabase with synthetic accounts. The page currently explains the missing update if its RPCs/tables are unavailable.
+Latest local increment: **Teaching assignments** connects teacher records to subjects and year-specific classes, with dates inside the academic year. Migration `202610010005_teaching_assignments.sql` is local only; see `docs/TEACHING_ASSIGNMENTS.md` before activation. Corrections, assignment changes and timetables remain future work.
+
+Latest decision: the user authorized continuing Phase 2 without email. Resend SMTP settings are saved (user-reported), but the user owns no registered domain. Both local email flags are explicitly false. Domain purchase, delivery setup and email tests are deferred, not completed.
+
+The user reported migration 003 applied and viewed the academic forms; specific labels and examples were added at their request. The user also reported migration 004 applied, but has not tested School registers. Student/teacher/guardian creation, guardian links and initial enrollment are implemented locally. Read `docs/SCHOOL_REGISTERS.md` for the creation-only limits. No real learner data or user-created test records are needed for continued local development.
+
+On resume, the user confirmed that `supabase/migrations/202609300002_account_management.sql` ran successfully and People & access lists their administrator. This is user-reported hosted verification, not an independently exercised write/RLS test. Do not rerun either migration.
+
+After the user resumes, arrange hosted checks with synthetic accounts before real use. Email setup remains postponed until a registered domain and delivery configuration are ready. Do not rerun migrations reported applied.
 
 ## Still not activated or verified
 
-- Hosted account-management migration and its full RPC/RLS integration checks.
+- Hosted account-management, register and teaching workflow/RLS integration checks; migration 005 activation.
 - Deployment and Deno-runtime verification of `invite-school-user`.
 - SMTP provider, sender/domain verification, email templates, Site URL and redirect allowlist.
 - Actual invitation inbox delivery, recovery lifecycle and session-revocation behaviour.
@@ -49,25 +62,26 @@ Email features default to disabled until explicitly configured. See `docs/ACCOUN
 
 ## Latest validation
 
-`npm run check` passed: lint, TypeScript, 42 tests across seven files and production build. Five Playwright browser tests passed, including 1440/390/320px layouts, recovery gating and invalid links. The recovery screen was visually inspected at 320px.
+Latest `npm run check` passed: lint, TypeScript, 65 tests across twelve files and production build. See `docs/VERIFICATION.md`. The earlier five Playwright tests covered foundation layouts and recovery, not the new signed-in academic, register or teaching workflows.
 
 The actual migrations were tested in embedded PostgreSQL with fictional schools. Email/action tests use mocks. These do not replace hosted end-to-end tests. Windows browser-test teardown needed manual cleanup of only the test run's own Node processes.
 
 ## Running locally
 
-The production server was started at `http://127.0.0.1:3000` before this pause; do not assume it remains running when resuming. No server was stopped as part of saving this checkpoint.
+The local Next.js development server and its verified School Portal workers were stopped at the user's request. A follow-up process check found zero School Portal Node processes and no listeners on ports 3000 or 3001. The user will restart it themselves for testing; do not automatically restart it.
 
 For development, run `npm run dev` from this workspace. For the production preview, run `npm run build` then `npm run start`. Check for an existing server/port before starting another process, and only stop processes verified to belong to this project.
 
-Useful pages: `/login`, `/dashboard?view=people`, `/forgot-password`, `/preview`.
+Useful pages: `/login`, `/dashboard?view=people`, `/dashboard?view=academic`, `/dashboard?view=registers`, `/dashboard?view=teaching`, `/forgot-password`, `/preview`.
 
-The latest workspace inspection found no Git repository. Progress is saved in local files, not a Git commit or remote backup. No commit, push, deployment or scheduled continuation was performed.
+On resume, a Git repository is present and its tracked files were initially clean. Only `supabase/.temp/` was untracked. No commit, push, deployment or scheduled continuation was performed by this resume work; remote backup status was not checked.
 
 ## Supporting references
 
 - `docs/ACCOUNT_MANAGEMENT.md`: activation steps, SMTP, templates and function deployment.
 - `docs/VERIFICATION.md`: evidence and explicit testing limits.
-- `docs/ROADMAP.md`: remaining Phase 1 work; Phase 2 has not started.
+- `docs/ROADMAP.md`: remaining Phase 1 readiness and Phase 2 development.
+- `docs/ACADEMIC_SETUP.md`, `docs/SCHOOL_REGISTERS.md`, `docs/TEACHING_ASSIGNMENTS.md`: activation steps and test workflows.
 - `docs/PROJECT_CONTEXT.md` and `docs/ARCHITECTURE.md`: decisions and architecture.
 
 On resume, verify current state rather than assuming an email service, migration or deployment was completed while paused. Finish the account-management activation and validation before declaring Phase 1 complete.
