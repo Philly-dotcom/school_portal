@@ -1,5 +1,11 @@
 # Foundation verification
 
+## Enrollment lifecycle — 2026-10-01
+
+`npm run check` passed lint, TypeScript, 90 tests across 17 files and production build. Migration 009 ran in embedded PostgreSQL: transfer/withdrawal history, overlap protection, stale forms, invalid/cross-school/cross-year destinations, re-entry, permission denials, audit and atomic rollback tested. Server-action validation/authorization tests passed. Hosted migration 009, UI workflows and independent concurrent sessions remain unverified; see `ENROLLMENT_LIFECYCLE.md`.
+
+Earlier this session, fictional data creation through the signed-in local app independently verified hosted admin academic/register/link/enrollment/teaching/timetable saves and timetable persistence after refresh. User review remains deferred. See `SYNTHETIC_DATA.md`; these successes do not establish hosted RLS denial or concurrency coverage. Email remains disabled.
+
 ## Account-management increment — 2026-09-30
 
 - Supabase Auth settings were rechecked read-only and returned `disable_signup: true`. The earlier public-signup finding below is resolved.
@@ -70,3 +76,21 @@ Creation/listing of students, teachers and guardians, guardian links and initial
 `npm run check` passed: lint, TypeScript, 65 tests across twelve files and production build. Migration 005 was executed after migrations 001–004 in embedded PostgreSQL. Tests cover both schools' read isolation, permission-denied writes, non-admin and suspended/inactive/anonymous access, cross-school teacher/subject/class references, date limits, duplicate assignment rejection, co-teaching and audit actors. Action tests cover verified ownership, forged fields, invalid selections/dates and safe error messages.
 
 Teaching assignment creation/listing is local only. Migration 005 has not been applied to hosted Supabase. No new signed-in browser or hosted RLS verification was performed; existing tests do not prove hosted behavior. Email remains disabled. Editing, ending/replacing assignments, timetable scheduling, pagination and account-to-record links remain outstanding.
+
+## Grade name normalization and save-log review — 2026-10-01
+
+The user supplied a Next.js action trace showing previous-state arguments, not a returned save result. The available local development log did not contain this trace, and no app terminal was attached; VS Code terminal access was not available. Hosted save success still needs confirmation by persistence after refresh.
+
+Local npm run check passed: lint, TypeScript, 69 tests across 13 files and production build. New tests cover grade normalization, unchanged custom/subject labels, success versus initial action state, SQL duplicate rejection within a school, cross-school isolation, and safe migration rollback preserving existing grade/class references when collisions exist. No hosted data was changed. Migration 006 is local and requires the read-only duplicate preflight before activation; no existing duplicates were merged or deleted.
+
+## Record corrections — 2026-10-01
+
+npm run check passed: lint, TypeScript, 79 tests across 15 files and production build. Migration 007 adds versioned label/reference corrections via a narrow admin RPC. SQL tests cover all eight supported record types, same-school scope, stale version rejection, direct-write denial, grade/reference duplicate rejection, relationship preservation, non-PII audit metadata and suspended/inactive/anonymous/non-admin denial. Action tests cover verified context, normalized names, forwarded versions and safe errors.
+
+No hosted SQL was executed. Migration 007 activation and browser validation remain pending. The user's approval to continue after the repair preview is not independent verification that the committed repair or migration 006 succeeded.
+
+## Weekly timetable foundation — 2026-10-01
+
+npm run check passed: lint, TypeScript, 85 tests across 16 files and production build. Embedded PostgreSQL tests execute migration 008 and verify adjacent lessons, teacher clashes across classes, class clashes across teachers, exact weekday recurrence overlap, invalid/no-occurrence date ranges, different weekdays, school-isolated reads, non-admin/suspended/inactive/anonymous mutation denial, direct-write denial, removal audit and preservation of enrollments/assignments. Action tests cover trusted school context, input conversion/validation, conflict messages and explicit removal confirmation.
+
+Migration 007 is now user-reported applied. Migration 008 remains local only. No hosted SQL, browser workflow test or independent concurrent database-session test was performed by this increment. Timetable mutation RPCs serialize school writes; this needs hosted concurrent-save validation. Email remains disabled.

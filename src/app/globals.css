@@ -1820,3 +1820,4 @@ tbody td {
     grid-template-columns: 1fr
   }
 }
+.record-editor{margin-top:12px}.record-editor summary{cursor:pointer;font-size:12px;color:var(--green);overflow-wrap:anywhere;padding:8px 0}.record-editor summary:focus-visible{outline:2px solid var(--green);outline-offset:3px}.record-editor .access-form{padding-bottom:12px}

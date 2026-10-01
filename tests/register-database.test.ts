@@ -16,7 +16,7 @@ beforeAll(async () => {
     create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema public,auth to authenticated,anon;`);
-  for(const file of ["202609290001_foundation.sql","202609300002_account_management.sql","202610010003_academic_structure.sql","202610010004_registers.sql","202610010005_teaching_assignments.sql"])
+  for(const file of ["202609290001_foundation.sql","202609300002_account_management.sql","202610010003_academic_structure.sql","202610010004_registers.sql","202610010005_teaching_assignments.sql","202610010006_grade_name_normalization.sql","202610010007_record_corrections.sql","202610010008_timetable.sql","202610010009_enrollment_lifecycle.sql"])
     await db.exec(readFileSync(`supabase/migrations/${file}`,"utf8"));
   await db.query("insert into schools(id,name) values($1,'Fictional A'),($2,'Fictional B')",[A,B]);
   for(const [user,school,role] of [[adminA,A,"school_admin"],[adminB,B,"school_admin"],[teacher,A,"teacher"],[guardian,A,"guardian"],[student,A,"student"]]) {
@@ -50,6 +50,10 @@ it("isolates reads in both directions and audits creation without creating Auth 
 });
 async function deniedWrites(school: string) {
   const r=rows[school];
+  await expect(db.query("select change_enrollment($1,$2,1,'withdrawal','2027-06-01',null)",[school,id(999)])).rejects.toMatchObject({code:"42501"});
+  await expect(db.query("select create_timetable_lesson($1,$2,1,540,600,'2027-01-01','2027-12-31')",[school,id(999)])).rejects.toMatchObject({code:"42501"});
+  await expect(db.query("select remove_timetable_lesson($1,$2)",[school,id(999)])).rejects.toMatchObject({code:"42501"});
+  await expect(db.query("select correct_school_record($1,'students',$2,1,'Denied','DENIED')",[school,r.student])).rejects.toMatchObject({code:"42501"});
   await expect(db.query("insert into teaching_assignments(school_id,teacher_id,subject_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,'2027-01-01','2027-12-31')",[school,r.teacher,r.subject,r.class,r.year])).rejects.toMatchObject({code:"42501"});
   for(const table of ["students","teachers","guardians"])
     await expect(db.query(`insert into ${table}(school_id,full_name,reference) values($1,'Denied','DENIED')`,[school])).rejects.toMatchObject({code:"42501"});
@@ -102,6 +106,142 @@ it("validates teaching relationships, dates, duplicates and creation audit",asyn
     const coTeacher=await insert("insert into teachers(school_id,full_name,reference) values($1,'Fictional Co-teacher','TE-002')",[A]);
     await db.query(sql,[A,coTeacher,a.subject,a.class,a.year,"2027-01-01","2027-12-31"]);
     expect((await db.query("select * from teaching_assignments")).rows).toHaveLength(2);
+  });
+});
+it("corrections reject another school's record IDs, arbitrary table names and invalid fields",async()=>{
+  await asUser(adminA,async()=>{
+    await expect(db.query("select correct_school_record($1,'students',$2,1,'Denied','DENIED')",[A,rows[B].student])).rejects.toMatchObject({code:"40001"});
+    await expect(db.query("select correct_school_record($1,'schools',$2,1,'Denied',null)",[A,A])).rejects.toMatchObject({code:"22023"});
+    await expect(db.query("select correct_school_record($1,'students',$2,1,' ',null)",[A,rows[A].student])).rejects.toMatchObject({code:"22023"});
+  });
+});
+it("corrects all supported records with stable relationships, version checks and non-PII audit",async()=>{
+  const enrollments=(await db.query("select * from enrollments order by id")).rows;
+  const teaching=(await db.query("select * from teaching_assignments order by id")).rows;
+  const guardianLinks=(await db.query("select * from student_guardians order by id")).rows;
+  await db.query("insert into academic_terms(school_id,academic_year_id,name,starts_on,ends_on) values($1,$2,'Term 1','2027-01-01','2027-03-31')",[A,rows[A].year]);
+  await asUser(adminA,async()=>{
+    for(const kind of ['academic_years','academic_terms','grades','subjects','classes','students','teachers','guardians']){
+      const before=(await db.query<Record<string,unknown>>(`select * from ${kind} where school_id=$1 order by id limit 1`,[A])).rows[0];
+      const person=['students','teachers','guardians'].includes(kind);
+      const name=kind==='grades'?'Grade9':'Fictional corrected';
+      const corrected=kind==='grades'?'Grade 9':name;
+      const args=[A,kind,before.id,1,name,person?'CORRECTED':null];
+      expect((await db.query("select correct_school_record($1,$2,$3,$4,$5,$6) as version",args)).rows).toEqual([{version:2}]);
+      const after=(await db.query(`select * from ${kind} where id=$1`,[before.id])).rows[0];
+      expect(after).toEqual({...before,record_version:2,...(person?{full_name:corrected,reference:'CORRECTED'}:{name:corrected})});
+      await expect(db.query("select correct_school_record($1,$2,$3,$4,$5,$6)",args)).rejects.toMatchObject({code:"40001"});
+      const audit=await db.query("select details,actor_user_id from audit_events where action=$1 and record_id=$2",[kind+'.correct',before.id]);
+      expect(audit.rows).toEqual([{actor_user_id:adminA,details:{previous_version:1,record_version:2,fields:person?['full_name','reference']:['name']}}]);
+      await expect(db.query(`update ${kind} set record_version=99 where id=$1`,[before.id])).rejects.toMatchObject({code:"42501"});
+    }
+  });
+  expect((await db.query("select * from enrollments order by id")).rows).toEqual(enrollments);
+  expect((await db.query("select * from teaching_assignments order by id")).rows).toEqual(teaching);
+  expect((await db.query("select * from student_guardians order by id")).rows).toEqual(guardianLinks);
+});
+it("corrections preserve duplicate grade and register-reference protection",async()=>{
+  await asUser(adminA,async()=>{
+    const grade=await insert("insert into grades(school_id,name) values($1,'Grade 10')",[A]);
+    const otherGrade=await insert("insert into grades(school_id,name) values($1,'Grade 11')",[A]);
+    await expect(db.query("select correct_school_record($1,'grades',$2,1,'grade10',null)",[A,otherGrade])).rejects.toMatchObject({code:"23505"});
+    expect((await db.query("select record_version from grades where id=$1",[grade])).rows).toEqual([{record_version:1}]);
+    const first=await insert("insert into teachers(school_id,full_name,reference) values($1,'Fictional first','TE-DUP')",[A]);
+    const second=await insert("insert into teachers(school_id,full_name,reference) values($1,'Fictional second','TE-OTHER')",[A]);
+    await expect(db.query("select correct_school_record($1,'teachers',$2,1,'Fictional second',' te-dup ')",[A,second])).rejects.toMatchObject({code:"23505"});
+    expect(first).not.toBe(second);
+  });
+});
+it("schedules weekly lessons with teacher/class clash checks and exact recurrence dates",async()=>{
+  await asUser(adminA,async()=>{
+    const a=rows[A];
+    const assignment=(await db.query<{id:string}>("select id from teaching_assignments where teacher_id=$1 and class_id=$2",[a.teacher,a.class])).rows[0].id;
+    const schedule=(target:string,start:number,end:number,first='2027-01-01',last='2027-12-31',day=1)=>db.query<{id:string}>("select create_timetable_lesson($1,$2,$3,$4,$5,$6,$7) as id",[A,target,day,start,end,first,last]);
+    await schedule(assignment,540,600);
+    await schedule(assignment,600,660);
+    await expect(schedule(assignment,570,610)).rejects.toMatchObject({code:'23P01'});
+    await expect(schedule(assignment,660,660)).rejects.toMatchObject({code:'22023'});
+    await expect(schedule(assignment,660,720,'2026-12-31')).rejects.toMatchObject({code:'22023'});
+    await expect(schedule(assignment,660,720,'2027-01-05','2027-01-06')).rejects.toMatchObject({code:'22023'});
+    // Overlapping date ranges without a shared Monday must remain valid.
+    await schedule(assignment,780,840,'2027-01-04','2027-01-08');
+    await schedule(assignment,780,840,'2027-01-05','2027-01-11');
+    const newClass=(await db.query<{id:string}>("insert into classes(school_id,name,grade_id,academic_year_id) select school_id,'Fictional B',grade_id,academic_year_id from classes where id=$1 returning id",[a.class])).rows[0].id;
+    const otherClassAssignment=await insert("insert into teaching_assignments(school_id,teacher_id,subject_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,'2027-01-01','2027-12-31')",[A,a.teacher,a.subject,newClass,a.year]);
+    await expect(schedule(otherClassAssignment,540,600)).rejects.toMatchObject({code:'23P01'});
+    const coTeacherAssignment=(await db.query<{id:string}>("select id from teaching_assignments where class_id=$1 and teacher_id<>$2",[a.class,a.teacher])).rows[0].id;
+    await expect(schedule(coTeacherAssignment,540,600)).rejects.toMatchObject({code:'23P01'});
+    await schedule(assignment,540,600,'2027-01-01','2027-12-31',2);
+  });
+});
+it("isolates timetable reads/writes and audits removal without removing school records",async()=>{
+  let lessonB='';
+  await asUser(adminB,async()=>{
+    expect((await db.query("select * from timetable_lessons")).rows).toHaveLength(0);
+    const assignment=(await db.query<{id:string}>("select id from teaching_assignments where school_id=$1",[B])).rows[0].id;
+    lessonB=(await db.query<{id:string}>("select create_timetable_lesson($1,$2,1,540,600,'2027-01-01','2027-12-31') as id",[B,assignment])).rows[0].id;
+  });
+  const before=(await db.query("select * from enrollments order by id")).rows;
+  const beforeAssignments=(await db.query("select * from teaching_assignments order by id")).rows;
+  await asUser(adminA,async()=>{
+    expect((await db.query<{school_id:string}>("select school_id from timetable_lessons")).rows.every(r=>r.school_id===A)).toBe(true);
+    await expect(db.query("select remove_timetable_lesson($1,$2)",[A,lessonB])).rejects.toMatchObject({code:'22023'});
+    await expect(db.query("select create_timetable_lesson($1,$2,1,540,600,'2027-01-01','2027-12-31')",[A,lessonB])).rejects.toMatchObject({code:'22023'});
+    const own=(await db.query<{id:string}>("select id from timetable_lessons order by id limit 1")).rows[0].id;
+    await db.query("select remove_timetable_lesson($1,$2)",[A,own]);
+    expect((await db.query("select details->>'id' as id from audit_events where action='timetable_lessons.remove' and record_id=$1",[own])).rows).toEqual([{id:own}]);
+    await expect(db.query("select remove_timetable_lesson($1,$2)",[A,own])).rejects.toMatchObject({code:'22023'});
+    await expect(db.query("delete from timetable_lessons")).rejects.toMatchObject({code:'42501'});
+    await expect(db.query("update timetable_lessons set start_minute=0")).rejects.toMatchObject({code:'42501'});
+    await expect(db.query("insert into timetable_lessons(school_id) values($1)",[A])).rejects.toMatchObject({code:'42501'});
+  });
+  for(const user of [teacher,guardian,student,outsider])await asUser(user,async()=>{expect((await db.query("select * from timetable_lessons")).rows).toHaveLength(0);});
+  expect((await db.query("select * from enrollments order by id")).rows).toEqual(before);
+  expect((await db.query("select * from teaching_assignments order by id")).rows).toEqual(beforeAssignments);
+});
+it("preserves enrollment history, prevents overlaps and rejects stale or foreign lifecycle changes",async()=>{
+  const a=rows[A], b=rows[B];
+  const original=(await db.query<{id:string}>("select id from enrollments where student_id=$1",[a.student])).rows[0].id;
+  const foreign=(await db.query<{id:string}>("select id from enrollments where student_id=$1",[b.student])).rows[0].id;
+  await asUser(adminA,async()=>{
+    const grade=(await db.query<{grade_id:string}>("select grade_id from classes where id=$1",[a.class])).rows[0].grade_id;
+    const destination=await insert("insert into classes(school_id,name,academic_year_id,grade_id) values($1,'8B',$2,$3)",[A,a.year,grade]);
+    const nextYear=await insert("insert into academic_years(school_id,name,starts_on,ends_on) values($1,'2029','2029-01-01','2029-12-31')",[A]);
+    const nextClass=await insert("insert into classes(school_id,name,academic_year_id,grade_id) values($1,'8B',$2,$3)",[A,nextYear,grade]);
+    const call="select change_enrollment($1,$2,$3,$4,$5,$6) as id";
+    const before=(await db.query("select * from enrollments where id=$1",[original])).rows;
+    for(const fields of [
+      [A,foreign,1,'withdrawal','2027-06-01',null],
+      [A,original,1,'transfer','2027-06-01',b.class],
+      [A,original,1,'transfer','2027-06-01',nextClass],
+      [A,original,1,'transfer','2027-06-01',a.class],
+      [A,original,1,'transfer','2027-01-01',destination],
+      [A,original,1,'transfer','2028-01-01',destination],
+      [A,original,1,'withdrawal','2027-06-01',destination],
+      [A,original,1,'invalid','2027-06-01',null],
+    ]) await expect(db.query(call,fields)).rejects.toMatchObject({code:'22023'});
+    await expect(db.query(call,[A,original,99,'withdrawal','2027-06-01',null])).rejects.toMatchObject({code:'40001'});
+    expect((await db.query("select * from enrollments where id=$1",[original])).rows).toEqual(before);
+    // Force a later audit failure to prove the close + replacement are atomic.
+    await db.exec("reset role");
+    await db.exec("alter table audit_events add constraint test_no_transfer check(action <> 'enrollments.transfer')");
+    await db.exec("set role authenticated");
+    await expect(db.query(call,[A,original,1,'transfer','2027-06-01',destination])).rejects.toMatchObject({code:'23514'});
+    expect((await db.query("select * from enrollments where id=$1",[original])).rows).toEqual(before);
+    expect((await db.query("select id from enrollments where student_id=$1",[a.student])).rows).toHaveLength(1);
+    await db.exec("reset role");await db.exec("alter table audit_events drop constraint test_no_transfer");await db.exec("set role authenticated");
+    const replacement=(await db.query<{id:string}>(call,[A,original,1,'transfer','2027-06-01',destination])).rows[0].id;
+    expect((await db.query("select ends_on::text,closure,record_version from enrollments where id=$1",[original])).rows).toEqual([{ends_on:'2027-05-31',closure:'transfer',record_version:2}]);
+    expect((await db.query("select class_id,starts_on::text,ends_on::text from enrollments where id=$1",[replacement])).rows).toEqual([{class_id:destination,starts_on:'2027-06-01',ends_on:'2027-12-31'}]);
+    await expect(db.query(call,[A,original,1,'withdrawal','2027-03-01',null])).rejects.toMatchObject({code:'40001'});
+    await db.query(call,[A,replacement,1,'withdrawal','2027-09-30',null]);
+    const create="insert into enrollments(school_id,student_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,$6)";
+    await expect(db.query(create,[A,a.student,a.class,a.year,'2027-09-30','2027-12-31'])).rejects.toMatchObject({code:'23P01'});
+    await insert(create,[A,a.student,a.class,a.year,'2027-10-01','2027-12-31']);
+    await expect(db.query("update enrollments set ends_on='2027-12-31' where id=$1",[original])).rejects.toMatchObject({code:'42501'});
+    await expect(db.query("insert into enrollments(school_id,student_id,class_id,academic_year_id,starts_on,ends_on,closure) values($1,$2,$3,$4,'2027-01-01','2027-01-01','withdrawal')",[A,a.student,a.class,a.year])).rejects.toMatchObject({code:'42501'});
+    expect((await db.query("select actor_user_id,details->>'replacement_id' as replacement from audit_events where action='enrollments.transfer'")).rows).toEqual([{actor_user_id:adminA,replacement}]);
+    expect((await db.query("select details->'before'->>'ends_on' as old_end from audit_events where action='enrollments.withdrawal'")).rows).toEqual([{old_end:'2027-12-31'}]);
   });
 });
 it("blocks suspended admins, inactive schools and anonymous users",async()=>{

@@ -30,7 +30,7 @@ export function RelationshipForm({ options, enrollment }: { options: RegisterOpt
       <input type="hidden" name="academic_year_id" value={selected?.academic_year_id ?? ""} />
       <label>Enrollment start date<input name="starts_on" type="date" min={year?.starts_on} max={year?.ends_on} required disabled={pending || blocked || !year} /></label>
       <label>Enrollment end date<input name="ends_on" type="date" min={year?.starts_on} max={year?.ends_on} required disabled={pending || blocked || !year} /></label>
-      <p className="small muted">Dates must fit within the class year. One placement per student per year is supported for now; transfers will follow.</p>
+      <p className="small muted">Dates must fit within the class year. Use the existing placement’s transfer control to change class. With lifecycle support enabled, a new placement after withdrawal must start after the previous placement ends.</p>
     </> : <>
       <label>Parent / guardian<select name="guardian_id" required defaultValue="" disabled={pending || blocked}><option value="" disabled>Select a guardian</option>{options.guardians.map(g => <option key={g.id} value={g.id}>{g.full_name} · {g.reference}</option>)}</select></label>
       <label>Relationship to student<input name="relationship" required maxLength={60} placeholder="e.g. Parent or legal guardian" disabled={pending || blocked} /></label>

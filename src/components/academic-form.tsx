@@ -19,6 +19,7 @@ export function AcademicForm({ kind, years, grades }: { kind: AcademicKind; year
   return <form action={action} className="access-form">
     <input type="hidden" name="kind" value={kind} />
     <label>{copy.label}<input name="name" placeholder={copy.example} maxLength={80} required disabled={pending || blocked} /></label>
+    {kind === "grades" && <p className="small muted">Use a label such as Grade 10 or Grade R. Grade10 and Grade 10 count as the same grade.</p>}
     {needsYear && <label>Academic year<select name="academic_year_id" required defaultValue="" disabled={pending || blocked}><option value="" disabled>Select a year</option>{years.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}</select></label>}
     {kind === "classes" && <label>Grade<select name="grade_id" required defaultValue="" disabled={pending || blocked}><option value="" disabled>Select a grade</option>{grades.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></label>}
     {(kind === "academic_years" || kind === "academic_terms") && <><label>Start date<input type="date" name="starts_on" required disabled={pending || blocked} /></label><label>End date<input type="date" name="ends_on" required disabled={pending || blocked} /></label></>}

@@ -30,3 +30,9 @@ it("does not report success when database validation rejects a write", async () 
   mock.insert.mockResolvedValue({error:{code:"23505"}});
   expect((await createAcademicRecord(state,form({kind:"grades",name:"Grade 1"}))).error).toContain("already exists");
 });
+it("normalizes Grade10 before inserting and returns success rather than the initial state",async()=>{
+  const result=await createAcademicRecord(state,form({kind:"grades",name:"Grade10"}));
+  expect(mock.insert).toHaveBeenCalledWith({name:"Grade 10",school_id:"trusted-school"});
+  expect(result).toEqual({error:"",saved:true});
+  expect(state).toEqual({error:"",saved:false});
+});

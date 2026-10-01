@@ -14,7 +14,8 @@ export async function createRegisterRecord(_state: { error: string; saved: boole
   const client = await createClient();
   const { error } = await client.from(kind).insert({ ...fields, school_id: context.school.id });
   if (error) return { error: error.code === "23505"
-    ? "This reference, guardian link or student placement for the year already exists."
+    ? "This reference, guardian link or open student placement for the year already exists."
+    : error.code === "23P01" ? "These enrollment dates overlap an existing placement for this student and year."
     : "Could not save. Check your school access, selected records and enrollment dates within the class year.", saved: false };
   revalidatePath("/dashboard");
   return { error: "", saved: true };

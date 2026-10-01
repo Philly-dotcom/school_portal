@@ -23,6 +23,19 @@ Still required before Phase 1 can be called complete:
 
 ## Phase 2: academic setup
 
+Latest checkpoint (2026-10-01): fictional admin creation workflows through timetable saved successfully in the connected app; user review is deferred. Enrollment transfers/withdrawals are implemented locally in migration 009; hosted activation and lifecycle/security/concurrency checks remain pending. See `ENROLLMENT_LIFECYCLE.md` and `SYNTHETIC_DATA.md`. Older activation checklists below are historical.
+
+- [x] Local history-preserving enrollment transfer/withdrawal and overlap protection.
+- [ ] Apply 009 and verify hosted lifecycle behavior, role boundaries and concurrent changes.
+
+Current progress: migrations through 007 are user-reported applied. Academic setup, registers and teaching forms have been exercised by the user; name/reference editors and full hosted security checks remain to be independently verified.
+
+- [x] Local weekly timetable creation/listing/filtering/removal with teacher/class clash checks (migration 008).
+- [ ] Apply migration 008 and verify hosted timetable workflows and concurrent conflicting saves. See `docs/TIMETABLE.md`.
+
+- [x] Local academic-name and person-name/reference corrections, with stale-form checks and audit (migration 007).
+- [ ] Activate migration 007 after 006 and validate hosted editing; lifecycle changes and timetables remain outstanding.
+
 Authorized to proceed without email. Invitations/recovery stay disabled; Phase 1 delivery and readiness items remain open.
 
 - [x] Local admin creation/listing of academic years, terms, grades, subjects and year-specific classes; migration, audit and boundary tests.

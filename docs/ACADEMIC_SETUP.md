@@ -1,5 +1,7 @@
 # Academic setup: first Phase 2 increment
 
+Update: name corrections are now available locally through migration 007; see `docs/RECORD_CORRECTIONS.md`. The creation-only restrictions below describe the earlier increment. Dates, relationships, rollover and archiving remain outside the editor's scope.
+
 The user reports completing activation and viewing the academic forms. All five creation forms now use specific field labels, example placeholders, buttons and success messages (for example, Subject name / Create subject). This is a presentation change; no additional migration is needed.
 
 Email delivery is deliberately deferred at the user's request. Both local email flags are false. Resend SMTP settings were saved by the user, but no registered domain is available and delivery is unverified. Do not enable email or create real accounts yet.

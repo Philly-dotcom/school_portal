@@ -9,7 +9,7 @@ export const registerInput = z.discriminatedUnion("kind", [
 ]).refine(v => !("starts_on" in v) || v.starts_on <= v.ends_on, { message: "Check the enrollment dates." });
 export type PersonKind = "students" | "teachers" | "guardians";
 export type RegisterKind = z.infer<typeof registerInput>["kind"];
-export type PersonRow = { id: string; full_name: string; reference: string };
+export type PersonRow = { id: string; full_name: string; reference: string; record_version?: number };
 export type RegisterOptions = {
   students: PersonRow[]; guardians: PersonRow[];
   classes: { id: string; name: string; academic_year_id: string; grade_id: string }[];

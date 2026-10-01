@@ -9,6 +9,7 @@ import { PeoplePanel } from "@/components/people-panel";
 import { AcademicPanel } from "@/components/academic-panel";
 import { RegistersPanel } from "@/components/registers-panel";
 import { TeachingPanel } from "@/components/teaching-panel";
+import { TimetablePanel } from "@/components/timetable-panel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "School workspace" };
@@ -27,6 +28,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const admin = context.roles.includes("school_admin");
   const params = await searchParams;
   const settings = params.view === "settings";
+  if (params.view === "timetable") return <PortalShell preview={false} admin={admin} schoolName={context.school.name} view="timetable"><PageHeading eyebrow="ACADEMIC PLANNING" title="Weekly timetable" description="Schedule lessons from teaching assignments and check teacher and class availability." />{admin ? <TimetablePanel schoolId={context.school.id} timezone={context.school.timezone} /> : <section className="content-panel"><h2>Administrator access required</h2><p className="muted">Your role cannot manage the timetable.</p></section>}</PortalShell>;
   if (params.view === "teaching") return <PortalShell preview={false} admin={admin} schoolName={context.school.name} view="teaching"><PageHeading eyebrow="ACADEMIC SETUP" title="Teaching assignments" description="Connect teachers, subjects and classes for the academic year." />{admin ? <TeachingPanel schoolId={context.school.id} /> : <section className="content-panel"><h2>Administrator access required</h2><p className="muted">Your role cannot manage teaching assignments.</p></section>}</PortalShell>;
   if (params.view === "registers") return <PortalShell preview={false} admin={admin} schoolName={context.school.name} view="registers"><PageHeading eyebrow="SCHOOL REGISTERS" title="Your school community" description="Student, teacher and guardian records, relationships and class enrollment." />{admin ? <RegistersPanel schoolId={context.school.id} /> : <section className="content-panel"><h2>Administrator access required</h2><p className="muted">Your role cannot manage school registers.</p></section>}</PortalShell>;
   if (params.view === "academic") return <PortalShell preview={false} admin={admin} schoolName={context.school.name} view="academic"><PageHeading eyebrow="ACADEMIC SETUP" title="Build your school structure" description="Years, terms, grades, subjects and classes." />{admin ? <AcademicPanel schoolId={context.school.id} /> : <section className="content-panel"><h2>Administrator access required</h2><p className="muted">Your role cannot manage academic setup.</p></section>}</PortalShell>;

@@ -1,6 +1,6 @@
 # School Portal — resume checkpoint
 
-Saved at the user's request after the teaching-assignment increment. Development is paused while the user tests. Wait for their results and instruction to continue.
+Active development resumed on 2026-10-01 after user testing and record corrections. The latest status below supersedes historical pause notes.
 
 ## Start here next time
 
@@ -37,6 +37,18 @@ Work only in `C:\Users\moses\Documents\School_portal`. Read `AGENTS.md`, this ch
 - `.env.local` contains local configuration. Do not print, copy into documentation, commit or request secret values.
 
 ## Immediate next step
+
+2026-10-01 latest: user deferred reviewing the synthetic dataset and explicitly asked to move on. Enrollment lifecycle is implemented locally in migration 009: admin transfers/withdrawals, retained history, overlap checks, optimistic versions and atomic audit. Read `docs/ENROLLMENT_LIFECYCLE.md`. Migration 009 is not applied remotely. No demo records were transferred or withdrawn. Latest `npm run check` passed lint, TypeScript, 90 tests / 17 files and production build. Keep user review pending; next work is hosted lifecycle/security verification and remaining Phase 2 pagination/assignment lifecycle support.
+
+The synthetic data-entry task independently exercised hosted-backed admin creates for academic/register/guardian/enrollment/teaching records and four timetable lessons, retained after refresh; see `docs/SYNTHETIC_DATA.md`. Timetable creation is confirmed available, superseding the historical 008 status below. Full hosted isolation, concurrency and removal checks remain pending. Existing year 2027 spans through 2030 and needs separate review. Email stays off. The local server was already running for this task and was not restarted or stopped.
+
+Latest increment: weekly timetable foundation is local in migration 008, with an admin planning view, assignment filter, dated weekday lessons, teacher/class clash checks, deliberate recurring-lesson removal and audit. See `docs/TIMETABLE.md`. The user reports completing migration 007 and requested returning to Phase 2 development. Migration 008 has not been applied remotely. Hosted timetable/browser/RLS and concurrent-save checks remain pending. Email remains disabled. The next development areas after timetable validation include pagination/imports and enrollment/assignment lifecycle support before broader daily operations.
+
+Latest increment: name/reference corrections are local in migration 007 with UI editors, school-admin RPC checks, duplicate protection, optimistic record versions and audit metadata. Read `docs/RECORD_CORRECTIONS.md`. The user accepted the Grade 10 repair preview and asked to continue after receiving commit/006 instructions; actual committed cleanup and 006 application were not independently verified. Apply 007 only after those prerequisites are complete. Latest check: lint, TypeScript, 79 tests / 15 files and production build passed. Hosted editor tests remain pending; email remains disabled.
+
+User screenshots confirmed duplicate Grade 10 variants, one class each: valid 10A/2027 with one enrollment and one assignment, and a mistaken class/year named “Thapelo” with zero of either. User confirmed the latter entries were mistakes. A guarded, rollback-by-default repair is prepared at `supabase/repairs/review_grade10_typo.sql`; see `docs/GRADE10_REPAIR.md`. Local tests passed; hosted preview, approval, committed cleanup and migration 006 remain pending. Do not delete or merge records outside that reviewed scope.
+
+2026-10-01: user resumed to report tested academic/register/teaching forms and review save logs plus Grade10 / Grade 10 duplicates. The supplied Next.js action trace shows previous-state arguments, not the returned save result. Grade input normalization and migration 006 are now local; see `docs/GRADE_NAME_FIX.md`. Run the read-only duplicate preflight before migration 006; existing hosted grade variants have not been merged or removed. Await exact hosted outcomes before claiming verification. This supersedes the earlier pause below.
 
 The user is now testing and will report back. Do not continue development or start a server until requested. Migration 004 is user-reported applied; School registers had not yet been tested at that report. Migration 005 application has not been confirmed. Do not rerun migrations 001–004. Record actual test outcomes when supplied, then prioritize fixes before the next feature increment.
 

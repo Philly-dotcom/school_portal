@@ -62,6 +62,30 @@ it("validates dates and duplicate names in the database", async () => {
     await expect(db.query("update academic_years set ends_on='2026-01-01'")).rejects.toThrow();
   });
 });
+it("grade normalization migration refuses existing duplicates without changing references", async () => {
+  const duplicate = (await db.query<{id:string}>("insert into grades(school_id,name) values($1,'Grade1') returning id",[A])).rows[0].id;
+  const migration = readFileSync("supabase/migrations/202610010006_grade_name_normalization.sql","utf8");
+  await expect(db.exec(migration)).rejects.toMatchObject({code:"23505"});
+  await db.exec("rollback");
+  expect((await db.query("select id from grades where school_id=$1",[A])).rows).toHaveLength(2);
+  expect((await db.query("select grade_id from classes where school_id=$1",[A])).rows).toEqual([{grade_id:grade}]);
+  // Remove only the unreferenced fictional duplicate created by this test.
+  await db.query("delete from grades where id=$1",[duplicate]);
+  await db.exec(migration);
+  await asUser(admin,async()=>{
+    for(const name of ["Grade1"," grade   1 ","GRADE\t1"])
+      await expect(db.query("insert into grades(school_id,name) values($1,$2)",[A,name])).rejects.toMatchObject({code:"23505"});
+    await db.query("insert into grades(school_id,name) values($1,'Grade 10')",[A]);
+    await expect(db.query("insert into grades(school_id,name) values($1,'Grade10')",[A])).rejects.toMatchObject({code:"23505"});
+    await db.query("insert into grades(school_id,name) values($1,'Grade R')",[A]);
+    await expect(db.query("insert into grades(school_id,name) values($1,'GradeR')",[A])).rejects.toMatchObject({code:"23505"});
+  });
+  await asUser(other,async()=>{
+    await db.query("insert into grades(school_id,name) values($1,'Grade1')",[B]);
+    expect((await db.query("select school_id from grades")).rows).toEqual([{school_id:B}]);
+    await expect(db.query("insert into grades(school_id,name) values($1,'Grade11')",[A])).rejects.toMatchObject({code:"42501"});
+  });
+});
 it("blocks suspended admins, inactive schools and anonymous requests", async () => {
   await db.query("update school_memberships set status='suspended' where user_id=$1",[admin]);
   await asUser(admin,async () => {

@@ -1,5 +1,9 @@
 # School registers: Phase 2 increment
 
+Latest: enrollment lifecycle has local migration 009 and admin controls. See [Enrollment transfers and withdrawals](ENROLLMENT_LIFECYCLE.md). Earlier creation-only limitations below describe the original 004 release. Hosted 009 activation remains pending.
+
+Update: person-name and school-reference corrections are now available locally through migration 007; see `docs/RECORD_CORRECTIONS.md`. Earlier creation-only notes below are superseded for these fields. Guardian links, enrollment dates, transfers and deletions remain unchanged.
+
 ## Activate
 
 The code is local. This increment has not changed hosted Supabase or sent email.
