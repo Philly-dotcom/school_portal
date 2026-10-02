@@ -1,8 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { MailPlus, ShieldCheck } from "lucide-react";
-import { changeInvitation, createInvitation, updateMember, type AccessState } from "@/app/dashboard/people/actions";
+import { ListPlus, MailPlus, ShieldCheck } from "lucide-react";
+import { bulkInvite, changeInvitation, createInvitation, updateMember, type AccessState } from "@/app/dashboard/people/actions";
 import { roles, roleLabels, type Role } from "@/lib/permissions";
 
 export type MemberRow = { id: string; user_id: string; display_name: string; status: "active" | "suspended"; access_version: number; roles: Role[] };
@@ -29,11 +29,17 @@ export function InviteForm() {
     <form action={action} className="access-form"><label>Full name<input name="name" autoComplete="off" minLength={1} maxLength={120} required disabled={pending} /></label><label>Email address<input name="email" type="email" autoComplete="off" maxLength={254} required disabled={pending} /></label><RoleChoices disabled={pending} /><Feedback state={state} /><button className="button primary" disabled={pending}>{pending ? "Preparing…" : "Prepare invitation"}</button></form>
   </section>;
 }
+export function BulkInviteForm() {
+  const [state, action, pending] = useActionState(bulkInvite, initial);
+  return <section className="content-panel"><div className="section-heading"><h2>Prepare many invitations</h2><ListPlus size={21} /></div><p className="muted small">Paste up to 200 lines of <code>email,name,roles</code>, for example <code>{'anna@example.org,"Anna Fictional",teacher|guardian'}</code>. Roles: teacher, student, guardian, school_admin. The whole list is checked first; if any line is wrong, nothing is prepared. No email is sent.</p>
+    <form action={action} className="access-form"><label>Invitation list<textarea name="list" rows={8} spellCheck={false} autoComplete="off" maxLength={100000} required disabled={pending} placeholder={"email,name,roles\nanna@example.org,Anna Fictional,teacher"} /></label><Feedback state={state} /><button className="button primary" disabled={pending}>{pending ? "Checking…" : "Prepare invitations"}</button></form>
+  </section>;
+}
 export function InvitationItem({ invitation, canSend, expired }: { invitation: InvitationRow; canSend: boolean; expired: boolean }) {
   const [state, action, pending] = useActionState(changeInvitation, initial);
   const ready = invitation.status === "pending" && !expired;
   return <article className="invitation-item"><div className="section-heading"><div><h3>{invitation.display_name}</h3><p className="muted small">{invitation.email}</p></div><span className="phase-tag">{invitation.status === "pending" && expired ? "expired" : invitation.status}</span></div><p className="small">{invitation.roles.map((role) => roleLabels[role]).join(" · ")}</p><p className="muted small">Delivery: {invitation.delivery_status === "sent" ? "accepted by provider" : invitation.delivery_status} · Expires {invitation.expires_at.slice(0, 10)}</p>
-    {(invitation.delivery_status === "sending" || invitation.delivery_status === "failed") && <p className="small muted">An operator should check delivery before creating a replacement. Automatic resend is disabled.</p>}
-    {invitation.status === "pending" && <form action={action} className="invitation-actions"><input type="hidden" name="invitationId" value={invitation.id} /><button className="button primary compact" name="command" value="send" disabled={pending || !canSend || !ready || invitation.delivery_status !== "pending"}>Send invitation email</button><button className="button secondary compact" name="command" value="revoke" disabled={pending}>Revoke invitation</button></form>}<Feedback state={state} />
+    {(invitation.delivery_status === "sending" || invitation.delivery_status === "failed") && <p className="small muted">Check the provider logs first. If the email did not go out, use “Allow resend”. A send that started in the last 10 minutes cannot be reset. Automatic resend stays disabled.</p>}
+    {invitation.status === "pending" && <form action={action} className="invitation-actions"><input type="hidden" name="invitationId" value={invitation.id} /><button className="button primary compact" name="command" value="send" disabled={pending || !canSend || !ready || invitation.delivery_status !== "pending"}>Send invitation email</button>{(invitation.delivery_status === "failed" || invitation.delivery_status === "sending") && <button className="button secondary compact" name="command" value="reset" disabled={pending || expired}>Allow resend</button>}<button className="button secondary compact" name="command" value="revoke" disabled={pending}>Revoke invitation</button></form>}<Feedback state={state} />
   </article>;
 }

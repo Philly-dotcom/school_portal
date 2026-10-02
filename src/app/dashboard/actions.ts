@@ -3,15 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getSchoolContext } from "@/lib/auth-context";
-import { canManageSchool } from "@/lib/permissions";
+import { isSchoolAdminContext } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export type SettingsState = { error: string; saved: boolean };
 export async function saveSchoolSettings(_state: SettingsState, formData: FormData): Promise<SettingsState> {
   const context = await getSchoolContext();
-  if (context.status !== "ready" || !canManageSchool({
-    userId: context.userId, schoolId: context.school.id, active: true, roles: context.roles,
-  }, context.userId, context.school.id)) return { error: "You do not have permission to change school settings.", saved: false };
+  if (!isSchoolAdminContext(context)) return { error: "You do not have permission to change school settings.", saved: false };
   const parsed = z.object({
     name: z.string().trim().min(2).max(120),
     timezone: z.string().refine((value) => {

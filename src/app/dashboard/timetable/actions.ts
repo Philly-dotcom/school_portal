@@ -1,11 +1,12 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { getSchoolContext } from "@/lib/auth-context";
+import { isSchoolAdminContext } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { lessonInput,lessonRemoval } from "@/lib/timetable-validation";
 export async function saveLesson(_state:{error:string;saved:boolean},form:FormData){
   const context=await getSchoolContext();
-  if(context.status!=="ready"||!context.roles.includes("school_admin"))return {error:"School administrator access is required.",saved:false};
+  if(!isSchoolAdminContext(context))return {error:"School administrator access is required.",saved:false};
   const parsed=lessonInput.safeParse(Object.fromEntries(form));
   if(!parsed.success)return {error:"Select an assignment and weekday, and check the dates and start/end times.",saved:false};
   const v=parsed.data;const client=await createClient();
@@ -15,7 +16,7 @@ export async function saveLesson(_state:{error:string;saved:boolean},form:FormDa
 }
 export async function removeLesson(_state:{error:string;saved:boolean},form:FormData){
   const context=await getSchoolContext();
-  if(context.status!=="ready"||!context.roles.includes("school_admin"))return {error:"School administrator access is required.",saved:false};
+  if(!isSchoolAdminContext(context))return {error:"School administrator access is required.",saved:false};
   const parsed=lessonRemoval.safeParse(Object.fromEntries(form));
   if(!parsed.success)return {error:"Confirm that you want to remove this recurring lesson.",saved:false};
   const client=await createClient();const {data,error}=await client.rpc("remove_timetable_lesson",{target_school:context.school.id,target_lesson:parsed.data.id});

@@ -42,6 +42,9 @@ export async function changePassword(_state: AccountState, form: FormData): Prom
   if (error || !user) return { error: "Your session has expired. Open a new recovery link or sign in again.", message: "" };
   const result = await client.auth.updateUser({ password: parsed.data.password });
   if (result.error) return { error: "The password could not be updated. Use a different password or request a fresh link.", message: "" };
+  // A changed password must end every other session (for example a stolen one). The current
+  // session stays signed in. Failure here must not undo the successful change.
+  try { await client.auth.signOut({ scope: "others" }); } catch { /* best effort */ }
   if (form.get("flow") === "invite") redirect("/account/accept");
   // A verified session is required for this page, including ordinary signed-in users.
   // Session revocation behaviour is tested separately against the configured Auth project.
