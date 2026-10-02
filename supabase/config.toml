@@ -1,6 +1,50 @@
 project_id = "school-portal"
 
-# JWTs are validated in the handler with Auth getUser, then again by database RPC.
-# Disable only the legacy gateway JWT verifier; this does not make sending public.
+# ---------------------------------------------------------------------------------------------
+# Auth settings, version-controlled so they can be reviewed. IMPORTANT:
+#  * The hosted project only changes when you run `supabase config push` (review the diff the
+#    CLI prints; try it on a staging project first). Editing this file alone does nothing there.
+#  * `env(NAME)` values come from the shell running the CLI (never commit real URLs/secrets).
+#  * Settings the CLI version does not recognise are reported at push time; remove or rename
+#    them rather than ignoring the warning.
+# ---------------------------------------------------------------------------------------------
+[auth]
+enabled = true
+site_url = "env(SCHOOL_PORTAL_SITE_URL)"
+# Only the password-setting page is a valid email-link destination. Set per environment.
+additional_redirect_urls = ["env(SCHOOL_PORTAL_PASSWORD_REDIRECT_URL)"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Accounts exist only through administrator invitations (public.accept_school_invitation).
+enable_signup = false
+enable_anonymous_sign_ins = false
+# Enforced by Supabase Auth itself. The form-level check alone is bypassable with the public key.
+minimum_password_length = 12
+password_requirements = ""
+
+[auth.rate_limit]
+# Per hour unless stated. Raise email_sent only after custom SMTP is configured.
+email_sent = 30
+sign_in_sign_ups = 30
+token_verifications = 30
+token_refresh = 150
+
+[auth.email]
+enable_signup = false
+double_confirm_changes = true
+enable_confirmations = true
+secure_password_change = true
+max_frequency = "60s"
+otp_length = 6
+# Longest allowed (24 h). Invitation RECORDS last 7 days; an invitee whose email link has
+# expired uses "Forgot password" and then "Accept a school invitation" on the dashboard.
+otp_expiry = 86400
+
+# Admin MFA: enable TOTP here; requiring it for administrators is tracked in docs/AUTH_AND_PRIVACY.md.
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [functions.invite-school-user]
 verify_jwt = false

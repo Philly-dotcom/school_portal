@@ -18,7 +18,7 @@ The current Phase 1 increments include:
 
 **The dedicated backend is now configured locally.** On 2026-09-30, read-only checks confirmed Supabase connectivity, denied anonymous database reads, and a signed-out dashboard redirect to login. The user confirmed that School Admin sign-in, dashboard and settings work. A subsequent check confirmed public sign-ups are disabled. Preview pages contain no school data and do not bypass authentication. Full hosted permission, session lifecycle, email and deployment testing remains outstanding; see [verification](docs/VERIFICATION.md).
 
-Public sign-ups have now been independently verified disabled. The new account-management migration must be applied before **People & access** works. SMTP is not configured, so recovery and invitation emails remain disabled. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). MFA and academic modules are not implemented. Phase 1 is not complete and this is not ready for real learner data.
+Public sign-ups have now been independently verified disabled. The new account-management migration must be applied before **People & access** works. SMTP is not configured, so recovery and invitation emails remain disabled. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). Academic setup, school registers, teaching assignments, the weekly timetable, enrollment lifecycle and record corrections now exist (migrations 003–009) for administrators. Migrations 010–012 add **sign-in links** with scoped read access for teachers, guardians and students ([LOGIN_LINKS](docs/LOGIN_LINKS.md)), **bulk invitations** and delivery reset, an append-only audit trail, recoverable correction history and safer account deletion. MFA is enabled in configuration but not yet required for administrators ([AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Attendance, marks and finance are not implemented. Phase 1 is not complete and this is not ready for real learner data.
 
 ## Run locally
 
@@ -29,7 +29,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. With no backend configuration, the root opens `/preview`. The app binds to localhost by default.
+Open http://127.0.0.1:3000. With no backend configuration, the root opens `/preview`. The app binds to localhost by default (`npm run start:public` binds all interfaces; see [AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Copy `.env.example` to `.env.local` to connect a backend.
 
 ```powershell
 npm run check
@@ -50,7 +50,8 @@ Follow [Supabase setup](docs/SUPABASE_SETUP.md). Do not reuse another project's 
 | `src/app/login` | Server-side sign-in and sign-out |
 | `src/app/dashboard` | Protected workspace and school-settings action |
 | `src/lib/auth-context.ts` | Server-verified identity and active school context |
-| `src/proxy.ts` | Session-cookie refresh for authenticated routes |
+| `src/proxy.ts` | Per-request CSP nonce, plus session-cookie refresh for authenticated routes |
+| `src/lib/permissions.ts` | `isSchoolAdminContext`, the one admin check used by every administrator action |
 | `supabase/migrations` | Versioned schema, policies and audit triggers |
 | `tests` | Foundation permission and database tests |
 | `e2e` | Browser checks for local preview and unconfigured access |
@@ -62,6 +63,8 @@ Follow [Supabase setup](docs/SUPABASE_SETUP.md). Do not reuse another project's 
 - [Architecture and access model](docs/ARCHITECTURE.md)
 - [Supabase setup and live verification](docs/SUPABASE_SETUP.md)
 - [Account management, SMTP and invitation setup](docs/ACCOUNT_MANAGEMENT.md)
+- [Sign-in links and role-scoped access](docs/LOGIN_LINKS.md)
+- [Auth configuration, security headers and personal-data handling](docs/AUTH_AND_PRIVACY.md)
 - [Roadmap and remaining Phase 1 work](docs/ROADMAP.md)
 
 ## Scope

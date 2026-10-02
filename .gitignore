@@ -9,3 +9,6 @@ test-results/
 *.tsbuildinfo
 *.log
 .DS_Store
+
+# Supabase CLI state (holds the linked project reference after `supabase link`)
+supabase/.temp/

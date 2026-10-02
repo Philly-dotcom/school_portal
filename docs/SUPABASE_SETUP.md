@@ -10,6 +10,15 @@ For the first controlled pilot, disable public sign-ups. Do not enable unrestric
 
 ## 2. Apply the migration
 
+> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
+
+
+> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
+
+
+> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
+
+
 Review and run `supabase/migrations/202609290001_foundation.sql` in that project's SQL editor as its database owner, or through your migration workflow. It is a one-time migration, not an idempotent seed. Do not run it repeatedly or against another application database.
 
 Keep `private` out of exposed API schemas. The normal `public` schema contains the RLS-protected application tables. The local test suite does not confirm these hosted settings.
