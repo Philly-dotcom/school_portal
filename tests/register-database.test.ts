@@ -331,7 +331,7 @@ it("validates teaching relationships, dates, duplicates and creation audit", asy
         "2027-01-01",
         "2027-12-31",
       ]),
-    ).rejects.toMatchObject({ code: "23505" });
+    ).rejects.toMatchObject({ code: "23P01" });
     for (const [start, end] of [
       ["2026-12-31", "2027-12-31"],
       ["2027-01-01", "2028-01-01"],

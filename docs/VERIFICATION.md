@@ -1,5 +1,21 @@
 # Foundation verification
 
+## Teaching-assignment lifecycle — 4 October 2026
+
+Local migration 014 and the admin end/replace workflow passed `npm run check`: lint, TypeScript, **154 tests across 25 files**, and production build. Migrations 001–013 were not changed. The new migration has not been applied to Supabase and no hosted record was changed.
+
+The SQL tests upgrade existing assignments/lessons from 013, then exercise retained history, end-date inclusivity, stale/closed changes, current and future teacher roster access, non-overlapping periods, cross-school/non-admin denial, direct-update/delete denial, timetable date protection and rollback when replacement or audit fails. Action tests cover verified school ownership, confirmation, malformed input and safe error messages. The existing final-schema security tests run with 014 too.
+
+The first focused run found a fixture parameter-type error and date-check ordering that reported overlap before rejecting reversed dates. Both were corrected; focused checks and the complete suite then passed. Hosted independent-session concurrency, browser submissions and role-session verification remain pending. No automatic lesson handover or broad assignment-correction feature is claimed. See TEACHING_ASSIGNMENTS.md for application steps and the timetable constraint.
+
+## Post-formatting verification — 4 October 2026
+
+Fresh `npm run check` passed lint, TypeScript, all 143 tests in 24 files and the production build. Running E2E with `SCHOOL_PORTAL_E2E_PRODUCTION=true` passed all six browser tests, with none skipped, including the production CSP/nonce check. No application changes were needed for the formatting or skip investigation.
+
+The known Windows shutdown issue recurred after all six tests passed. The verified test-server process on port 3001 was stopped, after which Playwright exited successfully with `6 passed` and exit code 0. The user's separate development server was not stopped. Automatic E2E teardown remains maintenance work; test assertions passed, but unattended local shutdown is not yet reliable.
+
+These results support continuing Phase 2. Hosted role/isolation, mutation/concurrency and email readiness checks remain open; this was a disconnected browser run, not a new hosted verification pass.
+
 ## Environment and file cleanup — 4 October 2026
 
 `npm run check` passed lint, TypeScript, 143 tests across 24 files and production build. Two tests of an unused permission helper were removed with that helper; the active admin-helper test was moved to permissions.test.ts. Database boundary tests remain. The archived repair script's regression tests passed using its new path.

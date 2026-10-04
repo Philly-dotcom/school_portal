@@ -1,16 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { classLabel } from "@/lib/register-validation";
-import type { TeachingOptions } from "@/lib/teaching-validation";
+import type { TeachingOptions, TeachingAssignment } from "@/lib/teaching-validation";
 import { TeachingForm } from "./teaching-form";
-type Assignment = {
-  id: string;
-  teacher_id: string;
-  subject_id: string;
-  class_id: string;
-  starts_on: string;
-  ends_on: string;
-};
+import { TeachingEditor } from "./teaching-editor";
 export async function TeachingPanel({ schoolId }: { schoolId: string }) {
   const client = await createClient();
   const queries = [
@@ -21,7 +14,8 @@ export async function TeachingPanel({ schoolId }: { schoolId: string }) {
     ["grades", "id,name", "name"],
     [
       "teaching_assignments",
-      "id,teacher_id,subject_id,class_id,starts_on,ends_on",
+      // Keep reads working before 014: lifecycle fields are optional until applied.
+      "*",
       "starts_on",
     ],
   ] as const;
@@ -64,7 +58,7 @@ export async function TeachingPanel({ schoolId }: { schoolId: string }) {
       TeachingOptions["classes"],
       TeachingOptions["academic_years"],
       TeachingOptions["grades"],
-      Assignment[],
+      TeachingAssignment[],
     ];
   const options = { teachers, subjects, classes, academic_years, grades };
   return (
@@ -105,14 +99,15 @@ export async function TeachingPanel({ schoolId }: { schoolId: string }) {
                   <span>
                     {a.starts_on} – {a.ends_on}
                   </span>
+                  <TeachingEditor key={`${a.id}:${a.record_version}`} row={a} teachers={teachers} />
                 </li>
               );
             })}
           </ul>
           <p className="small muted">
-            Creation and viewing are available. Schedule lessons in Weekly
-            timetable. Assignment corrections and replacement periods are not
-            available yet.
+            End or replace a teacher while keeping the previous assignment.
+            Separate periods for the same teacher must not overlap. Subject,
+            class and original start-date corrections are not available here.
           </p>
         </section>
         <section className="content-panel">

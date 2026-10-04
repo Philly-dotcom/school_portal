@@ -28,7 +28,7 @@ Still open before live use:
 | School registers | Students, teachers, guardians; name/reference corrections | Verify corrections and capacity behavior in the intended school dataset. |
 | Relationships and access | Guardian relationships, explicit child grants, versioned login links, dated role-scoped reads | Hosted verification of new grants/linking, suspension and cross-school denial. No teacher/student/guardian record screens yet. |
 | Enrollment | Dated placement, history-preserving transfers/withdrawals and overlap protection | Hosted lifecycle and simultaneous-save tests, including future transfers. |
-| Teaching assignments | Dated creation/listing | Safe correction and ending/replacement workflow is still missing; changing responsibilities must preserve history. |
+| Teaching assignments | Dated creation/listing; local 014 adds versioned end/replacement with retained history | Apply and verify 014. Subject/class/start-date corrections remain outside this editor; timetable changes must be reviewed separately. |
 | Timetable foundations | Admin creation/listing/filtering/removal with clash checks | Hosted removal/conflict/concurrency checks. Role-facing daily use belongs to Phase 3. |
 | Capacity | Invitation pagination only; academic/register/teaching/timetable limits remain | Paginate required lists or explicitly accept a measured pilot capacity before declaring readiness. Related history lists also count toward limits. |
 

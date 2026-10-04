@@ -50,7 +50,7 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 | [src/app/dashboard/registers/actions.ts](../src/app/dashboard/registers/actions.ts) | Handles student, teacher and guardian creation, family links and initial class enrollment. |
 | [src/app/dashboard/registers/link-actions.ts](../src/app/dashboard/registers/link-actions.ts) | Handles explicit login links and guardian child-access changes, including confirmation/version checks. |
 | [src/app/dashboard/registers/lifecycle-actions.ts](../src/app/dashboard/registers/lifecycle-actions.ts) | Handles an enrollment transfer or withdrawal through the database lifecycle function. |
-| [src/app/dashboard/teaching/actions.ts](../src/app/dashboard/teaching/actions.ts) | Handles creation of dated teacher/subject/class assignments. |
+| [src/app/dashboard/teaching/actions.ts](../src/app/dashboard/teaching/actions.ts) | Handles assignment creation and validated, confirmed end/replacement requests using the verified school. |
 | [src/app/dashboard/timetable/actions.ts](../src/app/dashboard/timetable/actions.ts) | Handles lesson creation and deliberate removal. |
 | [src/app/dashboard/corrections/actions.ts](../src/app/dashboard/corrections/actions.ts) | Handles name/reference corrections; takes school ownership from verified context, not the submitted form. |
 | [src/app/dashboard/people/actions.ts](../src/app/dashboard/people/actions.ts) | Handles role/status changes, invitation preparation, bulk preparation, revocation and controlled delivery/reset actions. |
@@ -78,6 +78,7 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 | [src/components/guardian-access.tsx](../src/components/guardian-access.tsx) | The separate control that grants or revokes access to a child's records. |
 | [src/components/teaching-panel.tsx](../src/components/teaching-panel.tsx) | Loads teacher assignments and the options used by the assignment form. |
 | [src/components/teaching-form.tsx](../src/components/teaching-form.tsx) | Teacher, subject, class, year and date inputs for a new assignment. |
+| [src/components/teaching-editor.tsx](../src/components/teaching-editor.tsx) | Versioned end/replacement form and closed-history labels. Available after migration 014. |
 | [src/components/timetable-panel.tsx](../src/components/timetable-panel.tsx) | Loads timetable lessons and assignment choices for the admin planning screen. |
 | [src/components/timetable.tsx](../src/components/timetable.tsx) | Renders lesson lists and lesson creation/removal controls. |
 | [src/components/people-panel.tsx](../src/components/people-panel.tsx) | Loads school members, one page of invitations and recent audit activity. |
@@ -127,6 +128,7 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 | [supabase/migrations/202610020011_invitation_bulk_and_reset.sql](../supabase/migrations/202610020011_invitation_bulk_and_reset.sql) | 011: transactional bulk invitations, delivery attempt limits and reviewed retry/reset handling. |
 | [supabase/migrations/202610020012_audit_history_and_cleanup.sql](../supabase/migrations/202610020012_audit_history_and_cleanup.sql) | 012: append-only audit protections, correction snapshots and an owner-only school-member privacy procedure. |
 | [supabase/migrations/202610030013_linkable_members_email_type.sql](../supabase/migrations/202610030013_linkable_members_email_type.sql) | 013: fixes the register-login query's email return type. It replaces one function without changing stored records. |
+| [supabase/migrations/202610040014_teaching_assignment_lifecycle.sql](../supabase/migrations/202610040014_teaching_assignment_lifecycle.sql) | 014: assignment end/replacement history, non-overlapping periods, stale-form checks and timetable date protection. Local, pending hosted application. |
 | [supabase/checks/grade_name_duplicates.sql](../supabase/checks/grade_name_duplicates.sql) | Read-only check for names that would collide after grade normalization. |
 | [archive/2026-10/review_grade10_typo.sql](../archive/2026-10/review_grade10_typo.sql) | The archived one-off Grade 10 repair. The regression test still reads this copy; it is not an active setup step. |
 | [supabase/functions/invite-school-user/index.ts](../supabase/functions/invite-school-user/index.ts) | Supabase Edge Function entry point; reads its runtime configuration and supplies clients to the handler. It is outside the Next.js app. |

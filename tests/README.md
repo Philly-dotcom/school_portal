@@ -1,6 +1,6 @@
 # Tests: what they check and how to run them
 
-Updated 4 October 2026. The latest full local run passed **143 tests in 24 files**, plus lint, TypeScript and the production build. Cleanup retired two tests of the unused `canManageSchool` helper and moved the existing active admin-helper test into permissions.test.ts. No hosted test success is implied. These numbers describe that run; your next run is a new result.
+Updated 4 October 2026. The latest full local run passed **154 tests in 25 files**, plus lint, TypeScript and the production build, after adding assignment lifecycle 014. The earlier cleanup retired two tests of the unused `canManageSchool` helper and moved the active admin-helper test into permissions.test.ts. No hosted test success is implied. These numbers describe that run; your next run is a new result.
 
 ## Start here
 
@@ -48,7 +48,8 @@ All files below are in this folder. A test with an expected permission error is 
 | [academic-database.test.ts](academic-database.test.ts) | Runs academic-structure SQL: school isolation, academic relationships, date constraints, duplicate protection and grade normalization. |
 | [register-actions.test.ts](register-actions.test.ts) | Checks person/relationship/enrollment creation handlers reject non-admin calls, forged ownership and malformed inputs. |
 | [register-database.test.ts](register-database.test.ts) | The larger academic workflow suite: registers, teaching assignments, corrections, timetable clashes/removal and enrollment lifecycle, with SQL permission and ownership checks. |
-| [teaching-actions.test.ts](teaching-actions.test.ts) | Checks creation of a teaching assignment uses the verified school, validates selections/dates and reports duplicates safely. |
+| [teaching-actions.test.ts](teaching-actions.test.ts) | Checks assignment creation and end/replacement authorization, verified school ownership, validation/confirmation and safe conflict messages. |
+| [teaching-lifecycle-database.test.ts](teaching-lifecycle-database.test.ts) | Upgrades existing assignments through 014, then checks ending/replacement, roster access dates, preserved history, overlap/timetable rejection, school/role boundaries, stale changes and rollback on audit failure. |
 | [timetable-actions.test.ts](timetable-actions.test.ts) | Checks lesson creation/removal, time conversion, invalid ranges, confirmation and scheduling-error messages. |
 | [correction-actions.test.ts](correction-actions.test.ts) | Checks name/reference correction authorization, grade normalization, version forwarding and stale/duplicate error handling. |
 | [enrollment-actions.test.ts](enrollment-actions.test.ts) | Checks transfer/withdrawal authorization, dates, destination rules, confirmation and stale-form handling. |

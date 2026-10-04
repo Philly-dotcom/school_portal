@@ -54,7 +54,7 @@ See [LOGIN_LINKS.md](LOGIN_LINKS.md) for the exact read boundaries and [FILE_GUI
 
 School-owned relationships use school-matching foreign keys as well as RLS. Profiles are deliberately global: one login might eventually join more than one school. This does not mean school records should be global.
 
-SQL migrations are the database change history. Migrations 001–013 exist; the user has confirmed applying 009–013 to the dedicated project. Do not edit or rerun an applied migration to fix a new issue. Add a follow-up, as we did with 013.
+SQL migrations are the database change history. Migrations 001–014 exist; the user has confirmed applying 009–013 to the dedicated project. Migration 014 is local and adds versioned assignment end/replacement with history and timetable date protection. Do not edit or rerun an applied migration to fix a new issue. Add a follow-up, as we did with 013 and 014.
 
 ## Sessions, scripts and the public preview
 

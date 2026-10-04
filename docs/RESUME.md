@@ -4,6 +4,8 @@ Updated 4 October 2026.
 
 ## Current position
 
+Latest development: teaching-assignment lifecycle is implemented locally in migration **014**, with an admin end/replace form, confirmed/versioned actions and dated non-overlap checks. Earlier assignments remain in history. A change that would leave existing lessons outside the shortened assignment is rejected; lessons are not moved automatically. **014 is not applied to hosted Supabase.** See TEACHING_ASSIGNMENTS.md before applying it. No hosted records were changed during development.
+
 We are in Phase 2, Academic Setup. The admin foundation is working locally, but Phase 1 account/security readiness and parts of Phase 2 still need hosted testing. We are using the dedicated School Portal Supabase project with fictional records only.
 
 You confirmed migrations 010–012 and the earlier enrollment migration 009 were applied, then confirmed migration 013 on 4 October. Do not rerun them. Migration 013 is the small follow-up fix for the register-login query; it changes an email result to the type the function promises, without changing school records or granting new access.
@@ -12,7 +14,7 @@ You confirmed migrations 010–012 and the earlier enrollment migration 009 were
 
 Before 013, the connected admin dashboard, People & access and Academic setup loaded. School registers showed an unavailable message. The query defect was reproduced locally, and the test now proves both the failure before 013 and the corrected result after it.
 
-The latest full `npm run check` passed after cleanup on 4 October: lint, TypeScript, 143 tests across 24 files and the production build. Two tests for an unused helper were retired; the active helper test was moved into the permissions suite. Older counts in dated reports describe earlier runs.
+The latest full `npm run check` passed after teaching-assignment lifecycle 014 on 4 October: lint, TypeScript, 154 tests across 25 files and production build. Hosted 014 application and workflow verification remain pending. Older counts in dated reports describe earlier runs.
 
 The environment/file review is complete; see [CLEANUP.md](CLEANUP.md) and [ENVIRONMENT.md](ENVIRONMENT.md). The local env file stayed unchanged, its template now lists only the six app settings, and CLI/Edge settings are documented separately. The old patch and record-specific repair are archived with their contents preserved. All 13 migration hashes match the pre-cleanup snapshot. The user requested and received a memory checkpoint.
 
@@ -23,7 +25,7 @@ After 013, School registers loaded with the existing records and remained availa
 1. The post-013 admin page-loading check is complete; review the screens and documentation at your own pace.
 2. Test corrections, enrollment changes and timetable conflicts with clearly fictional records, recording the outcome.
 3. Complete hosted denied-read and denied-write checks with separate fictional roles and two schools. The last People & access check showed only one active School Admin, so these sessions are not available yet.
-4. Finish the agreed Phase 2 gaps: teaching-assignment changes and list capacity/pagination. Agree any extra scope before adding it.
+4. Apply and verify assignment lifecycle 014, then continue list capacity/pagination. Broader assignment corrections remain outside the end/replace editor; agree their scope separately.
 
 The original test dataset still needs your review. The year called 2027 runs through 2030, and a grade called Thapelo remained in the last observed list. Do not silently delete or rename these while testing.
 

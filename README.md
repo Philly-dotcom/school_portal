@@ -10,7 +10,7 @@ We are in **Phase 2: Academic Setup**. Much of the admin side is built, but we s
 
 You have confirmed that migrations **009–013** have run in the dedicated Supabase project. Migration 013 fixes the email-type mismatch that stopped School registers from loading. The register now loads and still works after refresh. All seven admin views loaded in the connected browser check on 4 October. That checks page loading, not every save or permission rule; see [the verification log](docs/VERIFICATION.md). Do not rerun migrations that have already been applied.
 
-The latest full local check passed after cleanup on 4 October: **143 tests in 24 files**, lint, TypeScript and the production build. Two tests for an unused helper were retired; active permission tests remain. That result does not prove the hosted permissions or email setup work. See [the cleanup notes](docs/CLEANUP.md).
+The latest full local check passed after the assignment-lifecycle work on 4 October: **154 tests in 25 files**, lint, TypeScript and the production build. Migration **014 is local and pending application**; see [Teaching assignments](docs/TEACHING_ASSIGNMENTS.md). These checks do not prove hosted workflow or email readiness. Earlier cleanup results remain in [the cleanup notes](docs/CLEANUP.md).
 
 | Area | What is available | What still needs attention |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ The latest full local check passed after cleanup on 4 October: **143 tests in 24
 | Academic setup | Years, terms, grades, subjects, classes and name corrections | Review test-data dates; date/relationship corrections and year rollover are not built |
 | School registers | Students, teachers, guardians, family links and enrollment | Hosted tests of corrections, login links and guardian access |
 | Enrollment | Transfers and withdrawals that keep placement history | Hosted workflow and simultaneous-save tests |
-| Teaching assignments | Assign a teacher to a subject and class for a date range | Ending, replacing and correcting assignments safely |
+| Teaching assignments | Dated creation/listing; local migration 014 adds ending/replacing with history | Apply and verify 014; broader corrections and timetable handover remain separate |
 | Timetable | Admin weekly lesson planning and clash checks | Hosted conflict/removal tests and later role-facing views |
 
 Teacher, student and guardian access rules exist in the database. Their dedicated record screens are not built yet. Adding a student record does not create a login, and recording a family relationship does not automatically give a guardian access.
