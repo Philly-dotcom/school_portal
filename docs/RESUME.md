@@ -2,6 +2,30 @@
 
 Active development resumed on 2026-10-01 after user testing and record corrections. The latest status below supersedes historical pause notes.
 
+## Latest migration update — 2026-10-03
+
+The user reports successfully running migrations 010–012 in the dedicated Supabase project and confirms the earlier enrollment migration (typed "090", interpreted as 009). The user confirms the project contains only the fictional records from prior tests. Do not re-run these migrations. This is user-reported application, not independent schema or policy verification. Earlier statements that 010–012 are unapplied are historical and superseded by this update.
+
+Next: connected read-only smoke checks, followed by hosted role/RLS and workflow verification using fictional records. Keep email disabled. No new phase is started by successful migration application.
+
+## Current checkpoint — 2026-10-03 architecture consistency cleanup
+
+The user approved the targeted corrections following a read-only architecture audit. Current phase remains **Phase 2 with open Phase 1 readiness gates**. `ROADMAP.md` now separates local implementation, recorded hosted evidence, unresolved verification and proposed Phase 2 completion criteria. Academic imports are optional/undecided, not an assumed requirement.
+
+This cleanup corrects teaching-access guidance, uses the exact register-login RPC result type, and moves guardian access validation into the existing validation module. It does not add later-phase screens, restructure the app, change migrations, or provision/apply anything hosted. The previous repair remains in the working tree. Next is agreement on remaining scope and a confirmed staging target/baseline; no hosted migration should be inferred as applied.
+
+Validation for this cleanup: `npm run check` passed lint, TypeScript, 144 tests / 24 files and the production build. No hosted or browser verification was repeated.
+
+The overlapping member-list RPCs intentionally remain for now: their response contracts differ, one includes verified account email, and changing the existing 002 contract would exceed this cleanup. Large components, general pagination and Windows test teardown remain tracked debt; no broad refactor is authorized by this checkpoint.
+
+## Latest checkpoint — 2026-10-02 repair pass
+
+The user authorized correcting the evaluation findings while preserving the current architecture. Read `REPAIR_REPORT.md` and `REPAIR_PLAN.md` first. Migrations **010–012 are corrected locally and remain unapplied to hosted Supabase**. Migrations 001–009 were not edited or reordered. No cloud resources, hosted mutations, email sends, deployments, commits or pushes were made during this repair.
+
+Validation: final `npm run check` passed (144 tests / 24 files and production build); six production browser tests passed; dependency audit found zero vulnerabilities; working-tree secret scan found no matches. See the report for limits and the Windows test-server teardown note.
+
+The next step is an explicitly approved staging rehearsal with fictional data, not a new development phase. Keep all email gates off. Current work includes dated RLS access, versioned login linking, explicit guardian child grants, paginated invitations, bounded/manual delivery retries, password revocation feedback and an operator-only school-scoped privacy procedure. Older feature/pause notes below are historical and do not override this checkpoint. Confirm actual hosted migration history before any future migration action.
+
 ## Start here next time
 
 Work only in `C:\Users\moses\Documents\School_portal`. Read `AGENTS.md`, this checkpoint and relevant setup guides before changing anything. Keep all code, credentials, schema and decisions isolated from other projects. The user resumed development and authorized Phase 2 without email. No hosted test success should be inferred from migration application alone.

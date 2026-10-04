@@ -1,54 +1,54 @@
 # Delivery roadmap
 
+Updated 2026-10-03 after the architecture audit. This is the current status map; dated verification and resume entries are historical evidence, not instructions to reapply migrations.
+
+## Current position
+
+**Phase 2: Academic Setup**, with Phase 1 operational readiness still open. The user authorized development without email. No Phase 3 transition is approved by a local test result alone. Preserve the original six-phase product plan, one-school-first experience and school-aware ownership.
+
 ## Phase 1: foundation
 
-Local increment:
-- [x] Project isolation and documented decisions.
-- [x] Responsive application shell and explicitly labeled public preview.
-- [x] Supabase session and password sign-in code, disconnected by default.
-- [x] Active-membership protected workspace and admin settings code.
-- [x] Foundation migration with RLS, restricted grants and audit events.
-- [x] Two-school database boundary tests.
-- [x] Local account management, invitation acceptance and recovery code, with security tests.
+Implemented locally: application shell/public preview, Supabase authentication, active memberships and roles, protected admin settings, account management, explicit invitation acceptance/recovery, RLS, audit and synthetic two-school tests. Password/session error handling and invitation delivery controls were hardened during the repair pass.
 
-Still required before Phase 1 can be called complete:
-- [x] Dedicated hosted project configured and migration applied (user-reported setup; connectivity independently checked on 2026-09-30).
-- [x] Public sign-ups disabled; independently rechecked on 2026-09-30.
-- [ ] Hosted sign-in, sign-out, session refresh and RLS integration checks.
-- [ ] Apply the account-management migration and verify its member-management UI and audited role changes against hosted Supabase.
-- [ ] Deploy the isolated invitation sender; configure SMTP/templates and verify invitation/recovery/acceptance flows end to end.
-- [ ] Administrator MFA and account recovery procedures.
-- [ ] Production settings, monitoring, backup/restore and access checks.
-- [ ] School acceptance of the first workflow; no real learner data before readiness checks.
+Evidence already recorded: dedicated hosted project and admin login/settings success; the user reported applying account management and seeing their admin. Connectivity and disabled public signup were independently checked in September. This does not establish current hosted configuration or completion of every account workflow.
+
+Still open before live use:
+- Hosted sign-out, session refresh, role/status changes and audit verification; denied reads AND writes through real sessions for both fictional schools.
+- Invitation/recovery delivery and acceptance testing after domain, SMTP, redirects and templates are ready. Keep delivery disabled meanwhile.
+- Administrator recovery/security policy, including the previously recommended MFA enforcement; no MFA expansion in this cleanup.
+- Deployment settings, monitoring, backup/restore rehearsal and school acceptance before real learner data.
 
 ## Phase 2: academic setup
 
-Latest checkpoint (2026-10-01): fictional admin creation workflows through timetable saved successfully in the connected app; user review is deferred. Enrollment transfers/withdrawals are implemented locally in migration 009; hosted activation and lifecycle/security/concurrency checks remain pending. See `ENROLLMENT_LIFECYCLE.md` and `SYNTHETIC_DATA.md`. Older activation checklists below are historical.
+| Area | Local implementation | Remaining work / evidence |
+| --- | --- | --- |
+| Academic structure | Years, terms, grades, subjects, classes; versioned name corrections | Verify correction workflows and decide how required date/relationship mistakes should be handled; name editing does not change those fields. |
+| School registers | Students, teachers, guardians; name/reference corrections | Verify corrections and capacity behavior in the intended school dataset. |
+| Relationships and access | Guardian relationships, explicit child grants, versioned login links, dated role-scoped reads | Hosted verification of new grants/linking, suspension and cross-school denial. No teacher/student/guardian record screens yet. |
+| Enrollment | Dated placement, history-preserving transfers/withdrawals and overlap protection | Hosted lifecycle and simultaneous-save tests, including future transfers. |
+| Teaching assignments | Dated creation/listing | Safe correction and ending/replacement workflow is still missing; changing responsibilities must preserve history. |
+| Timetable foundations | Admin creation/listing/filtering/removal with clash checks | Hosted removal/conflict/concurrency checks. Role-facing daily use belongs to Phase 3. |
+| Capacity | Invitation pagination only; academic/register/teaching/timetable limits remain | Paginate required lists or explicitly accept a measured pilot capacity before declaring readiness. Related history lists also count toward limits. |
 
-- [x] Local history-preserving enrollment transfer/withdrawal and overlap protection.
-- [ ] Apply 009 and verify hosted lifecycle behavior, role boundaries and concurrent changes.
+Existing hosted evidence: the user tested academic setup, school registers and teaching assignments. Later synthetic admin creation workflows, including timetable lessons, were exercised in the connected app. Those checks do not prove all hosted policies, edits or concurrent operations.
 
-Current progress: migrations through 007 are user-reported applied. Academic setup, registers and teaching forms have been exercised by the user; name/reference editors and full hosted security checks remain to be independently verified.
+Migration status (user update 2026-10-03): the user reports 010–012 ran successfully and confirms the preceding enrollment migration ("090", interpreted as 009). The project contains only prior fictional test data. Do not reapply these migrations. Exact schema, grants, RLS and hosted workflows still require independent verification; success in the SQL editor alone does not close those checks.
 
-- [x] Local weekly timetable creation/listing/filtering/removal with teacher/class clash checks (migration 008).
-- [ ] Apply migration 008 and verify hosted timetable workflows and concurrent conflicting saves. See `docs/TIMETABLE.md`.
+### Phase 2 completion criteria
 
-- [x] Local academic-name and person-name/reference corrections, with stale-form checks and audit (migration 007).
-- [ ] Activate migration 007 after 006 and validate hosted editing; lifecycle changes and timetables remain outstanding.
+These are proposed acceptance criteria for the existing scope, not approval to build additional features:
+1. Admins can set up the academic structure and registers, correct agreed fields, link logins and deliberately grant guardian access.
+2. Enrollment and teaching responsibility changes have an agreed, tested history-preserving workflow; no silent overwriting of past ownership.
+3. Timetable foundations enforce class/teacher conflicts and preserve related records.
+4. Representative fictional data stays manageable within the agreed pilot size; limits cannot hide required choices or block normal work unexpectedly.
+5. The final migration chain, real-session school isolation, stale updates and concurrent saves pass staging verification; the user reviews the workflows.
+6. Remaining Phase 1 live-readiness gates are explicitly recorded. Email may remain off during development, but live account delivery/recovery cannot be declared complete.
 
-Authorized to proceed without email. Invitations/recovery stay disabled; Phase 1 delivery and readiness items remain open.
+Academic CSV imports are **optional and undecided**. They appeared in an expanded written roadmap, not the original Phase 2 list. Do not implement them or make them a completion blocker without user agreement. Bulk account invitations are a separate existing feature, not academic imports.
 
-- [x] Local admin creation/listing of academic years, terms, grades, subjects and year-specific classes; migration, audit and boundary tests.
-- [ ] Apply migration 003 and validate the signed-in hosted workflow. See `docs/ACADEMIC_SETUP.md`.
-- [ ] Registers, guardian links, enrollment, teaching assignments, lifecycle edits and timetable structure.
-- [x] Local student, teacher and guardian register creation/listing, guardian links and initial dated class enrollment, with administrator-only RLS and audit.
-- [ ] Apply migration 004 and verify School registers in the hosted signed-in workflow. See `docs/SCHOOL_REGISTERS.md`.
-- Migration 004 is now user-reported applied; register workflow testing is still pending.
-- [x] Local teaching assignment creation/listing with dates, composite school/year relationships, RLS and audit.
-- [ ] Apply migration 005 and verify Teaching assignments. See `docs/TEACHING_ASSIGNMENTS.md`.
-- [ ] Record corrections, transfers/withdrawals, teaching assignments, pagination/imports and timetable foundations.
+### Next sequence
 
-Students, teachers, guardians, grades, classes, subjects, academic years/terms, dated enrollment, teaching assignments and timetable foundations. CSV imports with validation. Each relationship requires school ownership and appropriate database constraints.
+Finish this targeted consistency cleanup and local checks → agree the remaining acceptance/scope decisions → confirm a staging target and migration baseline → rehearse/test the current schema → complete the agreed Phase 2 gaps. Do not add attendance, homework, announcements or documents merely because foundation tests pass.
 
 ## Phase 3: daily operations
 

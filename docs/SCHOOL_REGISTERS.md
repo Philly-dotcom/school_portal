@@ -20,7 +20,7 @@ The code is local. This increment has not changed hosted Supabase or sent email.
 - Select a student and a class from Academic setup. The class selector includes its grade and academic year. Enter enrollment dates within that academic year.
 - Reload and confirm records persist. Check recent activity in People & access for the creation audit entries.
 - Confirm duplicate references fail even if capitalization or surrounding spaces differ. Duplicate student placements for the same year must fail.
-- Test direct access using synthetic non-admin and second-school accounts before real use. An admin should see only their own school; teachers, guardians and students cannot access registers yet.
+- Test direct access using synthetic non-admin and second-school accounts before real use. An admin should see only their own school; unlinked teachers, guardians and students cannot read personal register records. After migration 010, explicitly linked logins have scoped read access; guardians also need an explicit child grant. See LOGIN_LINKS.md.
 
 ## Scope and boundaries
 

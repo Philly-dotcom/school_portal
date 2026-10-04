@@ -12,7 +12,7 @@ project_id = "school-portal"
 enabled = true
 site_url = "env(SCHOOL_PORTAL_SITE_URL)"
 # Only the password-setting page is a valid email-link destination. Set per environment.
-additional_redirect_urls = ["env(SCHOOL_PORTAL_PASSWORD_REDIRECT_URL)"]
+additional_redirect_urls = ["env(SCHOOL_PORTAL_PASSWORD_REDIRECT_URL)", "env(SCHOOL_PORTAL_INVITATION_REDIRECT_URL)"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10

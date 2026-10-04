@@ -20,12 +20,13 @@ $$;
 
 -- 2. Admin-only link/unlink. Pass null as target_membership to unlink.
 create function public.link_register_to_member(target_school uuid, record_kind text,
-  target_record uuid, target_membership uuid)
+  target_record uuid, target_membership uuid, expected_version integer)
 returns void language plpgsql security definer set search_path = '' as $$
 declare
   needed_role public.school_role;
   previous_membership uuid;
   found_record boolean;
+  current_version integer;
 begin
   if not private.is_school_admin(target_school) then
     raise exception 'School administrator access required' using errcode = '42501';
@@ -41,14 +42,17 @@ begin
   if target_membership is not null and not exists (
     select 1 from public.school_memberships m
     join public.membership_roles r on r.membership_id = m.id and r.school_id = m.school_id
-    where m.id = target_membership and m.school_id = target_school and r.role = needed_role) then
-    raise exception 'Member must belong to this school and hold the matching role' using errcode = '22023';
+    where m.id = target_membership and m.school_id = target_school and m.status = 'active' and r.role = needed_role) then
+    raise exception 'Member must be active in this school and hold the matching role' using errcode = '22023';
   end if;
   -- Identifiers come only from the allowlist above; values are parameters.
-  execute format('select true, membership_id from public.%I where id = $1 and school_id = $2 for update', record_kind)
-    into found_record, previous_membership using target_record, target_school;
+  execute format('select true, membership_id, record_version from public.%I where id = $1 and school_id = $2 for update', record_kind)
+    into found_record, previous_membership, current_version using target_record, target_school;
   if found_record is not true then
     raise exception 'Record unavailable' using errcode = '22023';
+  end if;
+  if expected_version is null or expected_version <> current_version then
+    raise exception 'Record changed; reload before linking' using errcode = '40001';
   end if;
   execute format('update public.%I set membership_id = $1, record_version = record_version + 1
     where id = $2 and school_id = $3', record_kind) using target_membership, target_record, target_school;
@@ -57,8 +61,52 @@ begin
       target_record, jsonb_build_object('previous_membership', previous_membership, 'membership', target_membership));
 end;
 $$;
-revoke all on function public.link_register_to_member(uuid,text,uuid,uuid) from public, anon;
-grant execute on function public.link_register_to_member(uuid,text,uuid,uuid) to authenticated;
+revoke all on function public.link_register_to_member(uuid,text,uuid,uuid,integer) from public, anon;
+grant execute on function public.link_register_to_member(uuid,text,uuid,uuid,integer) to authenticated;
+
+-- Register relationships predate portal access. Keep them, but grant child access explicitly.
+alter table public.student_guardians
+  add column access_enabled boolean not null default false,
+  add column record_version integer not null default 1 check(record_version > 0);
+create function public.set_guardian_access(target_school uuid,target_link uuid,
+  expected_version integer,enabled boolean) returns void
+language plpgsql security definer set search_path='' as $$
+declare previous public.student_guardians%rowtype;
+begin
+  if not private.is_school_admin(target_school) then raise exception 'Admin required' using errcode='42501'; end if;
+  perform 1 from public.schools where id=target_school for update;
+  if not private.is_school_admin(target_school) then raise exception 'Admin required' using errcode='42501'; end if;
+  select * into previous from public.student_guardians where id=target_link and school_id=target_school for update;
+  if not found then raise exception 'Relationship unavailable' using errcode='22023'; end if;
+  if expected_version is distinct from previous.record_version then raise exception 'Relationship changed; reload' using errcode='40001'; end if;
+  if enabled is null then raise exception 'Choose access state' using errcode='22023'; end if;
+  update public.student_guardians set access_enabled=enabled,record_version=record_version+1 where id=previous.id;
+  insert into public.audit_events(school_id,actor_user_id,action,record_id,details)
+    values(target_school,auth.uid(),'student_guardians.access_changed',previous.id,
+      jsonb_build_object('previous_access',previous.access_enabled,'access',enabled,'record_version',previous.record_version+1));
+end;
+$$;
+revoke all on function public.set_guardian_access(uuid,uuid,integer,boolean) from public,anon;
+grant execute on function public.set_guardian_access(uuid,uuid,integer,boolean) to authenticated;
+
+-- Same membership source as list_school_members; verified account identifiers are admin-only.
+create function public.list_linkable_members(target_school uuid)
+returns table(id uuid,display_name text,status public.membership_status,roles public.school_role[],verified_email text)
+language plpgsql stable security definer set search_path='' as $$
+begin
+  if not private.is_school_admin(target_school) then raise exception 'Admin required' using errcode='42501'; end if;
+  return query select m.id,p.display_name,m.status,
+    coalesce(array_agg(r.role order by r.role) filter(where r.role is not null),'{}'::public.school_role[]),
+    case when u.email_confirmed_at is not null then u.email else null end
+    from public.school_memberships m join public.profiles p on p.user_id=m.user_id
+    join auth.users u on u.id=m.user_id
+    left join public.membership_roles r on r.membership_id=m.id and r.school_id=m.school_id
+    where m.school_id=target_school group by m.id,p.display_name,u.email,u.email_confirmed_at
+    order by p.display_name,m.id;
+end;
+$$;
+revoke all on function public.list_linkable_members(uuid) from public,anon;
+grant execute on function public.list_linkable_members(uuid) to authenticated;
 
 -- 3. Identity helpers. SECURITY DEFINER so policies do not recurse; each derives the
 --    caller from auth.uid() and re-checks active membership, active school AND the role.
@@ -99,7 +147,7 @@ language sql stable security definer set search_path = '' as $$
   where s.school_id = target_school and s.membership_id = private.my_member_with_role(target_school, 'student')
   union
   select sg.student_id from public.student_guardians sg
-  where sg.school_id = target_school and sg.guardian_id = private.my_guardian_id(target_school);
+  where sg.school_id = target_school and sg.access_enabled and sg.guardian_id = private.my_guardian_id(target_school);
 $$;
 
 -- Classes the caller teaches TODAY (school timezone). Expired assignments grant nothing.
@@ -120,9 +168,23 @@ $$;
 create function private.my_roster_student_ids(target_school uuid) returns setof uuid
 language sql stable security definer set search_path = '' as $$
   select e.student_id from public.enrollments e
-  where e.school_id = target_school and e.closure is null
+  where e.school_id = target_school and private.school_today(target_school) between e.starts_on and e.ends_on
     and e.class_id in (select private.my_taught_class_ids(target_school));
 $$;
+
+-- Own history remains readable, but timetable access follows the current dated placement.
+create function private.my_current_lesson_ids(target_school uuid) returns setof uuid
+language sql stable security definer set search_path='' as $$
+  select l.id from public.timetable_lessons l
+  join public.enrollments e on e.school_id=l.school_id and e.class_id=l.class_id
+  where e.school_id=target_school and e.student_id in (select private.my_student_ids(target_school))
+    and private.school_today(target_school) between e.starts_on and e.ends_on
+    and greatest(e.starts_on,l.starts_on)<=least(e.ends_on,l.ends_on)
+    and greatest(e.starts_on,l.starts_on)+((l.weekday-extract(isodow from greatest(e.starts_on,l.starts_on))::integer+7)%7)
+      <=least(e.ends_on,l.ends_on);
+$$;
+revoke all on function private.my_current_lesson_ids(uuid) from public,anon;
+grant execute on function private.my_current_lesson_ids(uuid) to authenticated;
 
 revoke all on function private.school_today(uuid), private.my_member_with_role(uuid, public.school_role),
   private.my_teacher_id(uuid), private.my_guardian_id(uuid), private.my_student_ids(uuid),
@@ -151,14 +213,15 @@ create policy self_read on public.guardians for select to authenticated
 create policy scoped_read on public.students for select to authenticated
   using (id in (select private.my_student_ids(school_id)) or id in (select private.my_roster_student_ids(school_id)));
 create policy own_links_read on public.student_guardians for select to authenticated
-  using (guardian_id = private.my_guardian_id(school_id));
+  using (access_enabled and guardian_id = private.my_guardian_id(school_id));
 create policy scoped_read on public.enrollments for select to authenticated
-  using (student_id in (select private.my_student_ids(school_id)) or class_id in (select private.my_taught_class_ids(school_id)));
+  using (student_id in (select private.my_student_ids(school_id)) or
+    (class_id in (select private.my_taught_class_ids(school_id)) and private.school_today(school_id) between starts_on and ends_on));
 create policy scoped_read on public.classes for select to authenticated
   using (id in (select private.my_taught_class_ids(school_id)) or id in (select private.my_enrolled_class_ids(school_id)));
 create policy own_read on public.teaching_assignments for select to authenticated
   using (teacher_id = private.my_teacher_id(school_id));
 create policy scoped_read on public.timetable_lessons for select to authenticated
-  using (teacher_id = private.my_teacher_id(school_id) or class_id in (select private.my_enrolled_class_ids(school_id)));
+  using (teacher_id = private.my_teacher_id(school_id) or id in (select private.my_current_lesson_ids(school_id)));
 
 commit;

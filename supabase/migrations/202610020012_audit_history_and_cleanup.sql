@@ -1,9 +1,5 @@
--- Audit hardening, recoverable correction history, safer deletion behaviour, cleanup.
--- Apply AFTER 202610020011.
-begin;
 
--- 1. Append-only audit trail. This blocks application users AND accidental owner edits;
---    a database owner can still drop the trigger, which itself is visible in DDL history.
+begin;
 create function private.block_audit_changes() returns trigger
 language plpgsql set search_path = '' as $$
 begin
@@ -16,8 +12,6 @@ create trigger audit_append_only before update or delete on public.audit_events
 create trigger audit_no_truncate before truncate on public.audit_events
   for each statement execute function private.block_audit_changes();
 
--- 2. Previous values of corrected records live in an admin-only table with a purge
---    function, so the audit trail itself stays free of personal information.
 create table public.record_history (
   id bigint generated always as identity primary key,
   school_id uuid not null references public.schools(id),
@@ -54,6 +48,8 @@ begin
     ('academic_years','academic_terms','grades','subjects','classes','students','teachers','guardians') then
     raise exception 'Unsupported record type' using errcode='22023';
   end if;
+  perform 1 from public.schools where id=target_school for update;
+  if not private.is_school_admin(target_school) then raise exception 'School administrator access required' using errcode='42501'; end if;
   person_record := record_kind in ('students','teachers','guardians');
   if expected_version is null or expected_version < 1 or target_record is null
     or clean_name is null or length(clean_name) not between 1 and (case when person_record then 120 else 80 end)
@@ -90,7 +86,6 @@ begin
 end;
 $$;
 
--- Retention is a school policy decision: nothing runs automatically. Minimum 30 days.
 create function public.purge_record_history(target_school uuid, retain interval default interval '2 years')
 returns integer language plpgsql security definer set search_path = '' as $$
 declare removed integer;
@@ -108,22 +103,58 @@ begin
   return removed;
 end;
 $$;
--- record_history is append-only for everyone except the purge function above.
 revoke all on function public.purge_record_history(uuid,interval) from public, anon;
 grant execute on function public.purge_record_history(uuid,interval) to authenticated;
 
--- 3. Deleting an Auth account must not be blocked by (or destroy) invitation history.
 alter table public.school_invitations alter column invited_by drop not null;
 alter table public.school_invitations
   drop constraint school_invitations_invited_by_fkey,
   add constraint school_invitations_invited_by_fkey foreign key (invited_by) references auth.users(id) on delete set null,
   drop constraint school_invitations_accepted_by_fkey,
   add constraint school_invitations_accepted_by_fkey foreign key (accepted_by) references auth.users(id) on delete set null;
--- accept_school_invitation already rejects invitations whose issuer is no longer an active
--- admin; a null issuer therefore invalidates the invitation, which is the safe outcome.
 
--- 4. Migration 009's enrollment_history trigger supersedes migration 004's date trigger.
 drop trigger enrollment_dates on public.enrollments;
 drop function private.validate_enrollment_dates();
 
+create function private.erase_school_member(target_school uuid,target_membership uuid)
+returns void language plpgsql security invoker set search_path='' as $$
+declare member_user uuid; member_email text; kind text; person uuid;
+begin
+  perform 1 from public.schools where id=target_school for update;
+  select m.user_id,u.email into member_user,member_email from public.school_memberships m
+    join auth.users u on u.id=m.user_id where m.id=target_membership and m.school_id=target_school for update of m;
+  if not found then raise exception 'Membership unavailable' using errcode='22023'; end if;
+  if exists(select 1 from public.membership_roles where membership_id=target_membership and role='school_admin')
+    and not exists(select 1 from public.school_memberships m join public.membership_roles r on r.membership_id=m.id
+      where m.school_id=target_school and m.id<>target_membership and m.status='active' and r.role='school_admin') then
+    raise exception 'Keep another active School Admin' using errcode='23514'; end if;
+  foreach kind in array array['students','teachers','guardians'] loop
+    for person in execute format('select id from public.%I where school_id=$1 and membership_id=$2 for update',kind)
+      using target_school,target_membership loop
+      if kind='students' then
+        update public.student_guardians set access_enabled=false,relationship='[erased]',record_version=record_version+1
+          where school_id=target_school and student_id=person;
+      elsif kind='guardians' then
+        update public.student_guardians set access_enabled=false,relationship='[erased]',record_version=record_version+1
+          where school_id=target_school and guardian_id=person;
+      end if;
+      delete from public.record_history where school_id=target_school and record_kind=kind and record_id=person;
+      execute format('update public.%I set full_name=''[erased]'',reference=''ERASED-''||replace(id::text,''-'',''''),membership_id=null,record_version=record_version+1 where id=$1 and school_id=$2',kind)
+        using person,target_school;
+      insert into public.audit_events(school_id,actor_user_id,action,record_id)
+        values(target_school,null,kind||'.erased',person);
+    end loop;
+  end loop;
+  update public.school_invitations set email='erased-'||id::text||'@example.invalid',display_name='[erased]',
+    status=case when status='pending' then 'revoked' else status end,delivery_claim=null,accepted_by=null
+    where school_id=target_school and (accepted_by=member_user or email=lower(member_email));
+  update public.school_invitations set invited_by=null,
+    status=case when status='pending' then 'revoked' else status end,delivery_claim=null
+    where school_id=target_school and invited_by=member_user;
+  delete from public.school_memberships where school_id=target_school and id=target_membership;
+  insert into public.audit_events(school_id,actor_user_id,action,record_id)
+    values(target_school,null,'membership.erased',target_membership);
+end;
+$$;
+revoke all on function private.erase_school_member(uuid,uuid) from public,anon,authenticated,service_role;
 commit;

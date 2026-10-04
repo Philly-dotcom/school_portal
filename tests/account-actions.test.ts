@@ -5,13 +5,19 @@ vi.mock("next/navigation", () => ({ redirect: (path: string) => { throw new Erro
 vi.mock("@/lib/config", () => ({ isPortalConfigured: () => mock.configured, getSchoolId: () => mock.school }));
 vi.mock("@/lib/account-config", () => ({ emailFlowsEnabled: () => mock.emailEnabled, siteOrigin: () => "https://school.example.invalid" }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: mock, rpc: mock.rpc }) }));
-import { acceptInvitation, changePassword, confirmEmail, requestRecovery } from "../src/app/account/actions";
+import { acceptInvitation, revokeOtherSessions, changePassword, confirmEmail, requestRecovery } from "../src/app/account/actions";
 
 const state = { error: "", message: "" };
 function form(values: Record<string,string>) { const data = new FormData(); for (const [key,value] of Object.entries(values)) data.set(key,value); return data; }
 beforeEach(() => { vi.clearAllMocks(); mock.configured=true; mock.emailEnabled=true; mock.getUser.mockResolvedValue({data:{user:{id:"verified-user"}},error:null});mock.updateUser.mockResolvedValue({error:null});mock.signOut.mockResolvedValue({error:null});mock.verifyOtp.mockResolvedValue({error:null});mock.resetPasswordForEmail.mockResolvedValue({error:null});mock.rpc.mockResolvedValue({error:null}); });
 
 describe("password recovery and invitation actions (no real requests)", () => {
+  it("explains Supabase reauthentication without sending email or claiming a password change", async()=> {
+    mock.updateUser.mockResolvedValue({error:{code:"reauthentication_needed"}});
+    const result=await changePassword(state,form({password:"fictional-password-123",confirm:"fictional-password-123"}));
+    expect(result.error).toContain("sign out and sign in");
+    expect(result.revocationPending).not.toBe(true); expect(mock.signOut).not.toHaveBeenCalled();
+  });
   it("does not send when email is disabled", async () => {
     mock.emailEnabled=false;
     expect((await requestRecovery(state,form({email:"user@example.invalid"}))).error).toContain("not enabled");
@@ -45,12 +51,19 @@ describe("password recovery and invitation actions (no real requests)", () => {
     expect(mock.updateUser).not.toHaveBeenCalled();
     await expect(changePassword(state,form({...values,confirm:values.password,flow:"invite"}))).rejects.toThrow("REDIRECT:/account/accept");
   });
-  it("ends all other sessions after a successful password change, and tolerates revocation failure", async () => {
+  it("ends all other sessions after a successful password change, and reports revocation failure", async () => {
     const values = {password:"fictional-password-123",confirm:"fictional-password-123"};
     await expect(changePassword(state,form(values))).rejects.toThrow("REDIRECT:/dashboard");
     expect(mock.signOut).toHaveBeenCalledWith({scope:"others"});
     mock.signOut.mockRejectedValue(new Error("network"));
-    await expect(changePassword(state,form(values))).rejects.toThrow("REDIRECT:/dashboard");
+    expect(await changePassword(state,form(values))).toMatchObject({ revocationPending: true });
+    mock.signOut.mockResolvedValue({error:{message:"denied"}});
+    expect(await changePassword(state,form(values))).toMatchObject({ revocationPending: true });
+    expect(await revokeOtherSessions(state,form({}))).toMatchObject({ revocationPending: true });
+    mock.signOut.mockResolvedValue({error:null});
+    mock.updateUser.mockClear();
+    await expect(revokeOtherSessions(state,form({flow:"invite"}))).rejects.toThrow("REDIRECT:/account/accept");
+    expect(mock.updateUser).not.toHaveBeenCalled();
   });
   it("does not revoke sessions when the password update fails", async () => {
     mock.updateUser.mockResolvedValue({error:{message:"weak"}});

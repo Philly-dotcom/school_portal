@@ -7,7 +7,7 @@ import { getSchoolId, isPortalConfigured } from "@/lib/config";
 import { emailFlowsEnabled, siteOrigin } from "@/lib/account-config";
 import { confirmationSchema, passwordSchema } from "@/lib/account-validation";
 
-export type AccountState = { error: string; message: string };
+export type AccountState = { error: string; message: string; revocationPending?: boolean };
 
 export async function requestRecovery(_state: AccountState, form: FormData): Promise<AccountState> {
   if (!emailFlowsEnabled()) return { error: "Password recovery email is not enabled yet. Contact your school administrator.", message: "" };
@@ -40,15 +40,35 @@ export async function changePassword(_state: AccountState, form: FormData): Prom
   const client = await createClient();
   const { data: { user }, error } = await client.auth.getUser();
   if (error || !user) return { error: "Your session has expired. Open a new recovery link or sign in again.", message: "" };
-  const result = await client.auth.updateUser({ password: parsed.data.password });
+  let result;
+  try { result = await client.auth.updateUser({ password: parsed.data.password }); }
+  catch { return { error: "Password update could not be confirmed. Sign in again before retrying.", message: "" }; }
+  if (result.error?.code === "reauthentication_needed" || result.error?.code === "reauthentication_not_valid") return { error: "For security, sign out and sign in again before changing your password. If needed, request a fresh recovery link once email is enabled.", message: "" };
   if (result.error) return { error: "The password could not be updated. Use a different password or request a fresh link.", message: "" };
-  // A changed password must end every other session (for example a stolen one). The current
-  // session stays signed in. Failure here must not undo the successful change.
-  try { await client.auth.signOut({ scope: "others" }); } catch { /* best effort */ }
+  // Revoke other refresh sessions; existing access JWTs retain their configured lifetime.
+  // The current session stays signed in. Report failure without undoing the password change.
+  try {
+    const revoked = await client.auth.signOut({ scope: "others" });
+    if (revoked.error) return revocationWarning;
+  } catch { return revocationWarning; }
   if (form.get("flow") === "invite") redirect("/account/accept");
   // A verified session is required for this page, including ordinary signed-in users.
   // Session revocation behaviour is tested separately against the configured Auth project.
   redirect("/dashboard");
+}
+
+const revocationWarning: AccountState = { error: "Your password changed, but ending other sessions was not confirmed. Retry below. Existing access tokens may remain valid until their configured expiry.", message: "", revocationPending: true };
+
+export async function revokeOtherSessions(_state: AccountState, form: FormData): Promise<AccountState> {
+  if (!isPortalConfigured()) return { error: "Your school is not configured yet.", message: "" };
+  try {
+    const client = await createClient();
+    const { data: { user }, error } = await client.auth.getUser();
+    if (error || !user) return { ...revocationWarning, error: "Sign in again before retrying session revocation." };
+    const result = await client.auth.signOut({ scope: "others" });
+    if (result.error) return revocationWarning;
+  } catch { return revocationWarning; }
+  redirect(form.get("flow") === "invite" ? "/account/accept" : "/dashboard");
 }
 
 export async function acceptInvitation(_state: AccountState): Promise<AccountState> {

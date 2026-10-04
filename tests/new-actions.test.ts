@@ -6,12 +6,12 @@ vi.mock("@/lib/auth-context", () => ({ getSchoolContext: mock.getContext }));
 vi.mock("@/lib/account-config", () => ({ invitationDeliveryEnabled: () => true }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ rpc: mock.rpc, functions: { invoke: mock.invoke } }) }));
 import { bulkInvite, changeInvitation } from "../src/app/dashboard/people/actions";
-import { linkRegisterMember } from "../src/app/dashboard/registers/link-actions";
+import { linkRegisterMember, setGuardianAccess } from "../src/app/dashboard/registers/link-actions";
 import { isSchoolAdminContext } from "../src/lib/permissions";
 
 const school = "00000000-0000-4000-8000-000000000001", record = "00000000-0000-4000-8000-000000000002", member = "00000000-0000-4000-8000-000000000003";
 const accessState = { error: "", message: "" }, linkState = { error: "", saved: false };
-function form(values: Record<string, string>) { const d = new FormData(); for (const [k, v] of Object.entries(values)) d.set(k, v); return d; }
+function form(values: Record<string, string>) { const d = new FormData(); d.set("version", "1"); d.set("confirmed", "yes"); d.set("reviewed", "yes"); for (const [k, v] of Object.entries(values)) d.set(k, v); return d; }
 beforeEach(() => { vi.clearAllMocks(); mock.getContext.mockResolvedValue({ status: "ready", school: { id: school }, roles: ["school_admin"] }); mock.rpc.mockResolvedValue({ data: null, error: null }); });
 
 describe("isSchoolAdminContext", () => {
@@ -56,7 +56,7 @@ describe("changeInvitation reset", () => {
   it("calls the reset RPC for admins only and never sends email by itself", async () => {
     const result = await changeInvitation(accessState, form({ invitationId: record, command: "reset" }));
     expect(result.message).toContain("Delivery reset");
-    expect(mock.rpc).toHaveBeenCalledWith("reset_invitation_delivery", { target_school: school, target_invitation: record });
+    expect(mock.rpc).toHaveBeenCalledWith("reset_invitation_delivery", { target_school: school, target_invitation: record, reviewed_not_sent: true });
     expect(mock.invoke).not.toHaveBeenCalled();
     mock.rpc.mockResolvedValue({ error: { code: "22023" } });
     expect((await changeInvitation(accessState, form({ invitationId: record, command: "reset" }))).error).toContain("cannot be reset yet");
@@ -68,6 +68,14 @@ describe("changeInvitation reset", () => {
 });
 
 describe("linkRegisterMember", () => {
+  it("requires a version and explicit identity confirmation, and reports stale updates", async()=> {
+    const input=form({kind:"teachers",id:record,membershipId:member});input.delete("version");
+    expect((await linkRegisterMember(linkState,input)).saved).toBe(false); expect(mock.rpc).not.toHaveBeenCalled();
+    input.set("version","2"); input.delete("confirmed");
+    expect((await linkRegisterMember(linkState,input)).saved).toBe(false); expect(mock.rpc).not.toHaveBeenCalled();
+    input.set("confirmed","yes");mock.rpc.mockResolvedValue({error:{code:"40001"}});
+    expect((await linkRegisterMember(linkState,input)).error).toContain("Reload");
+  });
   it("denies non-admins and unsupported kinds", async () => {
     mock.getContext.mockResolvedValue({ status: "ready", school: { id: school }, roles: ["guardian"] });
     expect((await linkRegisterMember(linkState, form({ kind: "students", id: record, membershipId: member }))).error).toContain("administrator");
@@ -79,7 +87,7 @@ describe("linkRegisterMember", () => {
   });
   it("links, unlinks (empty selection becomes null) and maps database errors", async () => {
     expect((await linkRegisterMember(linkState, form({ kind: "teachers", id: record, membershipId: member, schoolId: member }))).saved).toBe(true);
-    expect(mock.rpc).toHaveBeenLastCalledWith("link_register_to_member", { target_school: school, record_kind: "teachers", target_record: record, target_membership: member });
+    expect(mock.rpc).toHaveBeenLastCalledWith("link_register_to_member", { target_school: school, record_kind: "teachers", target_record: record, target_membership: member, expected_version: 1 });
     await linkRegisterMember(linkState, form({ kind: "teachers", id: record, membershipId: "" }));
     expect(mock.rpc).toHaveBeenLastCalledWith("link_register_to_member", expect.objectContaining({ target_membership: null }));
     mock.rpc.mockResolvedValue({ error: { code: "23505" } });
@@ -87,4 +95,16 @@ describe("linkRegisterMember", () => {
     mock.rpc.mockResolvedValue({ error: { code: "22023" } });
     expect((await linkRegisterMember(linkState, form({ kind: "teachers", id: record, membershipId: member }))).error).toContain("matching role");
   });
+});
+
+it("changes guardian grants only through verified admin scope and a versioned confirmed RPC",async()=> {
+  const input=form({id:record,version:"2",enabled:"true",schoolId:member});
+  expect((await setGuardianAccess(linkState,input)).saved).toBe(true);
+  expect(mock.rpc).toHaveBeenCalledWith("set_guardian_access",{target_school:school,target_link:record,expected_version:2,enabled:true});
+  mock.rpc.mockClear();input.delete("confirmed");
+  expect((await setGuardianAccess(linkState,input)).saved).toBe(false);expect(mock.rpc).not.toHaveBeenCalled();
+  input.set("confirmed","yes");mock.rpc.mockResolvedValue({error:{code:"40001"}});
+  expect((await setGuardianAccess(linkState,input)).error).toContain("Reload");
+  mock.getContext.mockResolvedValue({status:"ready",school:{id:school},roles:["guardian"]});mock.rpc.mockClear();
+  expect((await setGuardianAccess(linkState,input)).saved).toBe(false);expect(mock.rpc).not.toHaveBeenCalled();
 });

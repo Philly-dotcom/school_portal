@@ -10,13 +10,11 @@ For the first controlled pilot, disable public sign-ups. Do not enable unrestric
 
 ## 2. Apply the migration
 
-> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
+> **Migration hold (2026-10-02):** 010–012 are edited locally and have NOT been applied to hosted Supabase. Rehearse the final chain with synthetic data in an explicitly approved staging project first. Keep 001–009 and migration order intact; never re-run an already applied file. Verify hosted migration history rather than inferring it from local files. Do not push Auth configuration or migrations until the staging checklist in `REPAIR_REPORT.md` is approved.
 
 
-> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
 
 
-> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
 
 
 Review and run `supabase/migrations/202609290001_foundation.sql` in that project's SQL editor as its database owner, or through your migration workflow. It is a one-time migration, not an idempotent seed. Do not run it repeatedly or against another application database.

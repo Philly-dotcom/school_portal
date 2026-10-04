@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, expect, it } from "vitest";
 const db = new PGlite();
@@ -16,7 +16,7 @@ beforeAll(async () => {
     create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema public,auth to authenticated,anon;`);
-  for(const file of ["202609290001_foundation.sql","202609300002_account_management.sql","202610010003_academic_structure.sql","202610010004_registers.sql","202610010005_teaching_assignments.sql","202610010006_grade_name_normalization.sql","202610010007_record_corrections.sql","202610010008_timetable.sql","202610010009_enrollment_lifecycle.sql"])
+  for(const file of readdirSync("supabase/migrations").sort())
     await db.exec(readFileSync(`supabase/migrations/${file}`,"utf8"));
   await db.query("insert into schools(id,name) values($1,'Fictional A'),($2,'Fictional B')",[A,B]);
   for(const [user,school,role] of [[adminA,A,"school_admin"],[adminB,B,"school_admin"],[teacher,A,"teacher"],[guardian,A,"guardian"],[student,A,"student"]]) {

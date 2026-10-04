@@ -1,0 +1,2044 @@
+From afcaa27867ad491ccc5cb5381de0a0b0b07570e0 Mon Sep 17 00:00:00 2001
+From: Review <review@example.invalid>
+Date: Fri, 2 Oct 2026 09:26:33 +0000
+Subject: [PATCH 1/4] Database: sign-in links with scoped read access, bulk
+ invitations, audit hardening
+
+- 010: membership_id on students/teachers/guardians, admin-only link RPC, role-scoped
+  read policies for teachers, guardians and students (re-checked on every query)
+- 011: atomic bulk invitations (200/call, 500/day), audited delivery reset
+- 012: append-only audit trail, admin-only correction history with purge,
+  ON DELETE SET NULL for invitation issuers, drop redundant enrollment trigger
+- Tests run every migration in embedded PostgreSQL, plus permanent sweeps for RLS,
+  anon execute grants and pinned search_path
+---
+ supabase/.temp/cli-latest                     |   1 -
+ ...202610020010_register_membership_links.sql | 164 +++++++++++++++++
+ ...202610020011_invitation_bulk_and_reset.sql |  98 +++++++++++
+ ...202610020012_audit_history_and_cleanup.sql | 129 ++++++++++++++
+ tests/hardening-database.test.ts              | 166 ++++++++++++++++++
+ tests/membership-links-database.test.ts       | 148 ++++++++++++++++
+ 6 files changed, 705 insertions(+), 1 deletion(-)
+ delete mode 100644 supabase/.temp/cli-latest
+ create mode 100644 supabase/migrations/202610020010_register_membership_links.sql
+ create mode 100644 supabase/migrations/202610020011_invitation_bulk_and_reset.sql
+ create mode 100644 supabase/migrations/202610020012_audit_history_and_cleanup.sql
+ create mode 100644 tests/hardening-database.test.ts
+ create mode 100644 tests/membership-links-database.test.ts
+
+diff --git a/supabase/.temp/cli-latest b/supabase/.temp/cli-latest
+deleted file mode 100644
+index fdb8554..0000000
+--- a/supabase/.temp/cli-latest
++++ /dev/null
+@@ -1 +0,0 @@
+-v2.118.0
+\ No newline at end of file
+diff --git a/supabase/migrations/202610020010_register_membership_links.sql b/supabase/migrations/202610020010_register_membership_links.sql
+new file mode 100644
+index 0000000..8246624
+--- /dev/null
++++ b/supabase/migrations/202610020010_register_membership_links.sql
+@@ -0,0 +1,164 @@
++-- Links register records to portal logins and adds least-privilege READ access for
++-- teachers, guardians and students. Writes stay administrator-only.
++-- Apply AFTER 202610010009_enrollment_lifecycle.sql. No Auth users are created here.
++begin;
++
++-- 1. Link column: one login (membership) per register record, same school enforced by FK.
++do $$
++declare t text;
++begin
++  foreach t in array array['students','teachers','guardians'] loop
++    execute format('alter table public.%I add column membership_id uuid', t);
++    execute format('alter table public.%I add constraint %I foreign key (membership_id, school_id)
++      references public.school_memberships(id, school_id)', t, t || '_membership_fk');
++    execute format('create unique index %I on public.%I(membership_id) where membership_id is not null',
++      t || '_membership_unique', t);
++  end loop;
++end;
++$$;
++-- INSERT grants list columns explicitly, so membership_id can only be set by the RPC below.
++
++-- 2. Admin-only link/unlink. Pass null as target_membership to unlink.
++create function public.link_register_to_member(target_school uuid, record_kind text,
++  target_record uuid, target_membership uuid)
++returns void language plpgsql security definer set search_path = '' as $$
++declare
++  needed_role public.school_role;
++  previous_membership uuid;
++  found_record boolean;
++begin
++  if not private.is_school_admin(target_school) then
++    raise exception 'School administrator access required' using errcode = '42501';
++  end if;
++  perform 1 from public.schools where id = target_school for update;
++  if not private.is_school_admin(target_school) then
++    raise exception 'School administrator access required' using errcode = '42501';
++  end if;
++  if record_kind is null or record_kind not in ('students','teachers','guardians') or target_record is null then
++    raise exception 'Unsupported record type' using errcode = '22023';
++  end if;
++  needed_role := case record_kind when 'students' then 'student' when 'teachers' then 'teacher' else 'guardian' end;
++  if target_membership is not null and not exists (
++    select 1 from public.school_memberships m
++    join public.membership_roles r on r.membership_id = m.id and r.school_id = m.school_id
++    where m.id = target_membership and m.school_id = target_school and r.role = needed_role) then
++    raise exception 'Member must belong to this school and hold the matching role' using errcode = '22023';
++  end if;
++  -- Identifiers come only from the allowlist above; values are parameters.
++  execute format('select true, membership_id from public.%I where id = $1 and school_id = $2 for update', record_kind)
++    into found_record, previous_membership using target_record, target_school;
++  if found_record is not true then
++    raise exception 'Record unavailable' using errcode = '22023';
++  end if;
++  execute format('update public.%I set membership_id = $1, record_version = record_version + 1
++    where id = $2 and school_id = $3', record_kind) using target_membership, target_record, target_school;
++  insert into public.audit_events(school_id, actor_user_id, action, record_id, details)
++    values (target_school, auth.uid(), record_kind || case when target_membership is null then '.unlink' else '.link' end,
++      target_record, jsonb_build_object('previous_membership', previous_membership, 'membership', target_membership));
++end;
++$$;
++revoke all on function public.link_register_to_member(uuid,text,uuid,uuid) from public, anon;
++grant execute on function public.link_register_to_member(uuid,text,uuid,uuid) to authenticated;
++
++-- 3. Identity helpers. SECURITY DEFINER so policies do not recurse; each derives the
++--    caller from auth.uid() and re-checks active membership, active school AND the role.
++create function private.school_today(target_school uuid) returns date
++language plpgsql stable security definer set search_path = '' as $$
++begin
++  return (select (now() at time zone s.timezone)::date from public.schools s where s.id = target_school);
++exception when others then
++  return (now() at time zone 'UTC')::date;  -- an invalid stored timezone must not break reads
++end;
++$$;
++
++create function private.my_member_with_role(target_school uuid, needed public.school_role) returns uuid
++language sql stable security definer set search_path = '' as $$
++  select m.id from public.school_memberships m
++  join public.schools s on s.id = m.school_id
++  join public.membership_roles r on r.membership_id = m.id and r.school_id = m.school_id
++  where m.user_id = (select auth.uid()) and m.school_id = target_school
++    and m.status = 'active' and s.active and r.role = needed;
++$$;
++
++create function private.my_teacher_id(target_school uuid) returns uuid
++language sql stable security definer set search_path = '' as $$
++  select t.id from public.teachers t
++  where t.school_id = target_school and t.membership_id = private.my_member_with_role(target_school, 'teacher');
++$$;
++
++create function private.my_guardian_id(target_school uuid) returns uuid
++language sql stable security definer set search_path = '' as $$
++  select g.id from public.guardians g
++  where g.school_id = target_school and g.membership_id = private.my_member_with_role(target_school, 'guardian');
++$$;
++
++-- Students the caller may see: themselves (student role) and their linked children (guardian role).
++create function private.my_student_ids(target_school uuid) returns setof uuid
++language sql stable security definer set search_path = '' as $$
++  select s.id from public.students s
++  where s.school_id = target_school and s.membership_id = private.my_member_with_role(target_school, 'student')
++  union
++  select sg.student_id from public.student_guardians sg
++  where sg.school_id = target_school and sg.guardian_id = private.my_guardian_id(target_school);
++$$;
++
++-- Classes the caller teaches TODAY (school timezone). Expired assignments grant nothing.
++create function private.my_taught_class_ids(target_school uuid) returns setof uuid
++language sql stable security definer set search_path = '' as $$
++  select ta.class_id from public.teaching_assignments ta
++  where ta.school_id = target_school and ta.teacher_id = private.my_teacher_id(target_school)
++    and private.school_today(target_school) between ta.starts_on and ta.ends_on;
++$$;
++
++create function private.my_enrolled_class_ids(target_school uuid) returns setof uuid
++language sql stable security definer set search_path = '' as $$
++  select e.class_id from public.enrollments e
++  where e.school_id = target_school and e.student_id in (select private.my_student_ids(target_school));
++$$;
++
++-- Students currently on the rosters of classes the caller teaches.
++create function private.my_roster_student_ids(target_school uuid) returns setof uuid
++language sql stable security definer set search_path = '' as $$
++  select e.student_id from public.enrollments e
++  where e.school_id = target_school and e.closure is null
++    and e.class_id in (select private.my_taught_class_ids(target_school));
++$$;
++
++revoke all on function private.school_today(uuid), private.my_member_with_role(uuid, public.school_role),
++  private.my_teacher_id(uuid), private.my_guardian_id(uuid), private.my_student_ids(uuid),
++  private.my_taught_class_ids(uuid), private.my_enrolled_class_ids(uuid), private.my_roster_student_ids(uuid)
++  from public, anon;
++grant execute on function private.school_today(uuid), private.my_member_with_role(uuid, public.school_role),
++  private.my_teacher_id(uuid), private.my_guardian_id(uuid), private.my_student_ids(uuid),
++  private.my_taught_class_ids(uuid), private.my_enrolled_class_ids(uuid), private.my_roster_student_ids(uuid)
++  to authenticated;
++
++-- 4. Read policies (permissive, OR-ed with the existing admin_read policies).
++-- Non-sensitive reference data: any active member of the school.
++do $$
++declare t text;
++begin
++  foreach t in array array['academic_years','academic_terms','grades','subjects'] loop
++    execute format('create policy member_read on public.%I for select to authenticated using (private.is_school_member(school_id))', t);
++  end loop;
++end;
++$$;
++
++create policy self_read on public.teachers for select to authenticated
++  using (id = private.my_teacher_id(school_id));
++create policy self_read on public.guardians for select to authenticated
++  using (id = private.my_guardian_id(school_id));
++create policy scoped_read on public.students for select to authenticated
++  using (id in (select private.my_student_ids(school_id)) or id in (select private.my_roster_student_ids(school_id)));
++create policy own_links_read on public.student_guardians for select to authenticated
++  using (guardian_id = private.my_guardian_id(school_id));
++create policy scoped_read on public.enrollments for select to authenticated
++  using (student_id in (select private.my_student_ids(school_id)) or class_id in (select private.my_taught_class_ids(school_id)));
++create policy scoped_read on public.classes for select to authenticated
++  using (id in (select private.my_taught_class_ids(school_id)) or id in (select private.my_enrolled_class_ids(school_id)));
++create policy own_read on public.teaching_assignments for select to authenticated
++  using (teacher_id = private.my_teacher_id(school_id));
++create policy scoped_read on public.timetable_lessons for select to authenticated
++  using (teacher_id = private.my_teacher_id(school_id) or class_id in (select private.my_enrolled_class_ids(school_id)));
++
++commit;
+diff --git a/supabase/migrations/202610020011_invitation_bulk_and_reset.sql b/supabase/migrations/202610020011_invitation_bulk_and_reset.sql
+new file mode 100644
+index 0000000..3c251fc
+--- /dev/null
++++ b/supabase/migrations/202610020011_invitation_bulk_and_reset.sql
+@@ -0,0 +1,98 @@
++-- Invitation throughput: atomic bulk preparation and an admin-controlled delivery reset.
++-- Apply AFTER 202610020010. Nothing here sends email or creates Auth users.
++begin;
++
++alter table public.school_invitations add column bulk boolean not null default false;
++
++-- Single invitations: unchanged behaviour, except bulk rows no longer consume the
++-- one-per-minute and 50-per-day single-invite allowances.
++create or replace function public.create_school_invitation(target_school uuid,invite_email text,invite_name text,invite_roles public.school_role[])
++returns uuid language plpgsql security definer set search_path='' as $$
++declare invitation_id uuid;
++begin
++  perform 1 from public.schools where id=target_school for update;
++  if not private.is_school_admin(target_school) then raise exception 'Access denied' using errcode='42501'; end if;
++  if invite_roles is null or cardinality(invite_roles) not between 1 and 4 or array_position(invite_roles,null) is not null then
++    raise exception 'Select at least one valid role' using errcode='22023'; end if;
++  if exists(select 1 from public.school_invitations where school_id=target_school and not bulk and created_at>now()-interval '1 minute') then
++    raise exception 'Wait a minute before creating another invitation' using errcode='P0001'; end if;
++  if (select count(*) from public.school_invitations where school_id=target_school and not bulk and created_at>now()-interval '1 day')>=50 then
++    raise exception 'Daily invitation limit reached' using errcode='P0001'; end if;
++  update public.school_invitations set status='revoked' where school_id=target_school
++    and email=lower(trim(invite_email)) and status='pending' and expires_at<=now();
++  insert into public.school_invitations(school_id,email,display_name,roles,invited_by)
++    values(target_school,lower(trim(invite_email)),trim(invite_name),array(select distinct unnest(invite_roles)),auth.uid()) returning id into invitation_id;
++  insert into public.audit_events(school_id,actor_user_id,action,record_id)
++    values(target_school,auth.uid(),'invitation.created',invitation_id);
++  return invitation_id;
++end;
++$$;
++
++-- Bulk preparation: 1-200 rows per call, 500 per school per day. All-or-nothing: one bad
++-- row rejects the whole batch with its row number. Pending duplicates are skipped.
++-- Input: [{"email": "...", "name": "...", "roles": ["teacher"]}, ...]
++create function public.create_school_invitations_bulk(target_school uuid, invites jsonb)
++returns table(created_count integer, skipped_count integer)
++language plpgsql security definer set search_path='' as $$
++declare
++  item jsonb; row_no integer := 0; made integer := 0; skipped integer := 0;
++  clean_email text; clean_name text; parsed_roles public.school_role[]; invitation_id uuid;
++begin
++  perform 1 from public.schools where id=target_school for update;
++  if not private.is_school_admin(target_school) then raise exception 'Access denied' using errcode='42501'; end if;
++  if invites is null or jsonb_typeof(invites) <> 'array' or jsonb_array_length(invites) not between 1 and 200 then
++    raise exception 'Provide between 1 and 200 invitations' using errcode='22023'; end if;
++  if (select count(*) from public.school_invitations where school_id=target_school and bulk and created_at>now()-interval '1 day')
++      + jsonb_array_length(invites) > 500 then
++    raise exception 'Daily bulk invitation limit reached' using errcode='P0001'; end if;
++  update public.school_invitations set status='revoked' where school_id=target_school and status='pending' and expires_at<=now();
++  for item in select value from jsonb_array_elements(invites) loop
++    row_no := row_no + 1;
++    if jsonb_typeof(item) <> 'object' then raise exception 'Row %: invalid entry', row_no using errcode='22023'; end if;
++    clean_email := lower(btrim(item->>'email'));
++    clean_name := btrim(item->>'name');
++    if clean_email is null or char_length(clean_email) > 254 or clean_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$' then
++      raise exception 'Row %: invalid email', row_no using errcode='22023'; end if;
++    if clean_name is null or char_length(clean_name) not between 1 and 120 then
++      raise exception 'Row %: name must be 1-120 characters', row_no using errcode='22023'; end if;
++    if jsonb_typeof(item->'roles') <> 'array' then raise exception 'Row %: roles must be a list', row_no using errcode='22023'; end if;
++    begin
++      select coalesce(array_agg(distinct r::public.school_role), '{}'::public.school_role[]) into parsed_roles
++        from jsonb_array_elements_text(item->'roles') r;
++    exception when invalid_text_representation then
++      raise exception 'Row %: unknown role', row_no using errcode='22023';
++    end;
++    if cardinality(parsed_roles) not between 1 and 4 then raise exception 'Row %: choose at least one role', row_no using errcode='22023'; end if;
++    if exists(select 1 from public.school_invitations where school_id=target_school and email=clean_email and status='pending') then
++      skipped := skipped + 1; continue; end if;
++    insert into public.school_invitations(school_id,email,display_name,roles,invited_by,bulk)
++      values(target_school,clean_email,clean_name,parsed_roles,auth.uid(),true) returning id into invitation_id;
++    insert into public.audit_events(school_id,actor_user_id,action,record_id,details)
++      values(target_school,auth.uid(),'invitation.created',invitation_id,jsonb_build_object('bulk',true));
++    made := made + 1;
++  end loop;
++  return query select made, skipped;
++end;
++$$;
++
++-- Explicit, audited retry. Allowed for 'failed' deliveries, or 'sending' deliveries whose
++-- send request is older than 10 minutes (the sender crashed). Never for 'sent'.
++create function public.reset_invitation_delivery(target_school uuid, target_invitation uuid)
++returns void language plpgsql security definer set search_path='' as $$
++begin
++  perform 1 from public.schools where id=target_school for update;
++  if not private.is_school_admin(target_school) then raise exception 'Access denied' using errcode='42501'; end if;
++  update public.school_invitations i set delivery_status='pending', delivery_claim=null
++    where i.id=target_invitation and i.school_id=target_school and i.status='pending' and i.expires_at>now()
++      and (i.delivery_status='failed' or (i.delivery_status='sending' and not exists(
++        select 1 from public.audit_events a where a.record_id=i.id and a.action='invitation.send_requested'
++          and a.occurred_at>now()-interval '10 minutes')));
++  if not found then raise exception 'Delivery cannot be reset yet' using errcode='22023'; end if;
++  insert into public.audit_events(school_id,actor_user_id,action,record_id)
++    values(target_school,auth.uid(),'invitation.delivery_reset',target_invitation);
++end;
++$$;
++
++revoke all on function public.create_school_invitations_bulk(uuid,jsonb), public.reset_invitation_delivery(uuid,uuid) from public, anon;
++grant execute on function public.create_school_invitations_bulk(uuid,jsonb), public.reset_invitation_delivery(uuid,uuid) to authenticated;
++commit;
+diff --git a/supabase/migrations/202610020012_audit_history_and_cleanup.sql b/supabase/migrations/202610020012_audit_history_and_cleanup.sql
+new file mode 100644
+index 0000000..e57669f
+--- /dev/null
++++ b/supabase/migrations/202610020012_audit_history_and_cleanup.sql
+@@ -0,0 +1,129 @@
++-- Audit hardening, recoverable correction history, safer deletion behaviour, cleanup.
++-- Apply AFTER 202610020011.
++begin;
++
++-- 1. Append-only audit trail. This blocks application users AND accidental owner edits;
++--    a database owner can still drop the trigger, which itself is visible in DDL history.
++create function private.block_audit_changes() returns trigger
++language plpgsql set search_path = '' as $$
++begin
++  raise exception 'Audit history is append-only' using errcode = '42501';
++end;
++$$;
++revoke all on function private.block_audit_changes() from public, anon, authenticated;
++create trigger audit_append_only before update or delete on public.audit_events
++  for each row execute function private.block_audit_changes();
++create trigger audit_no_truncate before truncate on public.audit_events
++  for each statement execute function private.block_audit_changes();
++
++-- 2. Previous values of corrected records live in an admin-only table with a purge
++--    function, so the audit trail itself stays free of personal information.
++create table public.record_history (
++  id bigint generated always as identity primary key,
++  school_id uuid not null references public.schools(id),
++  record_kind text not null check (record_kind in
++    ('academic_years','academic_terms','grades','subjects','classes','students','teachers','guardians')),
++  record_id uuid not null,
++  replaced_version integer not null,
++  previous jsonb not null,
++  changed_by uuid,
++  changed_at timestamptz not null default now()
++);
++create index record_history_lookup on public.record_history(school_id, record_kind, record_id, changed_at desc);
++alter table public.record_history enable row level security;
++revoke all on public.record_history from public, anon, authenticated;
++grant select on public.record_history to authenticated;
++create policy admin_read on public.record_history for select to authenticated
++  using (private.is_school_admin(school_id));
++
++create or replace function public.correct_school_record(
++  target_school uuid, record_kind text, target_record uuid,
++  expected_version integer, corrected_name text, corrected_reference text default null
++) returns integer language plpgsql security definer set search_path = '' as $$
++declare
++  next_version integer;
++  previous_row jsonb;
++  person_record boolean;
++  clean_name text := btrim(corrected_name);
++  clean_reference text := btrim(corrected_reference);
++begin
++  if not private.is_school_admin(target_school) then
++    raise exception 'School administrator access required' using errcode='42501';
++  end if;
++  if record_kind is null or record_kind not in
++    ('academic_years','academic_terms','grades','subjects','classes','students','teachers','guardians') then
++    raise exception 'Unsupported record type' using errcode='22023';
++  end if;
++  person_record := record_kind in ('students','teachers','guardians');
++  if expected_version is null or expected_version < 1 or target_record is null
++    or clean_name is null or length(clean_name) not between 1 and (case when person_record then 120 else 80 end)
++    or (person_record and (clean_reference is null or length(clean_reference) not between 1 and 40))
++    or (not person_record and corrected_reference is not null) then
++    raise exception 'Invalid correction fields' using errcode='22023';
++  end if;
++  if record_kind='grades' and clean_name ~* '^grade[[:space:]]*([0-9]+|r)$' then
++    clean_name := regexp_replace(clean_name,'^grade[[:space:]]*([0-9]+|r)$','Grade \1','i');
++    if lower(clean_name)='grade r' then clean_name := 'Grade R'; end if;
++  end if;
++  -- Identifiers come only from the allowlist above. All data is parameterized.
++  execute format('select to_jsonb(t) from public.%I t where id=$1 and school_id=$2 and record_version=$3', record_kind)
++    into previous_row using target_record, target_school, expected_version;
++  if person_record then
++    execute format('update public.%I set full_name=$1, reference=$2, record_version=record_version+1
++      where id=$3 and school_id=$4 and record_version=$5 returning record_version',record_kind)
++      into next_version using clean_name,clean_reference,target_record,target_school,expected_version;
++  else
++    execute format('update public.%I set name=$1, record_version=record_version+1
++      where id=$2 and school_id=$3 and record_version=$4 returning record_version',record_kind)
++      into next_version using clean_name,target_record,target_school,expected_version;
++  end if;
++  if next_version is null or previous_row is null then
++    raise exception 'Record unavailable or changed. Reload before editing.' using errcode='40001';
++  end if;
++  insert into public.record_history(school_id,record_kind,record_id,replaced_version,previous,changed_by)
++    values(target_school,record_kind,target_record,expected_version,previous_row,auth.uid());
++  insert into public.audit_events(school_id,actor_user_id,action,record_id,details)
++    values(target_school,auth.uid(),record_kind||'.correct',target_record,
++      jsonb_build_object('previous_version',expected_version,'record_version',next_version,
++        'fields',case when person_record then jsonb_build_array('full_name','reference') else jsonb_build_array('name') end));
++  return next_version;
++end;
++$$;
++
++-- Retention is a school policy decision: nothing runs automatically. Minimum 30 days.
++create function public.purge_record_history(target_school uuid, retain interval default interval '2 years')
++returns integer language plpgsql security definer set search_path = '' as $$
++declare removed integer;
++begin
++  perform 1 from public.schools where id = target_school for update;
++  if not private.is_school_admin(target_school) then
++    raise exception 'School administrator access required' using errcode='42501'; end if;
++  if retain is null or retain < interval '30 days' then
++    raise exception 'Retention must be at least 30 days' using errcode='22023'; end if;
++  delete from public.record_history where school_id = target_school and changed_at < now() - retain;
++  get diagnostics removed = row_count;
++  insert into public.audit_events(school_id,actor_user_id,action,record_id,details)
++    values(target_school,auth.uid(),'record_history.purge',target_school,
++      jsonb_build_object('removed',removed,'retained_for',retain::text));
++  return removed;
++end;
++$$;
++-- record_history is append-only for everyone except the purge function above.
++revoke all on function public.purge_record_history(uuid,interval) from public, anon;
++grant execute on function public.purge_record_history(uuid,interval) to authenticated;
++
++-- 3. Deleting an Auth account must not be blocked by (or destroy) invitation history.
++alter table public.school_invitations alter column invited_by drop not null;
++alter table public.school_invitations
++  drop constraint school_invitations_invited_by_fkey,
++  add constraint school_invitations_invited_by_fkey foreign key (invited_by) references auth.users(id) on delete set null,
++  drop constraint school_invitations_accepted_by_fkey,
++  add constraint school_invitations_accepted_by_fkey foreign key (accepted_by) references auth.users(id) on delete set null;
++-- accept_school_invitation already rejects invitations whose issuer is no longer an active
++-- admin; a null issuer therefore invalidates the invitation, which is the safe outcome.
++
++-- 4. Migration 009's enrollment_history trigger supersedes migration 004's date trigger.
++drop trigger enrollment_dates on public.enrollments;
++drop function private.validate_enrollment_dates();
++
++commit;
+diff --git a/tests/hardening-database.test.ts b/tests/hardening-database.test.ts
+new file mode 100644
+index 0000000..96918e5
+--- /dev/null
++++ b/tests/hardening-database.test.ts
+@@ -0,0 +1,166 @@
++import { readdirSync, readFileSync } from "node:fs";
++import { PGlite } from "@electric-sql/pglite";
++import { afterAll, beforeAll, describe, expect, it } from "vitest";
++
++const db = new PGlite();
++const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
++const A = id(1), B = id(2), adminA = id(3), adminB = id(4), teacherU = id(5);
++
++async function asUser<T>(user: string | null, fn: () => Promise<T>, role = "authenticated"): Promise<T> {
++  await db.exec(`set role ${role}`);
++  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user ?? ""]);
++  try { return await fn(); } finally { await db.exec("reset role; reset request.jwt.claim.sub"); }
++}
++const rowsOf = (n: number, prefix = "p") => Array.from({ length: n }, (_, i) => ({ email: `${prefix}${i}@example.invalid`, name: `Fictional ${i}`, roles: ["student"] }));
++const bulk = (user: string, school: string, invites: unknown) => asUser(user, () => db.query("select * from create_school_invitations_bulk($1,$2::jsonb)", [school, JSON.stringify(invites)]));
++
++beforeAll(async () => {
++  await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin;
++    create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
++    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
++    grant usage on schema public,auth to authenticated,anon;`);
++  for (const file of readdirSync("supabase/migrations").sort()) await db.exec(readFileSync(`supabase/migrations/${file}`, "utf8"));
++  await db.query("insert into schools(id,name) values($1,'Fictional A'),($2,'Fictional B')", [A, B]);
++  for (const [user, school, role] of [[adminA, A, "school_admin"], [adminB, B, "school_admin"], [teacherU, A, "teacher"]]) {
++    await db.query("insert into auth.users(id) values($1)", [user]);
++    await db.query("insert into profiles(user_id) values($1)", [user]);
++    await db.query("insert into school_memberships(id,school_id,user_id) values($1,$2,$1)", [user, school]);
++    await db.query("insert into membership_roles values($1,$2,$3)", [user, school, role]);
++  }
++}, 90000);
++afterAll(async () => { await db.close(); });
++
++describe("permanent security sweeps (apply to every future migration)", () => {
++  it("enables row-level security on every table in public", async () => {
++    const r = await db.query("select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind in ('r','p') and not c.relrowsecurity");
++    expect(r.rows).toEqual([]);
++  });
++  it("lets anonymous callers execute no function in public or private", async () => {
++    const r = await db.query(`select n.nspname||'.'||p.proname fn from pg_proc p join pg_namespace n on n.oid=p.pronamespace
++      where n.nspname in ('public','private') and has_function_privilege('anon', p.oid, 'execute')`);
++    expect(r.rows).toEqual([]);
++  });
++  it("grants no direct table privileges to anonymous callers", async () => {
++    const r = await db.query(`select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
++      where n.nspname='public' and c.relkind='r' and has_table_privilege('anon', c.oid, 'select,insert,update,delete')`);
++    expect(r.rows).toEqual([]);
++  });
++  it("gives every security-definer function an empty search_path", async () => {
++    const r = await db.query(`select n.nspname||'.'||p.proname fn from pg_proc p join pg_namespace n on n.oid=p.pronamespace
++      where n.nspname in ('public','private') and p.prosecdef and not coalesce(array_to_string(p.proconfig, ','),'') like '%search_path=""%'`);
++    expect(r.rows).toEqual([]);
++  });
++});
++
++describe("append-only audit trail", () => {
++  it("rejects update, delete and truncate even for the database owner", async () => {
++    await db.query("insert into audit_events(school_id,actor_user_id,action,record_id) values($1,null,'test.event',$1)", [A]);
++    await expect(db.query("update audit_events set action='tampered'")).rejects.toMatchObject({ code: "42501" });
++    await expect(db.query("delete from audit_events")).rejects.toMatchObject({ code: "42501" });
++    await expect(db.query("truncate audit_events")).rejects.toMatchObject({ code: "42501" });
++  });
++});
++
++describe("correction history", () => {
++  it("keeps previous values admin-only, outside the audit trail, and purgeable", async () => {
++    const student = await asUser(adminA, async () => (await db.query<{ id: string }>("insert into students(school_id,full_name,reference) values($1,'Fictional Typo','ST-001') returning id", [A])).rows[0].id);
++    await asUser(adminA, () => db.query("select correct_school_record($1,'students',$2,1,'Fictional Fixed','ST-001')", [A, student]));
++    await asUser(adminA, async () => {
++      const h = await db.query<{ previous: { full_name: string }; replaced_version: number }>("select previous, replaced_version from record_history where record_id=$1", [student]);
++      expect(h.rows).toHaveLength(1);
++      expect(h.rows[0].previous.full_name).toBe("Fictional Typo");
++      expect(h.rows[0].replaced_version).toBe(1);
++    });
++    await asUser(teacherU, async () => { expect((await db.query("select * from record_history")).rows).toHaveLength(0); });
++    await asUser(adminB, async () => { expect((await db.query("select * from record_history")).rows).toHaveLength(0); });
++    const audit = JSON.stringify((await db.query("select details from audit_events where action='students.correct'")).rows);
++    expect(audit).not.toContain("Fictional Typo");
++    await asUser(adminA, async () => {
++      await expect(db.query("delete from record_history")).rejects.toMatchObject({ code: "42501" });
++      await expect(db.query("select purge_record_history($1, interval '1 day')", [A])).rejects.toMatchObject({ code: "22023" });
++      expect((await db.query<{ purge_record_history: number }>("select purge_record_history($1, interval '30 days')", [A])).rows[0].purge_record_history).toBe(0);
++    });
++    await db.query("update record_history set changed_at = now() - interval '3 years'");
++    await asUser(teacherU, async () => { await expect(db.query("select purge_record_history($1)", [A])).rejects.toMatchObject({ code: "42501" }); });
++    await asUser(adminA, async () => { expect((await db.query<{ purge_record_history: number }>("select purge_record_history($1)", [A])).rows[0].purge_record_history).toBe(1); });
++  });
++});
++
++describe("bulk invitations", () => {
++  it("creates in bulk, skips pending duplicates and audits each row", async () => {
++    const first = await bulk(adminA, A, rowsOf(120));
++    expect(first.rows[0]).toEqual({ created_count: 120, skipped_count: 0 });
++    const again = await bulk(adminA, A, [...rowsOf(3), { email: "NEW@Example.invalid ", name: " New ", roles: ["teacher", "teacher"] }]);
++    expect(again.rows[0]).toEqual({ created_count: 1, skipped_count: 3 });
++    const stored = await db.query<{ email: string; display_name: string; roles: string[]; bulk: boolean }>("select email, display_name, roles::text[] as roles, bulk from school_invitations where email='new@example.invalid'");
++    expect(stored.rows[0]).toMatchObject({ email: "new@example.invalid", display_name: "New", roles: ["teacher"], bulk: true });
++    expect(Number((await db.query<{ n: string }>("select count(*) n from audit_events where action='invitation.created'")).rows[0].n)).toBe(121);
++  });
++  it("is atomic: one bad row rejects the batch and names the row", async () => {
++    const before = Number((await db.query<{ n: string }>("select count(*) n from school_invitations")).rows[0].n);
++    await expect(bulk(adminA, A, [...rowsOf(2, "ok"), { email: "not-an-email", name: "Bad", roles: ["student"] }])).rejects.toThrow(/Row 3: invalid email/);
++    await expect(bulk(adminA, A, [{ email: "x1@example.invalid", name: "Bad", roles: ["principal"] }])).rejects.toThrow(/Row 1: unknown role/);
++    await expect(bulk(adminA, A, [{ email: "x2@example.invalid", name: "Bad", roles: [] }])).rejects.toThrow(/Row 1: choose at least one role/);
++    expect(Number((await db.query<{ n: string }>("select count(*) n from school_invitations")).rows[0].n)).toBe(before);
++  });
++  it("enforces size and daily limits, administrator access, school scope and anonymous denial", async () => {
++    await expect(bulk(adminA, A, rowsOf(201, "big"))).rejects.toMatchObject({ code: "22023" });
++    await expect(bulk(adminA, A, [])).rejects.toMatchObject({ code: "22023" });
++    await expect(bulk(teacherU, A, rowsOf(1, "t"))).rejects.toMatchObject({ code: "42501" });
++    await expect(bulk(adminB, A, rowsOf(1, "t"))).rejects.toMatchObject({ code: "42501" });
++    await expect(asUser(null, () => db.query("select * from create_school_invitations_bulk($1,'[]'::jsonb)", [A]), "anon")).rejects.toMatchObject({ code: "42501" });
++    await bulk(adminA, A, rowsOf(200, "b2")); await bulk(adminA, A, rowsOf(79, "b3")); // 121 + 200 + 79 = 400 bulk rows today
++    await expect(bulk(adminA, A, rowsOf(101, "b4"))).rejects.toMatchObject({ code: "P0001" });
++  });
++  it("does not consume the single-invitation allowance", async () => {
++    await asUser(adminA, async () => {
++      const r = await db.query<{ create_school_invitation: string }>("select create_school_invitation($1,'single@example.invalid','Single','{teacher}')", [A]);
++      expect(r.rows[0].create_school_invitation).toMatch(/^[0-9a-f-]{36}$/);
++      await expect(db.query("select create_school_invitation($1,'single2@example.invalid','Single','{teacher}')", [A])).rejects.toMatchObject({ code: "P0001" }); // 1/minute still applies to singles
++    });
++  });
++});
++
++describe("reset_invitation_delivery", () => {
++  const reset = (user: string, inv: string) => asUser(user, () => db.query("select reset_invitation_delivery($1,$2)", [A, inv]));
++  const state = async (inv: string) => (await db.query<{ delivery_status: string; delivery_claim: string | null }>("select delivery_status, delivery_claim from school_invitations where id=$1", [inv])).rows[0];
++  async function invitation(email: string, status: string) {
++    const inv = (await db.query<{ id: string }>("insert into school_invitations(school_id,email,display_name,roles,invited_by,delivery_status,delivery_claim) values($1,$2,'F','{student}',$3,$4,$5) returning id",
++      [A, email, adminA, status, status === "sending" ? id(77) : null])).rows[0].id;
++    return inv;
++  }
++  it("resets failed deliveries and stale sends, but not pending, sent or in-flight ones", async () => {
++    const failed = await invitation("r1@example.invalid", "failed");
++    await reset(adminA, failed);
++    expect(await state(failed)).toEqual({ delivery_status: "pending", delivery_claim: null });
++    await expect(reset(adminA, failed)).rejects.toMatchObject({ code: "22023" });             // already pending
++    const sent = await invitation("r2@example.invalid", "sent");
++    await expect(reset(adminA, sent)).rejects.toMatchObject({ code: "22023" });               // never resend 'sent'
++    const stuck = await invitation("r3@example.invalid", "sending");
++    await db.query("insert into audit_events(school_id,actor_user_id,action,record_id) values($1,$2,'invitation.send_requested',$3)", [A, adminA, stuck]);
++    await expect(reset(adminA, stuck)).rejects.toMatchObject({ code: "22023" });              // in flight (< 10 min)
++    const stale = await invitation("r4@example.invalid", "sending");                          // no recent send request recorded
++    await reset(adminA, stale);
++    expect((await state(stale)).delivery_status).toBe("pending");
++  });
++  it("requires an administrator of the same school and is audited", async () => {
++    const failed = await invitation("r5@example.invalid", "failed");
++    await expect(reset(teacherU, failed)).rejects.toMatchObject({ code: "42501" });
++    await expect(reset(adminB, failed)).rejects.toMatchObject({ code: "42501" });
++    await reset(adminA, failed);
++    expect(Number((await db.query<{ n: string }>("select count(*) n from audit_events where action='invitation.delivery_reset' and record_id=$1", [failed])).rows[0].n)).toBe(1);
++  });
++});
++
++describe("account deletion safety", () => {
++  it("lets an Auth account that issued invitations be deleted, which voids those invitations", async () => {
++    const issuer = id(60);
++    await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'issuer@example.invalid',now())", [issuer]);
++    const inv = (await db.query<{ id: string }>("insert into school_invitations(school_id,email,display_name,roles,invited_by) values($1,'gone@example.invalid','G','{student}',$2) returning id", [A, issuer])).rows[0].id;
++    await db.query("delete from auth.users where id=$1", [issuer]);
++    expect((await db.query("select invited_by from school_invitations where id=$1", [inv])).rows).toEqual([{ invited_by: null }]);
++    const recipient = id(61);
++    await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'gone@example.invalid',now())", [recipient]);
++    await asUser(recipient, async () => { await expect(db.query("select accept_school_invitation($1)", [A])).rejects.toMatchObject({ code: "42501" }); });
++  });
++});
+diff --git a/tests/membership-links-database.test.ts b/tests/membership-links-database.test.ts
+new file mode 100644
+index 0000000..f3d608b
+--- /dev/null
++++ b/tests/membership-links-database.test.ts
+@@ -0,0 +1,148 @@
++import { readdirSync, readFileSync } from "node:fs";
++import { PGlite } from "@electric-sql/pglite";
++import { afterAll, beforeAll, describe, expect, it } from "vitest";
++
++// Fictional data only. Runs every real migration in embedded PostgreSQL.
++const db = new PGlite();
++const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
++const A = id(1), B = id(2);
++const adminA = id(3), adminB = id(4), teacherU = id(5), guardianU = id(6), studentU = id(7), idleTeacherU = id(8);
++const y = new Date().getUTCFullYear();
++const ids: Record<string, string> = {};
++
++async function asUser<T>(user: string, fn: () => Promise<T>): Promise<T> {
++  await db.exec("set role authenticated");
++  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
++  try { return await fn(); } finally { await db.exec("reset role; reset request.jwt.claim.sub"); }
++}
++async function insert(sql: string, values: unknown[]) { return (await db.query<{ id: string }>(sql + " returning id", values)).rows[0].id; }
++async function count(table: string) { return Number((await db.query<{ n: string }>(`select count(*) n from ${table}`)).rows[0].n); }
++async function link(user: string, kind: string, record: string, membership: string | null) {
++  return asUser(user, () => db.query("select link_register_to_member($1,$2,$3,$4)", [A, kind, record, membership]));
++}
++
++beforeAll(async () => {
++  await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin;
++    create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
++    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
++    grant usage on schema public,auth to authenticated,anon;`);
++  for (const file of readdirSync("supabase/migrations").sort()) await db.exec(readFileSync(`supabase/migrations/${file}`, "utf8"));
++  await db.query("insert into schools(id,name) values($1,'Fictional A'),($2,'Fictional B')", [A, B]);
++  for (const [user, school, role] of [[adminA, A, "school_admin"], [adminB, B, "school_admin"], [teacherU, A, "teacher"],
++    [guardianU, A, "guardian"], [studentU, A, "student"], [idleTeacherU, A, "teacher"]]) {
++    await db.query("insert into auth.users(id) values($1)", [user]);
++    await db.query("insert into profiles(user_id) values($1)", [user]);
++    await db.query("insert into school_memberships(id,school_id,user_id) values($1,$2,$1)", [user, school]);
++    await db.query("insert into membership_roles values($1,$2,$3)", [user, school, role]);
++  }
++  await asUser(adminA, async () => {
++    const year = await insert("insert into academic_years(school_id,name,starts_on,ends_on) values($1,'Test year',$2,$3)", [A, `${y - 1}-01-01`, `${y + 1}-12-31`]);
++    const grade = await insert("insert into grades(school_id,name) values($1,'Grade 8')", [A]);
++    const c8a = await insert("insert into classes(school_id,name,academic_year_id,grade_id) values($1,'8A',$2,$3)", [A, year, grade]);
++    const c8b = await insert("insert into classes(school_id,name,academic_year_id,grade_id) values($1,'8B',$2,$3)", [A, year, grade]);
++    const subject = await insert("insert into subjects(school_id,name) values($1,'Mathematics')", [A]);
++    const s1 = await insert("insert into students(school_id,full_name,reference) values($1,'Fictional One','ST-001')", [A]);
++    const s2 = await insert("insert into students(school_id,full_name,reference) values($1,'Fictional Two','ST-002')", [A]);
++    const g1 = await insert("insert into guardians(school_id,full_name,reference) values($1,'Fictional Guardian','GU-001')", [A]);
++    const t1 = await insert("insert into teachers(school_id,full_name,reference) values($1,'Fictional Teacher','TE-001')", [A]);
++    const t2 = await insert("insert into teachers(school_id,full_name,reference) values($1,'Fictional Idle','TE-002')", [A]);
++    await insert("insert into teaching_assignments(school_id,teacher_id,subject_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,$6,$7)",
++      [A, t1, subject, c8a, year, `${y - 1}-01-01`, `${y + 1}-12-31`]);
++    await insert("insert into teaching_assignments(school_id,teacher_id,subject_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,$6,$7)",
++      [A, t1, subject, c8b, year, `${y - 1}-01-01`, `${y - 1}-12-31`]); // expired
++    await insert("insert into student_guardians(school_id,student_id,guardian_id,relationship) values($1,$2,$3,'Guardian')", [A, s1, g1]);
++    await insert("insert into enrollments(school_id,student_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,$6)", [A, s1, c8a, year, `${y - 1}-01-01`, `${y + 1}-12-31`]);
++    await insert("insert into enrollments(school_id,student_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,$6)", [A, s2, c8b, year, `${y - 1}-01-01`, `${y + 1}-12-31`]);
++    Object.assign(ids, { year, c8a, c8b, s1, s2, g1, t1, t2 });
++  });
++  await asUser(adminB, async () => { await insert("insert into students(school_id,full_name,reference) values($1,'Fictional Other School','ST-900')", [B]); });
++}, 90000);
++afterAll(async () => { await db.close(); });
++
++const linkedTables = ["students", "teachers", "guardians", "student_guardians", "enrollments", "classes", "teaching_assignments", "timetable_lessons"];
++
++describe("before any record is linked to a login", () => {
++  it("gives teachers, guardians and students no personal or relationship data", async () => {
++    for (const user of [teacherU, guardianU, studentU, idleTeacherU]) await asUser(user, async () => {
++      for (const table of linkedTables) expect(await count(table), `${table} for ${user}`).toBe(0);
++    });
++  });
++  it("lets active members read non-sensitive reference data of their own school only", async () => {
++    await asUser(teacherU, async () => { expect(await count("grades")).toBe(1); expect(await count("subjects")).toBe(1); expect(await count("academic_years")).toBe(1); });
++    await asUser(adminB, async () => { expect(await count("grades")).toBe(0); });
++  });
++});
++
++describe("link_register_to_member", () => {
++  it("is administrator-only and validates role, school, record type and duplicates", async () => {
++    await expect(link(teacherU, "teachers", ids.t1, teacherU)).rejects.toMatchObject({ code: "42501" });
++    await expect(link(adminB, "teachers", ids.t1, teacherU)).rejects.toMatchObject({ code: "42501" });
++    await expect(link(adminA, "teachers", ids.t1, guardianU)).rejects.toMatchObject({ code: "22023" }); // wrong role
++    await expect(link(adminA, "teachers", ids.t1, adminB)).rejects.toMatchObject({ code: "22023" });    // other school
++    await expect(link(adminA, "audit_events", ids.t1, teacherU)).rejects.toMatchObject({ code: "22023" });
++    await expect(link(adminA, "teachers", id(999), teacherU)).rejects.toMatchObject({ code: "22023" });
++    await expect(asUser(adminA, () => db.query("update teachers set membership_id=$1 where id=$2", [teacherU, ids.t1]))).rejects.toMatchObject({ code: "42501" });
++  });
++  it("links, audits, rejects a second record for the same login, and unlinks", async () => {
++    await link(adminA, "teachers", ids.t1, teacherU);
++    await expect(link(adminA, "teachers", ids.t2, teacherU)).rejects.toMatchObject({ code: "23505" });
++    await link(adminA, "teachers", ids.t2, idleTeacherU);
++    await link(adminA, "teachers", ids.t2, null);
++    const audit = await db.query<{ action: string }>("select action from audit_events where record_id=$1 and action like 'teachers.%link' order by id", [ids.t2]);
++    expect(audit.rows.map((r) => r.action)).toEqual(["teachers.link", "teachers.unlink"]);
++    await link(adminA, "guardians", ids.g1, guardianU);
++    await link(adminA, "students", ids.s1, studentU);
++  });
++});
++
++describe("after linking", () => {
++  it("shows a teacher only their own record, assignments, today's classes and roster", async () => {
++    await asUser(teacherU, async () => {
++      expect((await db.query("select id from teachers")).rows).toEqual([{ id: ids.t1 }]);
++      expect(await count("teaching_assignments")).toBe(2);
++      expect((await db.query("select id from classes")).rows).toEqual([{ id: ids.c8a }]); // 8B assignment expired
++      expect((await db.query("select id from students")).rows).toEqual([{ id: ids.s1 }]); // roster only, not S2
++      expect((await db.query("select student_id from enrollments")).rows).toEqual([{ student_id: ids.s1 }]);
++      expect(await count("guardians")).toBe(0);
++      expect(await count("student_guardians")).toBe(0);
++    });
++  });
++  it("shows a guardian only their own record, link and child", async () => {
++    await asUser(guardianU, async () => {
++      expect((await db.query("select id from guardians")).rows).toEqual([{ id: ids.g1 }]);
++      expect((await db.query("select id from students")).rows).toEqual([{ id: ids.s1 }]);
++      expect(await count("student_guardians")).toBe(1);
++      expect((await db.query("select id from classes")).rows).toEqual([{ id: ids.c8a }]);
++      expect(await count("teachers")).toBe(0);
++    });
++  });
++  it("shows a student only themselves", async () => {
++    await asUser(studentU, async () => {
++      expect((await db.query("select id from students")).rows).toEqual([{ id: ids.s1 }]);
++      expect(await count("guardians")).toBe(0);
++      expect(await count("student_guardians")).toBe(0);
++      expect(await count("teachers")).toBe(0);
++    });
++  });
++  it("never exposes other schools and never grants writes", async () => {
++    for (const user of [teacherU, guardianU, studentU]) await asUser(user, async () => {
++      expect((await db.query("select 1 from students where school_id=$1", [B])).rows).toHaveLength(0);
++      await expect(db.query("insert into students(school_id,full_name,reference) values($1,'x','x')", [A])).rejects.toMatchObject({ code: "42501" });
++      await expect(db.query("update students set full_name='x'")).rejects.toMatchObject({ code: "42501" });
++    });
++  });
++  it("revokes access immediately when the role is removed or the member is suspended", async () => {
++    await db.query("delete from membership_roles where membership_id=$1 and role='teacher'", [teacherU]);
++    await asUser(teacherU, async () => { expect(await count("teachers")).toBe(0); expect(await count("students")).toBe(0); });
++    await db.query("insert into membership_roles values($1,$2,'teacher')", [teacherU, A]);
++    await asUser(teacherU, async () => { expect(await count("teachers")).toBe(1); });
++    await db.query("update school_memberships set status='suspended' where id=$1", [guardianU]);
++    await asUser(guardianU, async () => { expect(await count("guardians")).toBe(0); expect(await count("students")).toBe(0); });
++    await db.query("update school_memberships set status='active' where id=$1", [guardianU]);
++  });
++  it("survives an invalid stored timezone without breaking reads", async () => {
++    await db.query("update schools set timezone='Not/AZone' where id=$1", [A]);
++    await asUser(teacherU, async () => { expect((await db.query("select id from classes")).rows).toEqual([{ id: ids.c8a }]); });
++    await db.query("update schools set timezone='Africa/Johannesburg' where id=$1", [A]);
++  });
++});
+-- 
+2.43.0
+
+
+From a84c75e3552b796ed526cb7b7d786f9f0c277255 Mon Sep 17 00:00:00 2001
+From: Review <review@example.invalid>
+Date: Fri, 2 Oct 2026 09:26:33 +0000
+Subject: [PATCH 2/4] App: shared admin guard, session revocation, bulk
+ invites, delivery reset, login linking
+
+- isSchoolAdminContext replaces 12 inline checks; auth context reads run in parallel
+- changePassword revokes other sessions
+- Bulk invitation parser/action/form, Allow resend action, Link sign-in control
+---
+ src/app/account/actions.ts                    |  3 +
+ src/app/dashboard/academic/actions.ts         |  3 +-
+ src/app/dashboard/actions.ts                  |  6 +-
+ src/app/dashboard/corrections/actions.ts      |  3 +-
+ src/app/dashboard/people/actions.ts           | 34 ++++++-
+ src/app/dashboard/registers/actions.ts        |  3 +-
+ .../dashboard/registers/lifecycle-actions.ts  |  3 +-
+ src/app/dashboard/registers/link-actions.ts   | 24 +++++
+ src/app/dashboard/teaching/actions.ts         |  3 +-
+ src/app/dashboard/timetable/actions.ts        |  5 +-
+ src/components/access-management.tsx          | 14 ++-
+ src/components/login-link.tsx                 | 19 ++++
+ src/components/people-panel.tsx               |  4 +-
+ src/components/registers-panel.tsx            | 20 +++--
+ src/lib/auth-context.ts                       | 20 +++--
+ src/lib/bulk-invitation.ts                    | 58 ++++++++++++
+ src/lib/link-validation.ts                    | 11 +++
+ src/lib/permissions.ts                        |  8 ++
+ src/lib/register-validation.ts                |  2 +-
+ tests/account-actions.test.ts                 | 16 +++-
+ tests/bulk-invitation.test.ts                 | 27 ++++++
+ tests/new-actions.test.ts                     | 90 +++++++++++++++++++
+ 22 files changed, 337 insertions(+), 39 deletions(-)
+ create mode 100644 src/app/dashboard/registers/link-actions.ts
+ create mode 100644 src/components/login-link.tsx
+ create mode 100644 src/lib/bulk-invitation.ts
+ create mode 100644 src/lib/link-validation.ts
+ create mode 100644 tests/bulk-invitation.test.ts
+ create mode 100644 tests/new-actions.test.ts
+
+diff --git a/src/app/account/actions.ts b/src/app/account/actions.ts
+index 7a5bde7..99e71c5 100644
+--- a/src/app/account/actions.ts
++++ b/src/app/account/actions.ts
+@@ -42,6 +42,9 @@ export async function changePassword(_state: AccountState, form: FormData): Prom
+   if (error || !user) return { error: "Your session has expired. Open a new recovery link or sign in again.", message: "" };
+   const result = await client.auth.updateUser({ password: parsed.data.password });
+   if (result.error) return { error: "The password could not be updated. Use a different password or request a fresh link.", message: "" };
++  // A changed password must end every other session (for example a stolen one). The current
++  // session stays signed in. Failure here must not undo the successful change.
++  try { await client.auth.signOut({ scope: "others" }); } catch { /* best effort */ }
+   if (form.get("flow") === "invite") redirect("/account/accept");
+   // A verified session is required for this page, including ordinary signed-in users.
+   // Session revocation behaviour is tested separately against the configured Auth project.
+diff --git a/src/app/dashboard/academic/actions.ts b/src/app/dashboard/academic/actions.ts
+index da9a6a2..a132eee 100644
+--- a/src/app/dashboard/academic/actions.ts
++++ b/src/app/dashboard/academic/actions.ts
+@@ -1,12 +1,13 @@
+ "use server";
+ import { revalidatePath } from "next/cache";
+ import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ import { academicInput } from "@/lib/academic-validation";
+ 
+ export async function createAcademicRecord(_state: { error: string; saved: boolean }, form: FormData) {
+   const context = await getSchoolContext();
+-  if (context.status !== "ready" || !context.roles.includes("school_admin"))
++  if (!isSchoolAdminContext(context))
+     return { error: "School administrator access is required.", saved: false };
+   const parsed = academicInput.safeParse(Object.fromEntries(form));
+   if (!parsed.success) return { error: "Check the name, dates and required selections. End date cannot precede start date.", saved: false };
+diff --git a/src/app/dashboard/actions.ts b/src/app/dashboard/actions.ts
+index 1629213..7e99d76 100644
+--- a/src/app/dashboard/actions.ts
++++ b/src/app/dashboard/actions.ts
+@@ -3,15 +3,13 @@
+ import { revalidatePath } from "next/cache";
+ import { z } from "zod";
+ import { getSchoolContext } from "@/lib/auth-context";
+-import { canManageSchool } from "@/lib/permissions";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ 
+ export type SettingsState = { error: string; saved: boolean };
+ export async function saveSchoolSettings(_state: SettingsState, formData: FormData): Promise<SettingsState> {
+   const context = await getSchoolContext();
+-  if (context.status !== "ready" || !canManageSchool({
+-    userId: context.userId, schoolId: context.school.id, active: true, roles: context.roles,
+-  }, context.userId, context.school.id)) return { error: "You do not have permission to change school settings.", saved: false };
++  if (!isSchoolAdminContext(context)) return { error: "You do not have permission to change school settings.", saved: false };
+   const parsed = z.object({
+     name: z.string().trim().min(2).max(120),
+     timezone: z.string().refine((value) => {
+diff --git a/src/app/dashboard/corrections/actions.ts b/src/app/dashboard/corrections/actions.ts
+index 2c3abe2..4b7fa2b 100644
+--- a/src/app/dashboard/corrections/actions.ts
++++ b/src/app/dashboard/corrections/actions.ts
+@@ -1,12 +1,13 @@
+ "use server";
+ import { revalidatePath } from "next/cache";
+ import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ import { correctionInput } from "@/lib/correction-validation";
+ 
+ export async function correctRecord(_state: {error:string;saved:boolean}, form:FormData) {
+   const context=await getSchoolContext();
+-  if(context.status!=="ready" || !context.roles.includes("school_admin"))
++  if(!isSchoolAdminContext(context))
+     return {error:"School administrator access is required.",saved:false};
+   const parsed=correctionInput.safeParse(Object.fromEntries(form));
+   if(!parsed.success) return {error:"Check the name and reference, then try again. Reload if this form is outdated.",saved:false};
+diff --git a/src/app/dashboard/people/actions.ts b/src/app/dashboard/people/actions.ts
+index 72cd59f..7a6ce56 100644
+--- a/src/app/dashboard/people/actions.ts
++++ b/src/app/dashboard/people/actions.ts
+@@ -3,16 +3,18 @@
+ import { revalidatePath } from "next/cache";
+ import { z } from "zod";
+ import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ import { invitationSchema, membershipSchema } from "@/lib/account-validation";
+ import { invitationDeliveryEnabled } from "@/lib/account-config";
++import { parseBulkInvitations } from "@/lib/bulk-invitation";
+ 
+ export type AccessState = { error: string; message: string };
+ const denied = { error: "Active School Admin access is required.", message: "" };
+ 
+ export async function updateMember(_state: AccessState, form: FormData): Promise<AccessState> {
+   const context = await getSchoolContext();
+-  if (context.status !== "ready" || !context.roles.includes("school_admin")) return denied;
++  if (!isSchoolAdminContext(context)) return denied;
+   const parsed = membershipSchema.safeParse({ membershipId: form.get("membershipId"), version: form.get("version"), status: form.get("status"), roles: form.getAll("roles") });
+   if (!parsed.success) return { error: "Select an access status and at least one role.", message: "" };
+   const client = await createClient();
+@@ -24,7 +26,7 @@ export async function updateMember(_state: AccessState, form: FormData): Promise
+ 
+ export async function createInvitation(_state: AccessState, form: FormData): Promise<AccessState> {
+   const context = await getSchoolContext();
+-  if (context.status !== "ready" || !context.roles.includes("school_admin")) return denied;
++  if (!isSchoolAdminContext(context)) return denied;
+   const parsed = invitationSchema.safeParse({ email: form.get("email"), name: form.get("name"), roles: form.getAll("roles") });
+   if (!parsed.success) return { error: "Enter a valid name, email and at least one role.", message: "" };
+   const client = await createClient();
+@@ -36,9 +38,9 @@ export async function createInvitation(_state: AccessState, form: FormData): Pro
+ 
+ export async function changeInvitation(_state: AccessState, form: FormData): Promise<AccessState> {
+   const context = await getSchoolContext();
+-  if (context.status !== "ready" || !context.roles.includes("school_admin")) return denied;
++  if (!isSchoolAdminContext(context)) return denied;
+   const id = z.uuid().safeParse(form.get("invitationId"));
+-  const command = z.enum(["send", "revoke"]).safeParse(form.get("command"));
++  const command = z.enum(["send", "revoke", "reset"]).safeParse(form.get("command"));
+   if (!id.success || !command.success) return { error: "Invalid invitation action.", message: "" };
+   const client = await createClient();
+   if (command.data === "revoke") {
+@@ -46,9 +48,33 @@ export async function changeInvitation(_state: AccessState, form: FormData): Pro
+     revalidatePath("/dashboard");
+     return error ? { error: "Invitation could not be revoked. Reload and check its status.", message: "" } : { error: "", message: "Invitation revoked. It cannot grant school access." };
+   }
++  if (command.data === "reset") {
++    const { error } = await client.rpc("reset_invitation_delivery", { target_school: context.school.id, target_invitation: id.data });
++    revalidatePath("/dashboard");
++    return error
++      ? { error: error.code === "22023" ? "Delivery cannot be reset yet. A send started in the last 10 minutes may still be in progress, and delivered invitations cannot be resent." : "Delivery could not be reset. Reload and check the invitation status.", message: "" }
++      : { error: "", message: "Delivery reset. Check the recipient and roles, then send again." };
++  }
+   if (!invitationDeliveryEnabled()) return { error: "Email invitations are not enabled. Complete the account setup guide first.", message: "" };
+   const { error } = await client.functions.invoke("invite-school-user", { body: { schoolId: context.school.id, invitationId: id.data } });
+   revalidatePath("/dashboard");
+   return error ? { error: "Sending was not confirmed. Check the recorded delivery status and function/email configuration before retrying.", message: "" }
+     : { error: "", message: "The provider accepted the invitation. Check the recipient inbox to verify delivery." };
+ }
++
++export async function bulkInvite(_state: AccessState, form: FormData): Promise<AccessState> {
++  const context = await getSchoolContext();
++  if (!isSchoolAdminContext(context)) return denied;
++  const parsed = parseBulkInvitations(form.get("list"));
++  if (!parsed.ok) return { error: parsed.error, message: "" };
++  const client = await createClient();
++  const { data, error } = await client.rpc("create_school_invitations_bulk", { target_school: context.school.id, invites: parsed.rows });
++  if (error) {
++    // Messages for 22023 are written by our SQL ("Row 3: invalid email") and contain no secrets.
++    if (error.code === "22023" && /^(Row \d+:|Provide between)/.test(error.message)) return { error: `${error.message}. Nothing was prepared.`, message: "" };
++    return { error: error.code === "P0001" ? "Daily bulk limit reached (500 per school per day). Try again tomorrow." : error.code === "42501" ? "Active School Admin access is required." : "The list could not be prepared. Check access and that the bulk-invitation migration is applied.", message: "" };
++  }
++  const result = Array.isArray(data) ? data[0] as { created_count?: number; skipped_count?: number } | undefined : undefined;
++  revalidatePath("/dashboard");
++  return { error: "", message: `Prepared ${result?.created_count ?? 0} invitation(s); ${result?.skipped_count ?? 0} already pending were skipped. No email has been sent.` };
++}
+diff --git a/src/app/dashboard/registers/actions.ts b/src/app/dashboard/registers/actions.ts
+index dc2df1f..c616f68 100644
+--- a/src/app/dashboard/registers/actions.ts
++++ b/src/app/dashboard/registers/actions.ts
+@@ -1,12 +1,13 @@
+ "use server";
+ import { revalidatePath } from "next/cache";
+ import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ import { registerInput } from "@/lib/register-validation";
+ 
+ export async function createRegisterRecord(_state: { error: string; saved: boolean }, form: FormData) {
+   const context = await getSchoolContext();
+-  if (context.status !== "ready" || !context.roles.includes("school_admin"))
++  if (!isSchoolAdminContext(context))
+     return { error: "School administrator access is required.", saved: false };
+   const parsed = registerInput.safeParse(Object.fromEntries(form));
+   if (!parsed.success) return { error: "Check all required fields and dates. End date must be on or after start date.", saved: false };
+diff --git a/src/app/dashboard/registers/lifecycle-actions.ts b/src/app/dashboard/registers/lifecycle-actions.ts
+index c1bb825..ceca4e3 100644
+--- a/src/app/dashboard/registers/lifecycle-actions.ts
++++ b/src/app/dashboard/registers/lifecycle-actions.ts
+@@ -1,12 +1,13 @@
+ "use server";
+ import { revalidatePath } from "next/cache";
+ import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ import { enrollmentChange } from "@/lib/enrollment-validation";
+ 
+ export async function changeEnrollment(_state: { error: string; saved: boolean }, form: FormData) {
+   const context = await getSchoolContext();
+-  if (context.status !== "ready" || !context.roles.includes("school_admin"))
++  if (!isSchoolAdminContext(context))
+     return { error: "School administrator access is required.", saved: false };
+   const parsed = enrollmentChange.safeParse(Object.fromEntries(form));
+   if (!parsed.success) return { error: "Choose a change, check the date and destination, and confirm the change.", saved: false };
+diff --git a/src/app/dashboard/registers/link-actions.ts b/src/app/dashboard/registers/link-actions.ts
+new file mode 100644
+index 0000000..0fa6655
+--- /dev/null
++++ b/src/app/dashboard/registers/link-actions.ts
+@@ -0,0 +1,24 @@
++"use server";
++import { revalidatePath } from "next/cache";
++import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
++import { createClient } from "@/lib/supabase/server";
++import { linkInput } from "@/lib/link-validation";
++
++export async function linkRegisterMember(_state: { error: string; saved: boolean }, form: FormData) {
++  const context = await getSchoolContext();
++  if (!isSchoolAdminContext(context)) return { error: "School administrator access is required.", saved: false };
++  const parsed = linkInput.safeParse(Object.fromEntries(form));
++  if (!parsed.success) return { error: "Choose a valid login, or “No linked login”, and try again.", saved: false };
++  const client = await createClient();
++  const { error } = await client.rpc("link_register_to_member", {
++    target_school: context.school.id, record_kind: parsed.data.kind,
++    target_record: parsed.data.id, target_membership: parsed.data.membershipId,
++  });
++  if (error) return { error: error.code === "23505" ? "That login is already linked to another record of this type. Unlink it first."
++    : error.code === "22023" ? "That member must be in this school and hold the matching role (student, teacher or guardian)."
++    : error.code === "42501" ? "School administrator access is required."
++    : "Could not save the link. Check access and that the register-link migration is applied.", saved: false };
++  revalidatePath("/dashboard");
++  return { error: "", saved: true };
++}
+diff --git a/src/app/dashboard/teaching/actions.ts b/src/app/dashboard/teaching/actions.ts
+index af9bada..8b5450e 100644
+--- a/src/app/dashboard/teaching/actions.ts
++++ b/src/app/dashboard/teaching/actions.ts
+@@ -1,11 +1,12 @@
+ "use server";
+ import { revalidatePath } from "next/cache";
+ import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ import { teachingInput } from "@/lib/teaching-validation";
+ export async function createTeachingAssignment(_state: { error: string; saved: boolean }, form: FormData) {
+   const context = await getSchoolContext();
+-  if(context.status !== "ready" || !context.roles.includes("school_admin"))
++  if(!isSchoolAdminContext(context))
+     return {error:"School administrator access is required.",saved:false};
+   const parsed = teachingInput.safeParse(Object.fromEntries(form));
+   if(!parsed.success) return {error:"Select a teacher, subject and class, and enter valid start and end dates.",saved:false};
+diff --git a/src/app/dashboard/timetable/actions.ts b/src/app/dashboard/timetable/actions.ts
+index 9e46b59..bd93fcb 100644
+--- a/src/app/dashboard/timetable/actions.ts
++++ b/src/app/dashboard/timetable/actions.ts
+@@ -1,11 +1,12 @@
+ "use server";
+ import { revalidatePath } from "next/cache";
+ import { getSchoolContext } from "@/lib/auth-context";
++import { isSchoolAdminContext } from "@/lib/permissions";
+ import { createClient } from "@/lib/supabase/server";
+ import { lessonInput,lessonRemoval } from "@/lib/timetable-validation";
+ export async function saveLesson(_state:{error:string;saved:boolean},form:FormData){
+   const context=await getSchoolContext();
+-  if(context.status!=="ready"||!context.roles.includes("school_admin"))return {error:"School administrator access is required.",saved:false};
++  if(!isSchoolAdminContext(context))return {error:"School administrator access is required.",saved:false};
+   const parsed=lessonInput.safeParse(Object.fromEntries(form));
+   if(!parsed.success)return {error:"Select an assignment and weekday, and check the dates and start/end times.",saved:false};
+   const v=parsed.data;const client=await createClient();
+@@ -15,7 +16,7 @@ export async function saveLesson(_state:{error:string;saved:boolean},form:FormDa
+ }
+ export async function removeLesson(_state:{error:string;saved:boolean},form:FormData){
+   const context=await getSchoolContext();
+-  if(context.status!=="ready"||!context.roles.includes("school_admin"))return {error:"School administrator access is required.",saved:false};
++  if(!isSchoolAdminContext(context))return {error:"School administrator access is required.",saved:false};
+   const parsed=lessonRemoval.safeParse(Object.fromEntries(form));
+   if(!parsed.success)return {error:"Confirm that you want to remove this recurring lesson.",saved:false};
+   const client=await createClient();const {data,error}=await client.rpc("remove_timetable_lesson",{target_school:context.school.id,target_lesson:parsed.data.id});
+diff --git a/src/components/access-management.tsx b/src/components/access-management.tsx
+index aee5b7e..b1fb64d 100644
+--- a/src/components/access-management.tsx
++++ b/src/components/access-management.tsx
+@@ -1,8 +1,8 @@
+ "use client";
+ 
+ import { useActionState } from "react";
+-import { MailPlus, ShieldCheck } from "lucide-react";
+-import { changeInvitation, createInvitation, updateMember, type AccessState } from "@/app/dashboard/people/actions";
++import { ListPlus, MailPlus, ShieldCheck } from "lucide-react";
++import { bulkInvite, changeInvitation, createInvitation, updateMember, type AccessState } from "@/app/dashboard/people/actions";
+ import { roles, roleLabels, type Role } from "@/lib/permissions";
+ 
+ export type MemberRow = { id: string; user_id: string; display_name: string; status: "active" | "suspended"; access_version: number; roles: Role[] };
+@@ -29,11 +29,17 @@ export function InviteForm() {
+     <form action={action} className="access-form"><label>Full name<input name="name" autoComplete="off" minLength={1} maxLength={120} required disabled={pending} /></label><label>Email address<input name="email" type="email" autoComplete="off" maxLength={254} required disabled={pending} /></label><RoleChoices disabled={pending} /><Feedback state={state} /><button className="button primary" disabled={pending}>{pending ? "Preparing…" : "Prepare invitation"}</button></form>
+   </section>;
+ }
++export function BulkInviteForm() {
++  const [state, action, pending] = useActionState(bulkInvite, initial);
++  return <section className="content-panel"><div className="section-heading"><h2>Prepare many invitations</h2><ListPlus size={21} /></div><p className="muted small">Paste up to 200 lines of <code>email,name,roles</code>, for example <code>{'anna@example.org,"Anna Fictional",teacher|guardian'}</code>. Roles: teacher, student, guardian, school_admin. The whole list is checked first; if any line is wrong, nothing is prepared. No email is sent.</p>
++    <form action={action} className="access-form"><label>Invitation list<textarea name="list" rows={8} spellCheck={false} autoComplete="off" maxLength={100000} required disabled={pending} placeholder={"email,name,roles\nanna@example.org,Anna Fictional,teacher"} /></label><Feedback state={state} /><button className="button primary" disabled={pending}>{pending ? "Checking…" : "Prepare invitations"}</button></form>
++  </section>;
++}
+ export function InvitationItem({ invitation, canSend, expired }: { invitation: InvitationRow; canSend: boolean; expired: boolean }) {
+   const [state, action, pending] = useActionState(changeInvitation, initial);
+   const ready = invitation.status === "pending" && !expired;
+   return <article className="invitation-item"><div className="section-heading"><div><h3>{invitation.display_name}</h3><p className="muted small">{invitation.email}</p></div><span className="phase-tag">{invitation.status === "pending" && expired ? "expired" : invitation.status}</span></div><p className="small">{invitation.roles.map((role) => roleLabels[role]).join(" · ")}</p><p className="muted small">Delivery: {invitation.delivery_status === "sent" ? "accepted by provider" : invitation.delivery_status} · Expires {invitation.expires_at.slice(0, 10)}</p>
+-    {(invitation.delivery_status === "sending" || invitation.delivery_status === "failed") && <p className="small muted">An operator should check delivery before creating a replacement. Automatic resend is disabled.</p>}
+-    {invitation.status === "pending" && <form action={action} className="invitation-actions"><input type="hidden" name="invitationId" value={invitation.id} /><button className="button primary compact" name="command" value="send" disabled={pending || !canSend || !ready || invitation.delivery_status !== "pending"}>Send invitation email</button><button className="button secondary compact" name="command" value="revoke" disabled={pending}>Revoke invitation</button></form>}<Feedback state={state} />
++    {(invitation.delivery_status === "sending" || invitation.delivery_status === "failed") && <p className="small muted">Check the provider logs first. If the email did not go out, use “Allow resend”. A send that started in the last 10 minutes cannot be reset. Automatic resend stays disabled.</p>}
++    {invitation.status === "pending" && <form action={action} className="invitation-actions"><input type="hidden" name="invitationId" value={invitation.id} /><button className="button primary compact" name="command" value="send" disabled={pending || !canSend || !ready || invitation.delivery_status !== "pending"}>Send invitation email</button>{(invitation.delivery_status === "failed" || invitation.delivery_status === "sending") && <button className="button secondary compact" name="command" value="reset" disabled={pending || expired}>Allow resend</button>}<button className="button secondary compact" name="command" value="revoke" disabled={pending}>Revoke invitation</button></form>}<Feedback state={state} />
+   </article>;
+ }
+diff --git a/src/components/login-link.tsx b/src/components/login-link.tsx
+new file mode 100644
+index 0000000..c0d65d5
+--- /dev/null
++++ b/src/components/login-link.tsx
+@@ -0,0 +1,19 @@
++"use client";
++import { useActionState } from "react";
++import { linkRegisterMember } from "@/app/dashboard/registers/link-actions";
++import type { LinkKind } from "@/lib/link-validation";
++
++export type LinkableMember = { id: string; name: string };
++// `members` must already be limited to active members holding the matching role and not
++// linked to a different record of this type (the database enforces all of this again).
++export function LoginLink({ kind, id, currentMembershipId, members }: { kind: LinkKind; id: string; currentMembershipId: string | null; members: LinkableMember[] }) {
++  const [state, action, pending] = useActionState(linkRegisterMember, { error: "", saved: false });
++  return <details className="record-editor"><summary>{currentMembershipId ? "Sign-in linked" : "Link sign-in"}</summary>
++    <form action={action} className="access-form"><input type="hidden" name="kind" value={kind} /><input type="hidden" name="id" value={id} />
++      <label>Portal login<select name="membershipId" defaultValue={currentMembershipId ?? ""} disabled={pending}><option value="">No linked login</option>{members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
++      <p className="small muted">Once linked, this person can read only their own records after signing in: students see themselves, guardians see their linked children, teachers see the classes they currently teach. Linking sends no email and grants no editing rights. Only members with the matching role are listed.</p>
++      {state.error && <p className="error-message" role="alert">{state.error}</p>}
++      {state.saved && <p className="success-message" role="status">Saved.</p>}
++      <button className="button primary" disabled={pending}>{pending ? "Saving…" : "Save link"}</button>
++    </form></details>;
++}
+diff --git a/src/components/people-panel.tsx b/src/components/people-panel.tsx
+index 7284d3d..dd38ad9 100644
+--- a/src/components/people-panel.tsx
++++ b/src/components/people-panel.tsx
+@@ -1,7 +1,7 @@
+ import Link from "next/link";
+ import { createClient } from "@/lib/supabase/server";
+ import { invitationDeliveryEnabled } from "@/lib/account-config";
+-import { InvitationItem, InviteForm, MemberEditor, type InvitationRow, type MemberRow } from "./access-management";
++import { BulkInviteForm, InvitationItem, InviteForm, MemberEditor, type InvitationRow, type MemberRow } from "./access-management";
+ 
+ export async function PeoplePanel({ schoolId, userId }: { schoolId: string; userId: string }) {
+   const client = await createClient();
+@@ -14,5 +14,5 @@ export async function PeoplePanel({ schoolId, userId }: { schoolId: string; user
+   const canSend = invitationDeliveryEnabled();
+   // eslint-disable-next-line react-hooks/purity -- Dynamic Server Component: one request-time snapshot. SQL enforces actual expiry.
+   const requestTime = Date.now();
+-  return <><div className="quiet-note" style={{ marginBottom: 24 }}><p><strong>{canSend ? "Invitation sending is enabled." : "Invitation emails are not enabled yet."}</strong> {canSend ? "Only press Send after checking the recipient and roles. Provider acceptance does not confirm inbox delivery." : "You can prepare invitations and manage existing members. Configure the isolated sender, email templates and delivery settings before sending."}</p></div><div className="people-grid"><section><div className="section-heading"><h2>School members</h2><span className="phase-tag">{members.data?.length ?? 0} members</span></div>{(members.data as MemberRow[]).map((member) => <MemberEditor key={`${member.id}-${member.access_version}`} member={member} ownAccount={member.user_id === userId} />)}<section className="content-panel" style={{ marginTop: 24 }}><h2>Recent access activity</h2><ul className="audit-list">{audit.data.map((event) => <li key={event.id}><span>{event.action.replaceAll("_", " ").replaceAll(".", " · ")}</span><time dateTime={event.occurred_at}>{event.occurred_at.slice(0, 16).replace("T", " ")} UTC</time></li>)}</ul></section></section><div><InviteForm /><section className="content-panel"><h2>Invitation history</h2>{!invitations.data.length && <p className="muted" style={{ marginTop: 16 }}>No invitations yet.</p>}{(invitations.data as InvitationRow[]).map((invitation) => <InvitationItem key={invitation.id} invitation={invitation} canSend={canSend} expired={Date.parse(invitation.expires_at) <= requestTime} />)}{invitations.data.length === 100 && <p className="muted small">Showing the latest 100 invitations.</p>}</section></div></div></>;
++  return <><div className="quiet-note" style={{ marginBottom: 24 }}><p><strong>{canSend ? "Invitation sending is enabled." : "Invitation emails are not enabled yet."}</strong> {canSend ? "Only press Send after checking the recipient and roles. Provider acceptance does not confirm inbox delivery." : "You can prepare invitations and manage existing members. Configure the isolated sender, email templates and delivery settings before sending."}</p></div><div className="people-grid"><section><div className="section-heading"><h2>School members</h2><span className="phase-tag">{members.data?.length ?? 0} members</span></div>{(members.data as MemberRow[]).map((member) => <MemberEditor key={`${member.id}-${member.access_version}`} member={member} ownAccount={member.user_id === userId} />)}<section className="content-panel" style={{ marginTop: 24 }}><h2>Recent access activity</h2><ul className="audit-list">{audit.data.map((event) => <li key={event.id}><span>{event.action.replaceAll("_", " ").replaceAll(".", " · ")}</span><time dateTime={event.occurred_at}>{event.occurred_at.slice(0, 16).replace("T", " ")} UTC</time></li>)}</ul></section></section><div><InviteForm /><BulkInviteForm /><section className="content-panel"><h2>Invitation history</h2>{!invitations.data.length && <p className="muted" style={{ marginTop: 16 }}>No invitations yet.</p>}{(invitations.data as InvitationRow[]).map((invitation) => <InvitationItem key={invitation.id} invitation={invitation} canSend={canSend} expired={Date.parse(invitation.expires_at) <= requestTime} />)}{invitations.data.length === 100 && <p className="muted small">Showing the latest 100 invitations.</p>}</section></div></div></>;
+ }
+diff --git a/src/components/registers-panel.tsx b/src/components/registers-panel.tsx
+index b2e6e4f..573509a 100644
+--- a/src/components/registers-panel.tsx
++++ b/src/components/registers-panel.tsx
+@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
+ import { classLabel, personLabels, type PersonKind, type PersonRow, type RegisterOptions } from "@/lib/register-validation";
+ import { PersonForm, RelationshipForm } from "./register-forms";
+ import { RecordEditor } from "./record-editor";
++import { LoginLink } from "./login-link";
++import { linkRoleFor } from "@/lib/link-validation";
++import type { MemberRow } from "./access-management";
+ import { EnrollmentEditor } from "./enrollment-editor";
+ import { type EnrollmentRow } from "@/lib/enrollment-validation";
+ 
+@@ -9,21 +12,26 @@ type LinkRow = { id: string; student_id: string; guardian_id: string; relationsh
+ export async function RegistersPanel({ schoolId }: { schoolId: string }) {
+   const client = await createClient();
+   const queries = [
+-    ["students", "id,full_name,reference,record_version", "full_name"], ["teachers", "id,full_name,reference,record_version", "full_name"],
+-    ["guardians", "id,full_name,reference,record_version", "full_name"], ["classes", "id,name,academic_year_id,grade_id", "name"],
++    ["students", "id,full_name,reference,record_version,membership_id", "full_name"], ["teachers", "id,full_name,reference,record_version,membership_id", "full_name"],
++    ["guardians", "id,full_name,reference,record_version,membership_id", "full_name"], ["classes", "id,name,academic_year_id,grade_id", "name"],
+     ["academic_years", "id,name,starts_on,ends_on", "name"], ["grades", "id,name", "name"],
+     ["student_guardians", "id,student_id,guardian_id,relationship", "id"],
+     ["enrollments", "*", "starts_on"],
+   ] as const;
+-  const results = await Promise.all(queries.map(([table,fields,order]) => client.from(table).select(fields).eq("school_id",schoolId).order(order).order("id").limit(501)));
+-  if (results.some(r => r.error)) return <section className="content-panel"><h2>School registers are unavailable.</h2><p className="muted">If this is your first visit, apply the register migration 004 and record correction migration 007 to School Portal. Otherwise check your access and connection, then reload.</p></section>;
++  const [memberResult, results] = await Promise.all([client.rpc("list_school_members", { target_school: schoolId }), Promise.all(queries.map(([table,fields,order]) => client.from(table).select(fields).eq("school_id",schoolId).order(order).order("id").limit(501)))]);
++  if (memberResult.error || results.some(r => r.error)) return <section className="content-panel"><h2>School registers are unavailable.</h2><p className="muted">If this is your first visit, apply the register migration 004, record correction migration 007 and register-link migration 010 to School Portal. Otherwise check your access and connection, then reload.</p></section>;
+   const [students,teachers,guardians,classes,years,grades,links,enrollments] = results.map(r => r.data ?? []) as unknown as [PersonRow[],PersonRow[],PersonRow[],RegisterOptions["classes"],RegisterOptions["academic_years"],RegisterOptions["grades"],LinkRow[],EnrollmentRow[]];
+   if (results.some(r => (r.data?.length ?? 0) > 500)) return <section className="content-panel"><h2>This register needs pagination.</h2><p className="muted">One of the school lists exceeds this initial version’s 500-record limit. Contact the maintainer to enable larger registers before continuing. Incomplete lists are not shown.</p></section>;
+   const people = { students, teachers, guardians };
++  const members = (memberResult.data ?? []) as MemberRow[];
++  const linkable = (kind: PersonKind, rowId: string) => {
++    const taken = new Set(people[kind].filter(p => p.id !== rowId && p.membership_id).map(p => p.membership_id));
++    return members.filter(m => m.status === "active" && m.roles.includes(linkRoleFor[kind]) && !taken.has(m.id)).map(m => ({ id: m.id, name: m.display_name || "School member" }));
++  };
+   const options = { students,guardians,classes,academic_years:years,grades };
+   const personName = (rows: PersonRow[], id: string) => { const row = rows.find(r => r.id === id); return row ? `${row.full_name} · ${row.reference}` : "Record unavailable"; };
+-  return <><div className="quiet-note"><p>School records are separate from sign-in accounts. Adding a person or relationship here sends no email and grants no portal access. You can correct names and references, and transfer or withdraw enrollments while keeping their history once migration 009 is applied. Guardian relationship changes will follow. Use fictional records while testing.</p></div>
+-    <div className="academic-grid">{(Object.keys(personLabels) as PersonKind[]).map(kind => <section className="content-panel" key={kind}><h2>{personLabels[kind].title}</h2><ul className="academic-list">{people[kind].map(p => <li key={p.id}><strong>{p.full_name}</strong><span>{personLabels[kind].reference}: {p.reference}</span><RecordEditor kind={kind} id={p.id} version={p.record_version} name={p.full_name} label={`${personLabels[kind].singular} full name`} reference={p.reference} referenceLabel={personLabels[kind].reference} /></li>)}</ul>{!people[kind].length && <p className="muted">No {personLabels[kind].title.toLowerCase()} added yet.</p>}<PersonForm kind={kind} /></section>)}
++  return <><div className="quiet-note"><p>School records are separate from sign-in accounts. Adding a person or relationship here sends no email and grants no portal access; use “Link sign-in” on a record to let that person read their own information. You can correct names and references, and transfer or withdraw enrollments while keeping their history once migration 009 is applied. Guardian relationship changes will follow. Use fictional records while testing.</p></div>
++    <div className="academic-grid">{(Object.keys(personLabels) as PersonKind[]).map(kind => <section className="content-panel" key={kind}><h2>{personLabels[kind].title}</h2><ul className="academic-list">{people[kind].map(p => <li key={p.id}><strong>{p.full_name}</strong><span>{personLabels[kind].reference}: {p.reference}</span><RecordEditor kind={kind} id={p.id} version={p.record_version} name={p.full_name} label={`${personLabels[kind].singular} full name`} reference={p.reference} referenceLabel={personLabels[kind].reference} /><LoginLink key={`${p.id}-${p.record_version}`} kind={kind} id={p.id} currentMembershipId={p.membership_id ?? null} members={linkable(kind, p.id)} /></li>)}</ul>{!people[kind].length && <p className="muted">No {personLabels[kind].title.toLowerCase()} added yet.</p>}<PersonForm kind={kind} /></section>)}
+       <section className="content-panel"><h2>Guardian links</h2><ul className="academic-list">{links.map(l => <li key={l.id}><strong>{personName(students,l.student_id)}</strong><span>{personName(guardians,l.guardian_id)} · {l.relationship}</span></li>)}</ul>{!links.length && <p className="muted">No guardians linked yet.</p>}<RelationshipForm options={options} enrollment={false} /></section>
+       <section className="content-panel"><h2>Class enrollment</h2><ul className="academic-list">{enrollments.map(e => { const c = classes.find(c => c.id === e.class_id); return <li key={e.id}><strong>{personName(students,e.student_id)}</strong><span>{c ? classLabel(c,options) : "Class unavailable"}</span><span>{e.starts_on} – {e.ends_on}</span><EnrollmentEditor key={`${e.id}-${e.record_version}`} row={e} options={options} /></li>; })}</ul>{!enrollments.length && <p className="muted">No students enrolled yet.</p>}<RelationshipForm options={options} enrollment /></section>
+     </div></>;
+diff --git a/src/lib/auth-context.ts b/src/lib/auth-context.ts
+index 63b62b4..17b371c 100644
+--- a/src/lib/auth-context.ts
++++ b/src/lib/auth-context.ts
+@@ -4,22 +4,24 @@ import { getSchoolId, isPortalConfigured } from "@/lib/config";
+ import { createClient } from "@/lib/supabase/server";
+ import { parseRoles } from "@/lib/permissions";
+ 
++// Not wrapped in React cache(): server actions mutate access and then re-render in the same
++// request, and a memoised context would show a just-demoted admin stale controls.
+ export async function getSchoolContext() {
+   if (!isPortalConfigured()) return { status: "unconfigured" as const };
+   const supabase = await createClient();
+   const { data: { user }, error: authError } = await supabase.auth.getUser();
+   if (authError || !user) redirect("/login");
+   const schoolId = getSchoolId()!;
+-  const { data: membership, error } = await supabase.from("school_memberships")
+-    .select("id, user_id, school_id, status, membership_roles(role)")
+-    .eq("user_id", user.id).eq("school_id", schoolId).eq("status", "active").maybeSingle();
+-  if (error) return { status: "unavailable" as const };
+-  if (!membership) return { status: "forbidden" as const };
++  // Independent reads run together: two sequential round trips instead of three.
++  const [{ data: membership, error }, { data: school, error: schoolError }] = await Promise.all([
++    supabase.from("school_memberships")
++      .select("id, user_id, school_id, status, membership_roles(role)")
++      .eq("user_id", user.id).eq("school_id", schoolId).eq("status", "active").maybeSingle(),
++    supabase.from("schools").select("id, name, timezone").eq("id", schoolId).eq("active", true).maybeSingle(),
++  ]);
++  if (error || schoolError) return { status: "unavailable" as const };
++  if (!membership || !school) return { status: "forbidden" as const };
+   const userRoles = parseRoles(membership.membership_roles.map((row) => row.role));
+   if (!userRoles.length) return { status: "forbidden" as const };
+-  const { data: school, error: schoolError } = await supabase.from("schools")
+-    .select("id, name, timezone").eq("id", schoolId).eq("active", true).maybeSingle();
+-  if (schoolError) return { status: "unavailable" as const };
+-  if (!school) return { status: "forbidden" as const };
+   return { status: "ready" as const, school, userId: user.id, roles: userRoles };
+ }
+diff --git a/src/lib/bulk-invitation.ts b/src/lib/bulk-invitation.ts
+new file mode 100644
+index 0000000..e0245a5
+--- /dev/null
++++ b/src/lib/bulk-invitation.ts
+@@ -0,0 +1,58 @@
++import type { Role } from "./permissions";
++import { invitationSchema } from "./account-validation";
++
++export const MAX_BULK_ROWS = 200;
++const MAX_BULK_CHARS = 100_000;
++const roleAliases: Record<string, Role> = {
++  admin: "school_admin", school_admin: "school_admin", "school admin": "school_admin",
++  teacher: "teacher", student: "student", learner: "student",
++  guardian: "guardian", parent: "guardian", "parent / guardian": "guardian",
++};
++
++export type BulkInvitation = { email: string; name: string; roles: Role[] };
++export type BulkParse = { ok: true; rows: BulkInvitation[] } | { ok: false; error: string };
++
++// Minimal RFC-4180-style splitter: commas, double-quoted fields, "" as an escaped quote.
++function splitCsvLine(line: string): string[] | null {
++  const out: string[] = []; let field = ""; let quoted = false;
++  for (let i = 0; i < line.length; i++) {
++    const c = line[i];
++    if (quoted) {
++      if (c === '"') { if (line[i + 1] === '"') { field += '"'; i++; } else quoted = false; } else field += c;
++    } else if (c === '"' && field.trim() === "") { quoted = true; field = ""; }
++    else if (c === ",") { out.push(field); field = ""; }
++    else field += c;
++  }
++  if (quoted) return null;
++  out.push(field);
++  return out.map((value) => value.trim());
++}
++
++// Input lines: email,name,roles   (roles separated by | or ;  e.g. teacher|guardian)
++// A header row starting with "email" is accepted and ignored. Blank lines are skipped.
++export function parseBulkInvitations(text: unknown): BulkParse {
++  if (typeof text !== "string" || !text.trim()) return { ok: false, error: "Paste at least one line: email,name,roles." };
++  if (text.length > MAX_BULK_CHARS) return { ok: false, error: "That list is too large. Import at most 200 people at a time." };
++  const lines = text.split(/\r?\n/).map((line, index) => ({ line, number: index + 1 })).filter(({ line }) => line.trim());
++  if (lines.length && /^\s*"?email"?\s*,/i.test(lines[0].line)) lines.shift();
++  if (!lines.length) return { ok: false, error: "Paste at least one line: email,name,roles." };
++  if (lines.length > MAX_BULK_ROWS) return { ok: false, error: `Import at most ${MAX_BULK_ROWS} people at a time (found ${lines.length}).` };
++  const rows: BulkInvitation[] = [];
++  for (const { line, number } of lines) {
++    const fields = splitCsvLine(line);
++    if (!fields || fields.length !== 3) return { ok: false, error: `Line ${number}: use exactly three fields — email,name,roles. Put names containing commas in double quotes.` };
++    const parsedRoles: Role[] = [];
++    for (const raw of fields[2].split(/[|;]/).map((value) => value.trim().toLowerCase()).filter(Boolean)) {
++      const role = roleAliases[raw];
++      if (!role) return { ok: false, error: `Line ${number}: unknown role “${raw.slice(0, 30)}”. Use teacher, student, guardian or school_admin.` };
++      parsedRoles.push(role);
++    }
++    const parsed = invitationSchema.safeParse({ email: fields[0], name: fields[1], roles: parsedRoles });
++    if (!parsed.success) {
++      const field = parsed.error.issues[0]?.path[0];
++      return { ok: false, error: `Line ${number}: ${field === "email" ? "invalid email address" : field === "name" ? "name must be 1–120 characters" : "choose at least one role"}.` };
++    }
++    rows.push(parsed.data);
++  }
++  return { ok: true, rows };
++}
+diff --git a/src/lib/link-validation.ts b/src/lib/link-validation.ts
+new file mode 100644
+index 0000000..e3ae464
+--- /dev/null
++++ b/src/lib/link-validation.ts
+@@ -0,0 +1,11 @@
++import { z } from "zod";
++
++export const linkKinds = ["students", "teachers", "guardians"] as const;
++export type LinkKind = (typeof linkKinds)[number];
++export const linkRoleFor: Record<LinkKind, "student" | "teacher" | "guardian"> = { students: "student", teachers: "teacher", guardians: "guardian" };
++// An empty membershipId means "remove the link".
++export const linkInput = z.object({
++  kind: z.enum(linkKinds),
++  id: z.uuid(),
++  membershipId: z.union([z.uuid(), z.literal("")]).transform((value) => (value === "" ? null : value)),
++});
+diff --git a/src/lib/permissions.ts b/src/lib/permissions.ts
+index 6daa60d..8595a6f 100644
+--- a/src/lib/permissions.ts
++++ b/src/lib/permissions.ts
+@@ -21,3 +21,11 @@ export function parseRoles(value: unknown): Role[] {
+   if (!Array.isArray(value)) return [];
+   return value.filter((role): role is Role => roles.includes(role as Role));
+ }
++
++// The single check every administrator server action uses. It narrows a school context to
++// the "ready" state, so callers can read context.school and context.userId safely afterwards.
++// This is action capability only: the database re-checks admin rights in every RPC and policy.
++export function isSchoolAdminContext<T extends { status: string }>(context: T): context is Extract<T, { status: "ready" }> {
++  const roleList = (context as { roles?: unknown }).roles;
++  return context.status === "ready" && Array.isArray(roleList) && roleList.includes("school_admin");
++}
+diff --git a/src/lib/register-validation.ts b/src/lib/register-validation.ts
+index 093a720..e17535b 100644
+--- a/src/lib/register-validation.ts
++++ b/src/lib/register-validation.ts
+@@ -9,7 +9,7 @@ export const registerInput = z.discriminatedUnion("kind", [
+ ]).refine(v => !("starts_on" in v) || v.starts_on <= v.ends_on, { message: "Check the enrollment dates." });
+ export type PersonKind = "students" | "teachers" | "guardians";
+ export type RegisterKind = z.infer<typeof registerInput>["kind"];
+-export type PersonRow = { id: string; full_name: string; reference: string; record_version?: number };
++export type PersonRow = { id: string; full_name: string; reference: string; record_version?: number; membership_id?: string | null };
+ export type RegisterOptions = {
+   students: PersonRow[]; guardians: PersonRow[];
+   classes: { id: string; name: string; academic_year_id: string; grade_id: string }[];
+diff --git a/tests/account-actions.test.ts b/tests/account-actions.test.ts
+index 1a31b39..338a497 100644
+--- a/tests/account-actions.test.ts
++++ b/tests/account-actions.test.ts
+@@ -1,5 +1,5 @@
+ import { beforeEach, describe, expect, it, vi } from "vitest";
+-const mock = vi.hoisted(() => ({ getUser: vi.fn(), updateUser: vi.fn(), verifyOtp: vi.fn(), resetPasswordForEmail: vi.fn(), rpc: vi.fn(), configured: true, emailEnabled: true, school: "00000000-0000-4000-8000-000000000001" }));
++const mock = vi.hoisted(() => ({ getUser: vi.fn(), updateUser: vi.fn(), signOut: vi.fn(), verifyOtp: vi.fn(), resetPasswordForEmail: vi.fn(), rpc: vi.fn(), configured: true, emailEnabled: true, school: "00000000-0000-4000-8000-000000000001" }));
+ vi.mock("server-only", () => ({}));
+ vi.mock("next/navigation", () => ({ redirect: (path: string) => { throw new Error(`REDIRECT:${path}`); } }));
+ vi.mock("@/lib/config", () => ({ isPortalConfigured: () => mock.configured, getSchoolId: () => mock.school }));
+@@ -9,7 +9,7 @@ import { acceptInvitation, changePassword, confirmEmail, requestRecovery } from
+ 
+ const state = { error: "", message: "" };
+ function form(values: Record<string,string>) { const data = new FormData(); for (const [key,value] of Object.entries(values)) data.set(key,value); return data; }
+-beforeEach(() => { vi.clearAllMocks(); mock.configured=true; mock.emailEnabled=true; mock.getUser.mockResolvedValue({data:{user:{id:"verified-user"}},error:null});mock.updateUser.mockResolvedValue({error:null});mock.verifyOtp.mockResolvedValue({error:null});mock.resetPasswordForEmail.mockResolvedValue({error:null});mock.rpc.mockResolvedValue({error:null}); });
++beforeEach(() => { vi.clearAllMocks(); mock.configured=true; mock.emailEnabled=true; mock.getUser.mockResolvedValue({data:{user:{id:"verified-user"}},error:null});mock.updateUser.mockResolvedValue({error:null});mock.signOut.mockResolvedValue({error:null});mock.verifyOtp.mockResolvedValue({error:null});mock.resetPasswordForEmail.mockResolvedValue({error:null});mock.rpc.mockResolvedValue({error:null}); });
+ 
+ describe("password recovery and invitation actions (no real requests)", () => {
+   it("does not send when email is disabled", async () => {
+@@ -45,6 +45,18 @@ describe("password recovery and invitation actions (no real requests)", () => {
+     expect(mock.updateUser).not.toHaveBeenCalled();
+     await expect(changePassword(state,form({...values,confirm:values.password,flow:"invite"}))).rejects.toThrow("REDIRECT:/account/accept");
+   });
++  it("ends all other sessions after a successful password change, and tolerates revocation failure", async () => {
++    const values = {password:"fictional-password-123",confirm:"fictional-password-123"};
++    await expect(changePassword(state,form(values))).rejects.toThrow("REDIRECT:/dashboard");
++    expect(mock.signOut).toHaveBeenCalledWith({scope:"others"});
++    mock.signOut.mockRejectedValue(new Error("network"));
++    await expect(changePassword(state,form(values))).rejects.toThrow("REDIRECT:/dashboard");
++  });
++  it("does not revoke sessions when the password update fails", async () => {
++    mock.updateUser.mockResolvedValue({error:{message:"weak"}});
++    expect((await changePassword(state,form({password:"fictional-password-123",confirm:"fictional-password-123"}))).error).toContain("could not be updated");
++    expect(mock.signOut).not.toHaveBeenCalled();
++  });
+   it("accepts only through the authenticated database RPC and configured school", async () => {
+     await expect(acceptInvitation(state)).rejects.toThrow("REDIRECT:/dashboard");
+     expect(mock.rpc).toHaveBeenCalledWith("accept_school_invitation",{target_school:mock.school});
+diff --git a/tests/bulk-invitation.test.ts b/tests/bulk-invitation.test.ts
+new file mode 100644
+index 0000000..fc2779f
+--- /dev/null
++++ b/tests/bulk-invitation.test.ts
+@@ -0,0 +1,27 @@
++import { describe, expect, it } from "vitest";
++import { MAX_BULK_ROWS, parseBulkInvitations } from "../src/lib/bulk-invitation";
++
++describe("parseBulkInvitations", () => {
++  it("parses rows, a header, quotes, aliases and mixed separators", () => {
++    const result = parseBulkInvitations('Email,Name,Roles\n  A@Example.invalid , "Fictional, Anna" ,teacher|Parent\n\nb@example.invalid,Ben,student;guardian\r\n');
++    expect(result).toEqual({ ok: true, rows: [
++      { email: "a@example.invalid", name: "Fictional, Anna", roles: ["teacher", "guardian"] },
++      { email: "b@example.invalid", name: "Ben", roles: ["student", "guardian"] },
++    ] });
++  });
++  it("rejects bad input with the line number and no partial result", () => {
++    expect(parseBulkInvitations("a@example.invalid,Ann,teacher\nnot-an-email,Bob,student")).toEqual({ ok: false, error: "Line 2: invalid email address." });
++    expect(parseBulkInvitations("a@example.invalid,Ann,principal")).toMatchObject({ ok: false, error: expect.stringContaining("unknown role") });
++    expect(parseBulkInvitations("a@example.invalid,Ann,")).toEqual({ ok: false, error: "Line 1: choose at least one role." });
++    expect(parseBulkInvitations("a@example.invalid,Ann")).toMatchObject({ ok: false, error: expect.stringContaining("exactly three fields") });
++    expect(parseBulkInvitations('a@example.invalid,"Unclosed,teacher')).toMatchObject({ ok: false, error: expect.stringContaining("Line 1") });
++  });
++  it("enforces empty and size limits", () => {
++    expect(parseBulkInvitations("   ")).toMatchObject({ ok: false });
++    expect(parseBulkInvitations(null)).toMatchObject({ ok: false });
++    expect(parseBulkInvitations("email,name,roles")).toMatchObject({ ok: false });
++    const many = Array.from({ length: MAX_BULK_ROWS + 1 }, (_, i) => `p${i}@example.invalid,P${i},student`).join("\n");
++    expect(parseBulkInvitations(many)).toMatchObject({ ok: false, error: expect.stringContaining("at most 200") });
++    expect(parseBulkInvitations("x".repeat(100_001))).toMatchObject({ ok: false });
++  });
++});
+diff --git a/tests/new-actions.test.ts b/tests/new-actions.test.ts
+new file mode 100644
+index 0000000..645bf6a
+--- /dev/null
++++ b/tests/new-actions.test.ts
+@@ -0,0 +1,90 @@
++import { beforeEach, describe, expect, it, vi } from "vitest";
++const mock = vi.hoisted(() => ({ getContext: vi.fn(), rpc: vi.fn(), invoke: vi.fn() }));
++vi.mock("server-only", () => ({}));
++vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
++vi.mock("@/lib/auth-context", () => ({ getSchoolContext: mock.getContext }));
++vi.mock("@/lib/account-config", () => ({ invitationDeliveryEnabled: () => true }));
++vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ rpc: mock.rpc, functions: { invoke: mock.invoke } }) }));
++import { bulkInvite, changeInvitation } from "../src/app/dashboard/people/actions";
++import { linkRegisterMember } from "../src/app/dashboard/registers/link-actions";
++import { isSchoolAdminContext } from "../src/lib/permissions";
++
++const school = "00000000-0000-4000-8000-000000000001", record = "00000000-0000-4000-8000-000000000002", member = "00000000-0000-4000-8000-000000000003";
++const accessState = { error: "", message: "" }, linkState = { error: "", saved: false };
++function form(values: Record<string, string>) { const d = new FormData(); for (const [k, v] of Object.entries(values)) d.set(k, v); return d; }
++beforeEach(() => { vi.clearAllMocks(); mock.getContext.mockResolvedValue({ status: "ready", school: { id: school }, roles: ["school_admin"] }); mock.rpc.mockResolvedValue({ data: null, error: null }); });
++
++describe("isSchoolAdminContext", () => {
++  it("accepts only a ready context holding school_admin", () => {
++    expect(isSchoolAdminContext({ status: "ready", roles: ["teacher", "school_admin"] })).toBe(true);
++    expect(isSchoolAdminContext({ status: "ready", roles: ["teacher"] })).toBe(false);
++    expect(isSchoolAdminContext({ status: "forbidden" })).toBe(false);
++    expect(isSchoolAdminContext({ status: "ready", roles: "school_admin" })).toBe(false);
++    expect(isSchoolAdminContext({ status: "ready" })).toBe(false);
++  });
++});
++
++describe("bulkInvite", () => {
++  it("denies non-admins before parsing or calling the database", async () => {
++    mock.getContext.mockResolvedValue({ status: "ready", school: { id: school }, roles: ["teacher"] });
++    expect((await bulkInvite(accessState, form({ list: "a@example.invalid,A,student" }))).error).toContain("Admin");
++    expect(mock.rpc).not.toHaveBeenCalled();
++  });
++  it("rejects malformed lists locally with the line number", async () => {
++    expect((await bulkInvite(accessState, form({ list: "a@example.invalid,A,student\nbad,B,student" }))).error).toContain("Line 2");
++    expect(mock.rpc).not.toHaveBeenCalled();
++  });
++  it("sends the server-side school ID, ignoring any forged one, and reports counts", async () => {
++    mock.rpc.mockResolvedValue({ data: [{ created_count: 2, skipped_count: 1 }], error: null });
++    const result = await bulkInvite(accessState, form({ list: "a@example.invalid,A,student\nb@example.invalid,B,teacher", schoolId: record }));
++    expect(result.message).toContain("Prepared 2"); expect(result.message).toContain("1 already pending");
++    expect(mock.rpc).toHaveBeenCalledWith("create_school_invitations_bulk", { target_school: school, invites: [
++      { email: "a@example.invalid", name: "A", roles: ["student"] }, { email: "b@example.invalid", name: "B", roles: ["teacher"] }] });
++    expect(mock.invoke).not.toHaveBeenCalled();
++  });
++  it("shows our own row-level SQL messages but hides unexpected database errors", async () => {
++    mock.rpc.mockResolvedValue({ data: null, error: { code: "22023", message: "Row 2: invalid email" } });
++    expect((await bulkInvite(accessState, form({ list: "a@example.invalid,A,student" }))).error).toContain("Row 2: invalid email");
++    mock.rpc.mockResolvedValue({ data: null, error: { code: "22023", message: "relation \"secret_table\" does not exist" } });
++    expect((await bulkInvite(accessState, form({ list: "a@example.invalid,A,student" }))).error).not.toContain("secret_table");
++    mock.rpc.mockResolvedValue({ data: null, error: { code: "P0001", message: "Daily bulk invitation limit reached" } });
++    expect((await bulkInvite(accessState, form({ list: "a@example.invalid,A,student" }))).error).toContain("500");
++  });
++});
++
++describe("changeInvitation reset", () => {
++  it("calls the reset RPC for admins only and never sends email by itself", async () => {
++    const result = await changeInvitation(accessState, form({ invitationId: record, command: "reset" }));
++    expect(result.message).toContain("Delivery reset");
++    expect(mock.rpc).toHaveBeenCalledWith("reset_invitation_delivery", { target_school: school, target_invitation: record });
++    expect(mock.invoke).not.toHaveBeenCalled();
++    mock.rpc.mockResolvedValue({ error: { code: "22023" } });
++    expect((await changeInvitation(accessState, form({ invitationId: record, command: "reset" }))).error).toContain("cannot be reset yet");
++    mock.getContext.mockResolvedValue({ status: "ready", school: { id: school }, roles: ["teacher"] });
++    mock.rpc.mockClear();
++    expect((await changeInvitation(accessState, form({ invitationId: record, command: "reset" }))).error).toContain("Admin");
++    expect(mock.rpc).not.toHaveBeenCalled();
++  });
++});
++
++describe("linkRegisterMember", () => {
++  it("denies non-admins and unsupported kinds", async () => {
++    mock.getContext.mockResolvedValue({ status: "ready", school: { id: school }, roles: ["guardian"] });
++    expect((await linkRegisterMember(linkState, form({ kind: "students", id: record, membershipId: member }))).error).toContain("administrator");
++    mock.getContext.mockResolvedValue({ status: "ready", school: { id: school }, roles: ["school_admin"] });
++    mock.rpc.mockClear();
++    expect((await linkRegisterMember(linkState, form({ kind: "audit_events", id: record, membershipId: member }))).error).toContain("valid");
++    expect((await linkRegisterMember(linkState, form({ kind: "students", id: "nope", membershipId: member }))).error).toContain("valid");
++    expect(mock.rpc).not.toHaveBeenCalled();
++  });
++  it("links, unlinks (empty selection becomes null) and maps database errors", async () => {
++    expect((await linkRegisterMember(linkState, form({ kind: "teachers", id: record, membershipId: member, schoolId: member }))).saved).toBe(true);
++    expect(mock.rpc).toHaveBeenLastCalledWith("link_register_to_member", { target_school: school, record_kind: "teachers", target_record: record, target_membership: member });
++    await linkRegisterMember(linkState, form({ kind: "teachers", id: record, membershipId: "" }));
++    expect(mock.rpc).toHaveBeenLastCalledWith("link_register_to_member", expect.objectContaining({ target_membership: null }));
++    mock.rpc.mockResolvedValue({ error: { code: "23505" } });
++    expect((await linkRegisterMember(linkState, form({ kind: "teachers", id: record, membershipId: member }))).error).toContain("already linked");
++    mock.rpc.mockResolvedValue({ error: { code: "22023" } });
++    expect((await linkRegisterMember(linkState, form({ kind: "teachers", id: record, membershipId: member }))).error).toContain("matching role");
++  });
++});
+-- 
+2.43.0
+
+
+From faf277afe9737fec265227e849fcf7de9adb5d58 Mon Sep 17 00:00:00 2001
+From: Review <review@example.invalid>
+Date: Fri, 2 Oct 2026 09:26:33 +0000
+Subject: [PATCH 3/4] Security headers: per-request nonce CSP, HSTS,
+ start:public script
+
+---
+ next.config.ts     |  1 +
+ package.json       |  1 +
+ src/app/layout.tsx |  5 ++++-
+ src/lib/csp.ts     | 23 +++++++++++++++++++++++
+ src/proxy.ts       | 47 +++++++++++++++++++++++++++++++---------------
+ tests/csp.test.ts  | 23 +++++++++++++++++++++++
+ 6 files changed, 84 insertions(+), 16 deletions(-)
+ create mode 100644 src/lib/csp.ts
+ create mode 100644 tests/csp.test.ts
+
+diff --git a/next.config.ts b/next.config.ts
+index 683a9f4..9cf31ad 100644
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -8,6 +8,7 @@ const config: NextConfig = {
+   logging: { incomingRequests: { ignore: [/\/auth\/confirm/] } },
+   async headers() {
+     return [{ source: "/:path*", headers: [
++      { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+       { key: "X-Content-Type-Options", value: "nosniff" },
+       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+       { key: "X-Frame-Options", value: "DENY" },
+diff --git a/package.json b/package.json
+index 915c7af..031525f 100644
+--- a/package.json
++++ b/package.json
+@@ -6,6 +6,7 @@
+     "dev": "next dev --hostname 127.0.0.1",
+     "build": "next build",
+     "start": "next start --hostname 127.0.0.1",
++    "start:public": "next start --hostname 0.0.0.0",
+     "lint": "eslint .",
+     "typecheck": "tsc --noEmit",
+     "test": "vitest run",
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index 7cc857b..14afe31 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -1,4 +1,5 @@
+ import type { Metadata } from "next";
++import { connection } from "next/server";
+ import "./globals.css";
+ 
+ export const metadata: Metadata = {
+@@ -7,6 +8,8 @@ export const metadata: Metadata = {
+   robots: { index: false, follow: false },
+ };
+ 
+-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
++// Rendering every page per request lets Next.js attach the CSP nonce (set in src/proxy.ts) to its scripts.
++export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
++  await connection();
+   return <html lang="en" data-scroll-behavior="smooth"><body>{children}</body></html>;
+ }
+diff --git a/src/lib/csp.ts b/src/lib/csp.ts
+new file mode 100644
+index 0000000..eb47e1f
+--- /dev/null
++++ b/src/lib/csp.ts
+@@ -0,0 +1,23 @@
++// Content-Security-Policy with a per-request nonce. The app loads nothing from other origins
++// (the browser never talks to Supabase; all backend calls happen on the server), so the policy
++// can be tight. style-src keeps 'unsafe-inline' because React inline style attributes are used;
++// scripts, the dangerous part, are nonce-only.
++export function buildCsp(nonce: string, development = false) {
++  const directives = [
++    "default-src 'self'",
++    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${development ? " 'unsafe-eval'" : ""}`,
++    "style-src 'self' 'unsafe-inline'",
++    "img-src 'self' data: blob:",
++    "font-src 'self'",
++    `connect-src 'self'${development ? " ws: wss:" : ""}`,
++    "object-src 'none'",
++    "base-uri 'self'",
++    "form-action 'self'",
++    "frame-ancestors 'none'",
++  ];
++  return directives.join("; ");
++}
++
++export function createNonce() {
++  return btoa(crypto.randomUUID());
++}
+diff --git a/src/proxy.ts b/src/proxy.ts
+index 4aafdb3..1cbe960 100644
+--- a/src/proxy.ts
++++ b/src/proxy.ts
+@@ -1,25 +1,42 @@
+ import { createServerClient } from "@supabase/ssr";
+ import { NextResponse, type NextRequest } from "next/server";
+ import { getSupabaseConfig } from "@/lib/config";
++import { buildCsp, createNonce } from "@/lib/csp";
++
++// Paths that need a refreshed Supabase session. Every other page only receives security headers.
++const sessionPaths = /^\/(dashboard|login|account|auth|forgot-password)(\/|$)/;
+ 
+ export async function proxy(request: NextRequest) {
+-  let response = NextResponse.next({ request });
++  const nonce = createNonce();
++  const csp = buildCsp(nonce, process.env.NODE_ENV !== "production");
++  // Next.js reads the nonce from the REQUEST's CSP header and applies it to its own scripts.
++  const forward = () => {
++    const headers = new Headers(request.headers); // rebuilt after cookie updates so they are forwarded
++    headers.set("x-nonce", nonce);
++    headers.set("Content-Security-Policy", csp);
++    return NextResponse.next({ request: { headers } });
++  };
++  let response = forward();
+   const config = getSupabaseConfig();
+-  if (!config) return response;
+-  const supabase = createServerClient(config.url, config.key, {
+-    cookies: {
+-      getAll: () => request.cookies.getAll(),
+-      setAll(values) {
+-        values.forEach(({ name, value }) => request.cookies.set(name, value));
+-        response = NextResponse.next({ request });
+-        values.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
++  const needsSession = sessionPaths.test(request.nextUrl.pathname);
++  if (config && needsSession) {
++    const supabase = createServerClient(config.url, config.key, {
++      cookies: {
++        getAll: () => request.cookies.getAll(),
++        setAll(values) {
++          values.forEach(({ name, value }) => request.cookies.set(name, value));
++          response = forward();
++          values.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
++        },
+       },
+-    },
+-  });
+-  // The protected page checks the current user AND active DB membership again.
+-  await supabase.auth.getUser();
+-  response.headers.set("Cache-Control", "private, no-store");
++    });
++    // The protected page checks the current user AND active DB membership again.
++    await supabase.auth.getUser();
++  }
++  response.headers.set("Content-Security-Policy", csp);
++  if (needsSession) response.headers.set("Cache-Control", "private, no-store");
+   return response;
+ }
+ 
+-export const config = { matcher: ["/dashboard/:path*", "/login", "/account/:path*", "/auth/:path*", "/forgot-password"] };
++// Run on pages, not on static assets.
++export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"] };
+diff --git a/tests/csp.test.ts b/tests/csp.test.ts
+new file mode 100644
+index 0000000..847d94f
+--- /dev/null
++++ b/tests/csp.test.ts
+@@ -0,0 +1,23 @@
++import { describe, expect, it } from "vitest";
++import { buildCsp, createNonce } from "../src/lib/csp";
++
++describe("content security policy", () => {
++  it("allows scripts only by nonce, forbids framing, plugins and foreign forms", () => {
++    const csp = buildCsp("abc123");
++    expect(csp).toContain("script-src 'self' 'nonce-abc123' 'strict-dynamic'");
++    expect(csp).not.toMatch(/script-src[^;]*'unsafe-(inline|eval)'/);
++    for (const directive of ["frame-ancestors 'none'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "default-src 'self'"]) expect(csp).toContain(directive);
++    expect(csp).not.toMatch(/https?:\/\//);
++  });
++  it("only relaxes eval and websockets in development", () => {
++    expect(buildCsp("n", true)).toContain("'unsafe-eval'");
++    expect(buildCsp("n", true)).toContain("ws:");
++    expect(buildCsp("n", false)).not.toContain("unsafe-eval");
++    expect(buildCsp("n", false)).not.toContain("ws:");
++  });
++  it("creates an unpredictable nonce for every request", () => {
++    const nonces = new Set(Array.from({ length: 50 }, createNonce));
++    expect(nonces.size).toBe(50);
++    for (const nonce of nonces) expect(nonce).toMatch(/^[A-Za-z0-9+/=]{20,}$/);
++  });
++});
+-- 
+2.43.0
+
+
+From 3e00e18a004b56dcafa2fdbe955668d2d778df9e Mon Sep 17 00:00:00 2001
+From: Review <review@example.invalid>
+Date: Fri, 2 Oct 2026 09:26:33 +0000
+Subject: [PATCH 4/4] Repo: CI (audit, e2e, pinned actions), Dependabot,
+ committed Auth config, .env.example, docs
+
+---
+ .env.example                | 13 ++++++++++
+ .github/dependabot.yml      | 12 ++++++++++
+ .github/workflows/check.yml | 36 +++++++++++++++++++++++++---
+ .gitignore                  |  3 +++
+ README.md                   |  9 ++++---
+ docs/AUTH_AND_PRIVACY.md    | 47 ++++++++++++++++++++++++++++++++++++
+ docs/LOGIN_LINKS.md         | 26 ++++++++++++++++++++
+ docs/SUPABASE_SETUP.md      |  9 +++++++
+ supabase/config.toml        | 48 +++++++++++++++++++++++++++++++++++--
+ 9 files changed, 195 insertions(+), 8 deletions(-)
+ create mode 100644 .env.example
+ create mode 100644 .github/dependabot.yml
+ create mode 100644 docs/AUTH_AND_PRIVACY.md
+ create mode 100644 docs/LOGIN_LINKS.md
+
+diff --git a/.env.example b/.env.example
+new file mode 100644
+index 0000000..86cb9ea
+--- /dev/null
++++ b/.env.example
+@@ -0,0 +1,13 @@
++# Copy to .env.local for local development. Never commit real values.
++# Browser-visible by design: Supabase project URL and PUBLISHABLE key only.
++# Never put an sb_secret_ key or the service_role key in this file (the app refuses sb_secret_ keys).
++NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
++NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_replace_me
++
++# The single school this deployment serves (a row in public.schools).
++SCHOOL_PORTAL_SCHOOL_ID=00000000-0000-4000-8000-000000000000
++
++# Email flows stay OFF until SMTP, templates and redirect URLs are configured (docs/ACCOUNT_MANAGEMENT.md).
++SCHOOL_PORTAL_SITE_URL=http://localhost:3000
++SCHOOL_PORTAL_EMAIL_ENABLED=false
++SCHOOL_PORTAL_INVITATIONS_ENABLED=false
+diff --git a/.github/dependabot.yml b/.github/dependabot.yml
+new file mode 100644
+index 0000000..9bd8254
+--- /dev/null
++++ b/.github/dependabot.yml
+@@ -0,0 +1,12 @@
++version: 2
++updates:
++  - package-ecosystem: npm
++    directory: /
++    schedule: { interval: weekly }
++    open-pull-requests-limit: 5
++    groups:
++      minor-and-patch:
++        update-types: [minor, patch]
++  - package-ecosystem: github-actions
++    directory: /
++    schedule: { interval: weekly }
+diff --git a/.github/workflows/check.yml b/.github/workflows/check.yml
+index b7c872b..ca661d5 100644
+--- a/.github/workflows/check.yml
++++ b/.github/workflows/check.yml
+@@ -1,17 +1,47 @@
+-name: Foundation checks
++name: Checks
+ on:
+   push:
++    branches: [main]
+   pull_request:
+ permissions:
+   contents: read
++concurrency:
++  group: checks-${{ github.ref }}
++  cancel-in-progress: true
+ jobs:
+   check:
+     runs-on: ubuntu-latest
++    timeout-minutes: 20
+     steps:
+-      - uses: actions/checkout@v4
+-      - uses: actions/setup-node@v4
++      # Actions are pinned to commit SHAs; Dependabot (see dependabot.yml) proposes updates.
++      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
++      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+         with:
+           node-version: '24'
+           cache: npm
+       - run: npm ci
++      # Runtime dependencies only: dev-tool advisories should not block a release.
++      - run: npm audit --omit=dev --audit-level=high
++      # lint + typecheck + unit/database tests (embedded PostgreSQL runs every migration) + build
+       - run: npm run check
++  e2e:
++    needs: check
++    runs-on: ubuntu-latest
++    timeout-minutes: 20
++    steps:
++      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
++      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
++        with:
++          node-version: '24'
++          cache: npm
++      - run: npm ci
++      - run: npx playwright install --with-deps chromium
++      - run: npm run test:e2e
++      - if: failure()
++        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
++        with:
++          name: playwright-report
++          path: |
++            playwright-report/
++            test-results/
++          retention-days: 7
+diff --git a/.gitignore b/.gitignore
+index 2d14d7c..ce257d3 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -9,3 +9,6 @@ test-results/
+ *.tsbuildinfo
+ *.log
+ .DS_Store
++
++# Supabase CLI state (holds the linked project reference after `supabase link`)
++supabase/.temp/
+diff --git a/README.md b/README.md
+index 00e4b47..e92b644 100644
+--- a/README.md
++++ b/README.md
+@@ -18,7 +18,7 @@ The current Phase 1 increments include:
+ 
+ **The dedicated backend is now configured locally.** On 2026-09-30, read-only checks confirmed Supabase connectivity, denied anonymous database reads, and a signed-out dashboard redirect to login. The user confirmed that School Admin sign-in, dashboard and settings work. A subsequent check confirmed public sign-ups are disabled. Preview pages contain no school data and do not bypass authentication. Full hosted permission, session lifecycle, email and deployment testing remains outstanding; see [verification](docs/VERIFICATION.md).
+ 
+-Public sign-ups have now been independently verified disabled. The new account-management migration must be applied before **People & access** works. SMTP is not configured, so recovery and invitation emails remain disabled. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). MFA and academic modules are not implemented. Phase 1 is not complete and this is not ready for real learner data.
++Public sign-ups have now been independently verified disabled. The new account-management migration must be applied before **People & access** works. SMTP is not configured, so recovery and invitation emails remain disabled. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). Academic setup, school registers, teaching assignments, the weekly timetable, enrollment lifecycle and record corrections now exist (migrations 003–009) for administrators. Migrations 010–012 add **sign-in links** with scoped read access for teachers, guardians and students ([LOGIN_LINKS](docs/LOGIN_LINKS.md)), **bulk invitations** and delivery reset, an append-only audit trail, recoverable correction history and safer account deletion. MFA is enabled in configuration but not yet required for administrators ([AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Attendance, marks and finance are not implemented. Phase 1 is not complete and this is not ready for real learner data.
+ 
+ ## Run locally
+ 
+@@ -29,7 +29,7 @@ npm ci
+ npm run dev
+ ```
+ 
+-Open http://127.0.0.1:3000. With no backend configuration, the root opens `/preview`. The app binds to localhost by default.
++Open http://127.0.0.1:3000. With no backend configuration, the root opens `/preview`. The app binds to localhost by default (`npm run start:public` binds all interfaces; see [AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Copy `.env.example` to `.env.local` to connect a backend.
+ 
+ ```powershell
+ npm run check
+@@ -50,7 +50,8 @@ Follow [Supabase setup](docs/SUPABASE_SETUP.md). Do not reuse another project's
+ | `src/app/login` | Server-side sign-in and sign-out |
+ | `src/app/dashboard` | Protected workspace and school-settings action |
+ | `src/lib/auth-context.ts` | Server-verified identity and active school context |
+-| `src/proxy.ts` | Session-cookie refresh for authenticated routes |
++| `src/proxy.ts` | Per-request CSP nonce, plus session-cookie refresh for authenticated routes |
++| `src/lib/permissions.ts` | `isSchoolAdminContext`, the one admin check used by every administrator action |
+ | `supabase/migrations` | Versioned schema, policies and audit triggers |
+ | `tests` | Foundation permission and database tests |
+ | `e2e` | Browser checks for local preview and unconfigured access |
+@@ -62,6 +63,8 @@ Follow [Supabase setup](docs/SUPABASE_SETUP.md). Do not reuse another project's
+ - [Architecture and access model](docs/ARCHITECTURE.md)
+ - [Supabase setup and live verification](docs/SUPABASE_SETUP.md)
+ - [Account management, SMTP and invitation setup](docs/ACCOUNT_MANAGEMENT.md)
++- [Sign-in links and role-scoped access](docs/LOGIN_LINKS.md)
++- [Auth configuration, security headers and personal-data handling](docs/AUTH_AND_PRIVACY.md)
+ - [Roadmap and remaining Phase 1 work](docs/ROADMAP.md)
+ 
+ ## Scope
+diff --git a/docs/AUTH_AND_PRIVACY.md b/docs/AUTH_AND_PRIVACY.md
+new file mode 100644
+index 0000000..876cb23
+--- /dev/null
++++ b/docs/AUTH_AND_PRIVACY.md
+@@ -0,0 +1,47 @@
++# Auth configuration, security headers and personal-data handling
++
++## 1. Auth settings are version-controlled (`supabase/config.toml`)
++The file now documents the intended hosted Auth settings: sign-ups off, 12-character minimum enforced by Supabase Auth itself (the form check alone can be bypassed with the public key), refresh-token rotation, confirmed email changes, rate limits, TOTP MFA enabled, and a 24-hour email-link lifetime.
++
++Nothing changes on the hosted project until you apply it:
++
++1. Create a **staging** Supabase project and `supabase link` to it.
++2. Export the variables the file references (`SCHOOL_PORTAL_SITE_URL`, `SCHOOL_PORTAL_PASSWORD_REDIRECT_URL`, e.g. `https://school.example/account/password`).
++3. Run `supabase config push`, read the diff it prints, and check sign-in, recovery and invitation links.
++4. Repeat for production. If the CLI reports a key it does not recognise, fix it rather than ignoring the warning.
++
++Invitation *records* last 7 days but email links last at most 24 hours. An invitee with an expired link uses **Forgot password**, then **Accept a school invitation** on the dashboard.
++
++## 2. Requiring MFA for administrators (not yet enforced)
++Enabling TOTP lets users enrol, it does not require it. Before real data: add an enrol screen, then require `aal2` for administrator actions. The cheapest robust approach is a database check inside `private.is_school_admin` (read `auth.jwt()->>'aal'`), so every policy and RPC enforces it at once. Test it in `tests/database.test.ts` style before enabling.
++
++## 3. Security headers
++`src/proxy.ts` issues a per-request-nonce Content-Security-Policy (`src/lib/csp.ts`); pages render per request so Next.js can attach the nonce. `next.config.ts` adds HSTS, `nosniff`, `X-Frame-Options` and a strict referrer policy. If you add an external script, image host or font, extend `buildCsp` deliberately and update `tests/csp.test.ts`. Browser-check the policy after any dependency upgrade: open the console and look for "Refused to execute" messages.
++
++## 4. Running the app on a server or in a container
++`npm start` binds to `127.0.0.1` on purpose. A VPS or container that must accept outside connections should use `npm run start:public` (binds `0.0.0.0`) behind a TLS-terminating reverse proxy. Hosted platforms that manage this for you need neither.
++
++## 5. Personal data: retention, history and erasure
++This is an engineering template, not legal advice. Have a privacy officer or lawyer confirm retention periods and lawful bases for your jurisdiction (for example POPIA in South Africa).
++
++* **Audit trail** (`audit_events`) is append-only and holds IDs and action names, not names. It is kept for accountability.
++* **Correction history** (`record_history`) holds the *previous* name/reference after a correction, readable by administrators only. Nothing purges it automatically. Run `select purge_record_history('<school-id>', interval '2 years')` as an administrator on a schedule the school has agreed (minimum 30 days).
++* **Deactivate, don't delete, by default.** Suspending a member removes all access and keeps history intact.
++* **Deleting an Auth account** no longer fails because of invitation history (`invited_by` / `accepted_by` become null, which also voids that person's unsent invitations). A member who still has a membership cannot be deleted, deliberately.
++* **Full erasure** (when required) is an operator task. Template, run in the SQL editor as the project owner and reviewed first (replace the placeholders):
++
++```sql
++begin;
++-- 1. Anonymise and detach the register record(s); enrollments stay for referential history.
++update public.students set full_name = '[erased]', reference = 'ERASED-' || id, membership_id = null,
++  record_version = record_version + 1 where id = '<student-id>';
++-- 2. Remove retained previous values.
++delete from public.record_history where record_kind = 'students' and record_id = '<student-id>';
++-- 3. Remove the sign-in membership and profile.
++delete from public.membership_roles where membership_id = '<membership-id>';
++delete from public.school_memberships where id = '<membership-id>';
++delete from public.profiles where user_id = '<auth-user-id>';
++commit;
++-- 4. Finally delete the user under Authentication > Users in the Supabase dashboard.
++```
++Repeat step 1 for `teachers` / `guardians` as needed. `audit_events` keeps only record IDs and cannot be edited, so no personal text remains there.
+diff --git a/docs/LOGIN_LINKS.md b/docs/LOGIN_LINKS.md
+new file mode 100644
+index 0000000..fad54c3
+--- /dev/null
++++ b/docs/LOGIN_LINKS.md
+@@ -0,0 +1,26 @@
++# Linking register records to sign-ins (migration 010)
++
++School registers (`students`, `teachers`, `guardians`) are separate from sign-in accounts. Migration `202610020010` adds an optional `membership_id` to each, so a person's *record* can be tied to their *login*. Until a record is linked, that person sees none of its personal or relationship data.
++
++## What each linked person can read (read-only; all writes stay administrator-only)
++
++| Role | Sees |
++| --- | --- |
++| Any active member | Academic years, terms, grades, subjects of their own school |
++| Teacher | Their own teacher record and assignments; classes they teach **today**; students on those rosters; those enrollments; lessons they teach |
++| Guardian | Their own record and links; their linked children; those children's enrollments, classes and lessons |
++| Student | Their own record, enrollments, classes and lessons |
++
++Access is re-evaluated on every query. Removing the role, suspending the member, deactivating the school, or letting a teaching assignment end removes access immediately. "Today" uses the school's timezone (falling back to UTC if the stored timezone is invalid).
++
++## How to link
++
++People & access → invite and accept → Registers → **Link sign-in** on the record. The list shows only active members who hold the matching role and are not already linked to another record of that type. The database enforces the same rules (`public.link_register_to_member`), including one login per record, same school, and role match. Each link and unlink is audited.
++
++## Extending this safely
++
++New tables that hold learner data must follow the same pattern: no policy `using (true)`; derive scope from the `private.my_*` helpers; add a test next to `tests/membership-links-database.test.ts` proving unlinked, expired, suspended and cross-school callers see nothing. `tests/hardening-database.test.ts` fails automatically if a new table lacks row-level security, if a function is executable by `anon`, or if a `SECURITY DEFINER` function does not pin its `search_path`.
++
++Policy performance note: helpers run per row. This is fine for a single school; if registers grow into the tens of thousands, review query plans (`explain analyze`) before adding more modules.
++
++The dashboard UI is still administrator-focused. The database now permits scoped reads for other roles; building the teacher, guardian and student screens is the next step and should query only through the authenticated client so these policies apply.
+diff --git a/docs/SUPABASE_SETUP.md b/docs/SUPABASE_SETUP.md
+index 0f4c187..43e9ddf 100644
+--- a/docs/SUPABASE_SETUP.md
++++ b/docs/SUPABASE_SETUP.md
+@@ -10,6 +10,15 @@ For the first controlled pilot, disable public sign-ups. Do not enable unrestric
+ 
+ ## 2. Apply the migration
+ 
++> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
++
++
++> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
++
++
++> **Order matters.** Apply every file in `supabase/migrations/` once, in filename order (`202609290001` … `202610020012`), or run `supabase db push` against the linked project. Never re-run an applied file. Migration 010 adds sign-in links, 011 adds bulk invitations and delivery reset, 012 makes the audit trail append-only and adds correction history; their notes are in `docs/LOGIN_LINKS.md` and `docs/AUTH_AND_PRIVACY.md`. After applying, commit the Auth settings with `supabase config push` as described there.
++
++
+ Review and run `supabase/migrations/202609290001_foundation.sql` in that project's SQL editor as its database owner, or through your migration workflow. It is a one-time migration, not an idempotent seed. Do not run it repeatedly or against another application database.
+ 
+ Keep `private` out of exposed API schemas. The normal `public` schema contains the RLS-protected application tables. The local test suite does not confirm these hosted settings.
+diff --git a/supabase/config.toml b/supabase/config.toml
+index 86abcd6..d96a8ad 100644
+--- a/supabase/config.toml
++++ b/supabase/config.toml
+@@ -1,6 +1,50 @@
+ project_id = "school-portal"
+ 
+-# JWTs are validated in the handler with Auth getUser, then again by database RPC.
+-# Disable only the legacy gateway JWT verifier; this does not make sending public.
++# ---------------------------------------------------------------------------------------------
++# Auth settings, version-controlled so they can be reviewed. IMPORTANT:
++#  * The hosted project only changes when you run `supabase config push` (review the diff the
++#    CLI prints; try it on a staging project first). Editing this file alone does nothing there.
++#  * `env(NAME)` values come from the shell running the CLI (never commit real URLs/secrets).
++#  * Settings the CLI version does not recognise are reported at push time; remove or rename
++#    them rather than ignoring the warning.
++# ---------------------------------------------------------------------------------------------
++[auth]
++enabled = true
++site_url = "env(SCHOOL_PORTAL_SITE_URL)"
++# Only the password-setting page is a valid email-link destination. Set per environment.
++additional_redirect_urls = ["env(SCHOOL_PORTAL_PASSWORD_REDIRECT_URL)"]
++jwt_expiry = 3600
++enable_refresh_token_rotation = true
++refresh_token_reuse_interval = 10
++# Accounts exist only through administrator invitations (public.accept_school_invitation).
++enable_signup = false
++enable_anonymous_sign_ins = false
++# Enforced by Supabase Auth itself. The form-level check alone is bypassable with the public key.
++minimum_password_length = 12
++password_requirements = ""
++
++[auth.rate_limit]
++# Per hour unless stated. Raise email_sent only after custom SMTP is configured.
++email_sent = 30
++sign_in_sign_ups = 30
++token_verifications = 30
++token_refresh = 150
++
++[auth.email]
++enable_signup = false
++double_confirm_changes = true
++enable_confirmations = true
++secure_password_change = true
++max_frequency = "60s"
++otp_length = 6
++# Longest allowed (24 h). Invitation RECORDS last 7 days; an invitee whose email link has
++# expired uses "Forgot password" and then "Accept a school invitation" on the dashboard.
++otp_expiry = 86400
++
++# Admin MFA: enable TOTP here; requiring it for administrators is tracked in docs/AUTH_AND_PRIVACY.md.
++[auth.mfa.totp]
++enroll_enabled = true
++verify_enabled = true
++
+ [functions.invite-school-user]
+ verify_jwt = false
+-- 
+2.43.0
+

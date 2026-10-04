@@ -1,5 +1,28 @@
 import { expect, test } from "@playwright/test";
 
+test("production CSP uses fresh script nonces and blocks untrusted inline code", async ({page})=> {
+  test.skip(process.env.SCHOOL_PORTAL_E2E_PRODUCTION !== "true", "Production-only CSP assertion");
+  const response=await page.goto("/preview");
+  const csp=response?.headers()["content-security-policy"] ?? "";
+  const nonce=csp.match(/'nonce-([^']+)'/)?.[1];
+  expect(nonce).toBeTruthy(); expect(csp).not.toContain("'unsafe-eval'");
+  expect(response?.headers()["cache-control"]).toContain("no-store");
+  const scripts=await page.locator("script").evaluateAll(elements=>elements.map(element=>(element as HTMLScriptElement).nonce));
+  expect(scripts.length).toBeGreaterThan(0);expect(scripts.every(value=>value===nonce)).toBe(true);
+  const second=await page.reload();
+  expect(second?.headers()["content-security-policy"].match(/'nonce-([^']+)'/)?.[1]).not.toBe(nonce);
+  // Test parser-inserted HTML. DevTools evaluation is privileged and is not an XSS probe.
+  await page.route("**/preview?csp-probe=1",async route=> {
+    const actual=await route.fetch();
+    const actualNonce=actual.headers()["content-security-policy"].match(/'nonce-([^']+)'/)?.[1];
+    const body=(await actual.text()).replace("</body>",`<script>document.documentElement.dataset.untrustedScript='executed'</script><script nonce="${actualNonce}">document.documentElement.dataset.trustedScript='executed'</script></body>`);
+    await route.fulfill({response:actual,body});
+  });
+  await page.goto("/preview?csp-probe=1");
+  expect(await page.locator("html").getAttribute("data-trusted-script")).toBe("executed");
+  expect(await page.locator("html").getAttribute("data-untrusted-script")).toBeNull();
+});
+
 test("preview navigation, disconnected login and protected route", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));

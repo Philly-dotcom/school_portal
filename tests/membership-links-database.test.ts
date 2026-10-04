@@ -18,12 +18,13 @@ async function asUser<T>(user: string, fn: () => Promise<T>): Promise<T> {
 async function insert(sql: string, values: unknown[]) { return (await db.query<{ id: string }>(sql + " returning id", values)).rows[0].id; }
 async function count(table: string) { return Number((await db.query<{ n: string }>(`select count(*) n from ${table}`)).rows[0].n); }
 async function link(user: string, kind: string, record: string, membership: string | null) {
-  return asUser(user, () => db.query("select link_register_to_member($1,$2,$3,$4)", [A, kind, record, membership]));
+  const version = ["students", "teachers", "guardians"].includes(kind) ? (await db.query<{record_version:number}>(`select record_version from ${kind} where id=$1`, [record])).rows[0]?.record_version ?? 1 : 1;
+  return asUser(user, () => db.query("select link_register_to_member($1,$2,$3,$4,$5)", [A, kind, record, membership, version]));
 }
 
 beforeAll(async () => {
   await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin;
-    create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
+    create schema auth; create table auth.users(id uuid primary key,email varchar(255),email_confirmed_at timestamptz);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema public,auth to authenticated,anon;`);
   for (const file of readdirSync("supabase/migrations").sort()) await db.exec(readFileSync(`supabase/migrations/${file}`, "utf8"));
@@ -107,7 +108,10 @@ describe("after linking", () => {
       expect(await count("student_guardians")).toBe(0);
     });
   });
-  it("shows a guardian only their own record, link and child", async () => {
+  it("requires an explicit guardian access grant before exposing a child", async () => {
+    await asUser(guardianU, async () => { expect(await count("students")).toBe(0); });
+    const relationship = (await db.query<{id:string}>("select id from student_guardians where guardian_id=$1", [ids.g1])).rows[0].id;
+    await asUser(adminA, () => db.query("select set_guardian_access($1,$2,1,true)", [A, relationship]));
     await asUser(guardianU, async () => {
       expect((await db.query("select id from guardians")).rows).toEqual([{ id: ids.g1 }]);
       expect((await db.query("select id from students")).rows).toEqual([{ id: ids.s1 }]);
@@ -144,5 +148,77 @@ describe("after linking", () => {
     await db.query("update schools set timezone='Not/AZone' where id=$1", [A]);
     await asUser(teacherU, async () => { expect((await db.query("select id from classes")).rows).toEqual([{ id: ids.c8a }]); });
     await db.query("update schools set timezone='Africa/Johannesburg' where id=$1", [A]);
+  });
+});
+
+describe("link and access regressions on the final schema", () => {
+  it("rejects stale admin intent and linking to a suspended member", async () => {
+    const version = (await db.query<{record_version:number}>("select record_version from teachers where id=$1", [ids.t2])).rows[0].record_version;
+    await link(adminA, "teachers", ids.t2, idleTeacherU);
+    await expect(asUser(adminA, () => db.query("select link_register_to_member($1,'teachers',$2,null,$3)", [A, ids.t2, version]))).rejects.toMatchObject({code:"40001"});
+    await db.query("update school_memberships set status='suspended' where id=$1", [idleTeacherU]);
+    await expect(link(adminA, "teachers", ids.t2, idleTeacherU)).rejects.toMatchObject({code:"22023"});
+    await link(adminA, "teachers", ids.t2, null); // removing inactive links is allowed
+    await db.query("update school_memberships set status='active' where id=$1", [idleTeacherU]);
+    await link(adminA, "teachers", ids.t2, idleTeacherU);
+  });
+  it("identifies duplicate display names through verified email and stable membership IDs, admin-only", async () => {
+    await db.query("update profiles set display_name='Fictional Duplicate' where user_id in ($1,$2)", [teacherU,idleTeacherU]);
+    await db.query("update auth.users set email='teacher@example.invalid',email_confirmed_at=now() where id=$1", [teacherU]);
+    await db.query("update auth.users set email='unverified@example.invalid' where id=$1", [idleTeacherU]);
+    const result = await asUser(adminA, () => db.query<{id:string;verified_email:string|null}>("select * from list_linkable_members($1)", [A]));
+    expect(result.rows.find(m=>m.id===teacherU)?.verified_email).toBe("teacher@example.invalid");
+    expect(result.rows.find(m=>m.id===idleTeacherU)?.verified_email).toBeNull();
+    expect(result.rows.some(m=>m.id===adminB)).toBe(false);
+    await expect(asUser(teacherU,()=>db.query("select * from list_linkable_members($1)",[A]))).rejects.toMatchObject({code:"42501"});
+    await expect(asUser(adminB,()=>db.query("select * from list_linkable_members($1)",[A]))).rejects.toMatchObject({code:"42501"});
+  });
+  it("revokes guardian access without deleting family history and rejects stale or foreign grants", async () => {
+    const relation = (await db.query<{id:string;record_version:number}>("select id,record_version from student_guardians where guardian_id=$1",[ids.g1])).rows[0];
+    await expect(asUser(adminB,()=>db.query("select set_guardian_access($1,$2,$3,false)",[A,relation.id,relation.record_version]))).rejects.toMatchObject({code:"42501"});
+    await expect(asUser(guardianU,()=>db.query("update student_guardians set access_enabled=true"))).rejects.toMatchObject({code:"42501"});
+    await asUser(adminA,()=>db.query("select set_guardian_access($1,$2,$3,false)",[A,relation.id,relation.record_version]));
+    await asUser(guardianU,async()=> { expect(await count("students")).toBe(0); expect(await count("enrollments")).toBe(0); expect(await count("classes")).toBe(0); });
+    expect(await count("student_guardians")).toBe(1);
+    await expect(asUser(adminA,()=>db.query("select set_guardian_access($1,$2,$3,true)",[A,relation.id,relation.record_version]))).rejects.toMatchObject({code:"40001"});
+    await asUser(adminA,()=>db.query("select set_guardian_access($1,$2,$3,true)",[A,relation.id,relation.record_version+1]));
+  });
+  it("uses inclusive dates, excludes future and expired learners, and preserves future-transfer history", async () => {
+    const today = "private.school_today($1)";
+    const expected: string[] = [ids.s1];
+    for (const [label,start,end,visible] of [["future",1,30,false],["expired",-30,-1,false],["starts",0,30,true],["ends",-30,0,true]] as const) {
+      await asUser(adminA,async()=> {
+        const student = await insert("insert into students(school_id,full_name,reference) values($1,$2,$2)",[A,label]);
+        await insert(`insert into enrollments(school_id,student_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,${today}+${start},${today}+${end})`,[A,student,ids.c8a,ids.year]);
+        if(visible) expected.push(student);
+      });
+    }
+    const subject = (await db.query<{id:string}>("select id from subjects where school_id=$1",[A])).rows[0].id;
+    await asUser(adminA,()=>insert(`insert into teaching_assignments(school_id,teacher_id,subject_id,class_id,academic_year_id,starts_on,ends_on) values($1,$2,$3,$4,$5,${today}-30,${today}+30)`,[A,ids.t2,subject,ids.c8b,ids.year]));
+    const enrollment = (await db.query<{id:string}>("select id from enrollments where student_id=$1",[ids.s1])).rows[0].id;
+    await asUser(adminA,()=>db.query(`select change_enrollment($1,$2,1,'transfer',${today}+10,$3)`,[A,enrollment,ids.c8b]));
+    await asUser(teacherU,async()=> {
+      expect((await db.query<{id:string}>("select id from students")).rows.map(r=>r.id).sort()).toEqual(expected.sort());
+      expect((await db.query<{student_id:string}>("select student_id from enrollments")).rows.map(r=>r.student_id).sort()).toEqual(expected.sort());
+    });
+    await asUser(idleTeacherU,async()=> { expect((await db.query("select id from students where id=$1",[ids.s1])).rows).toHaveLength(0); });
+    await asUser(studentU,async()=> { expect(await count("enrollments")).toBe(2); });
+    await asUser(guardianU,async()=> { expect(await count("enrollments")).toBe(2); });
+    const assignments = (await db.query<{id:string;class_id:string}>(`select id,class_id from teaching_assignments where school_id=$1 and ${today} between starts_on and ends_on`,[A])).rows;
+    for(const assignment of assignments) await asUser(adminA,()=>db.query(`select create_timetable_lesson($1,$2,1,480,540,${today}-7,${today}+28)`,[A,assignment.id]));
+    await asUser(studentU,async()=> { expect((await db.query("select class_id from timetable_lessons")).rows).toEqual([{class_id:ids.c8a}]); });
+    // Withdrawal today remains visible today; withdrawal yesterday grants no current roster access.
+    const other = (await db.query<{id:string}>("select id from enrollments where student_id=$1",[ids.s2])).rows[0].id;
+    await asUser(adminA,()=>db.query(`select change_enrollment($1,$2,1,'withdrawal',${today}-1,null)`,[A,other]));
+    await asUser(idleTeacherU,async()=> { expect(await count("students")).toBe(0); });
+    // Advance only the test's school-date helper in a rollback-only transaction.
+    const effective=(await db.query<{effective_date:string}>("select (private.school_today($1)+10)::text as effective_date",[A])).rows[0].effective_date;
+    await db.exec("begin");
+    try {
+      await db.exec(`create or replace function private.school_today(target_school uuid) returns date language sql stable security definer set search_path='' as $$select date '${effective}'$$`);
+      await asUser(teacherU,async()=>{expect((await db.query("select id from students where id=$1",[ids.s1])).rows).toEqual([]);});
+      await asUser(idleTeacherU,async()=>{expect((await db.query("select id from students where id=$1",[ids.s1])).rows).toEqual([{id:ids.s1}]);});
+      await asUser(studentU,async()=>{expect((await db.query("select class_id from timetable_lessons")).rows).toEqual([{class_id:ids.c8b}]);});
+    } finally { await db.exec("rollback"); }
   });
 });

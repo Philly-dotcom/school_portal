@@ -16,7 +16,7 @@ const bulk = (user: string, school: string, invites: unknown) => asUser(user, ()
 
 beforeAll(async () => {
   await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin;
-    create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
+    create schema auth; create table auth.users(id uuid primary key,email varchar(255),email_confirmed_at timestamptz);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
     grant usage on schema public,auth to authenticated,anon;`);
   for (const file of readdirSync("supabase/migrations").sort()) await db.exec(readFileSync(`supabase/migrations/${file}`, "utf8"));
@@ -101,6 +101,8 @@ describe("bulk invitations", () => {
     await expect(bulk(adminA, A, [...rowsOf(2, "ok"), { email: "not-an-email", name: "Bad", roles: ["student"] }])).rejects.toThrow(/Row 3: invalid email/);
     await expect(bulk(adminA, A, [{ email: "x1@example.invalid", name: "Bad", roles: ["principal"] }])).rejects.toThrow(/Row 1: unknown role/);
     await expect(bulk(adminA, A, [{ email: "x2@example.invalid", name: "Bad", roles: [] }])).rejects.toThrow(/Row 1: choose at least one role/);
+    await expect(bulk(adminA, A, [{ email: "p0@example.invalid", name: "Duplicate", roles: [null] }])).rejects.toMatchObject({code:"22023"});
+    await expect(bulk(adminA, A, [{ email: "p0@example.invalid", name: {wrong:"type"}, roles: ["student"] }])).rejects.toMatchObject({code:"22023"});
     expect(Number((await db.query<{ n: string }>("select count(*) n from school_invitations")).rows[0].n)).toBe(before);
   });
   it("enforces size and daily limits, administrator access, school scope and anonymous denial", async () => {
@@ -122,11 +124,12 @@ describe("bulk invitations", () => {
 });
 
 describe("reset_invitation_delivery", () => {
-  const reset = (user: string, inv: string) => asUser(user, () => db.query("select reset_invitation_delivery($1,$2)", [A, inv]));
+  const reset = (user: string, inv: string) => asUser(user, () => db.query("select reset_invitation_delivery($1,$2,true)", [A, inv]));
   const state = async (inv: string) => (await db.query<{ delivery_status: string; delivery_claim: string | null }>("select delivery_status, delivery_claim from school_invitations where id=$1", [inv])).rows[0];
   async function invitation(email: string, status: string) {
     const inv = (await db.query<{ id: string }>("insert into school_invitations(school_id,email,display_name,roles,invited_by,delivery_status,delivery_claim) values($1,$2,'F','{student}',$3,$4,$5) returning id",
       [A, email, adminA, status, status === "sending" ? id(77) : null])).rows[0].id;
+    await db.query("update school_invitations set delivery_attempts=1,last_delivery_attempt_at=now()-interval '11 minutes' where id=$1", [inv]);
     return inv;
   }
   it("resets failed deliveries and stale sends, but not pending, sent or in-flight ones", async () => {
@@ -137,6 +140,7 @@ describe("reset_invitation_delivery", () => {
     const sent = await invitation("r2@example.invalid", "sent");
     await expect(reset(adminA, sent)).rejects.toMatchObject({ code: "22023" });               // never resend 'sent'
     const stuck = await invitation("r3@example.invalid", "sending");
+    await db.query("update school_invitations set last_delivery_attempt_at=now() where id=$1", [stuck]);
     await db.query("insert into audit_events(school_id,actor_user_id,action,record_id) values($1,$2,'invitation.send_requested',$3)", [A, adminA, stuck]);
     await expect(reset(adminA, stuck)).rejects.toMatchObject({ code: "22023" });              // in flight (< 10 min)
     const stale = await invitation("r4@example.invalid", "sending");                          // no recent send request recorded
@@ -163,4 +167,25 @@ describe("account deletion safety", () => {
     await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'gone@example.invalid',now())", [recipient]);
     await asUser(recipient, async () => { await expect(db.query("select accept_school_invitation($1)", [A])).rejects.toMatchObject({ code: "42501" }); });
   });
+});
+
+it("bounds retries, requires review, records unknown outcomes and fences obsolete claims", async () => {
+  const invite = (await db.query<{id:string}>("insert into school_invitations(school_id,email,display_name,roles,invited_by) values($1,'retry@example.invalid','Fictional Retry','{student}',$2) returning id",[A,adminA])).rows[0].id;
+  const claim = async()=> (await asUser(adminA,()=>db.query<{claim_id:string}>("select * from claim_school_invitation($1,$2)",[A,invite]))).rows[0].claim_id;
+  const finish = (token:string,result:boolean|null)=>asUser(null,()=>db.query("select complete_school_invitation_delivery($1,$2,$3)",[invite,token,result]),"service_role");
+  const reset = (review:boolean)=>asUser(adminA,()=>db.query("select reset_invitation_delivery($1,$2,$3)",[A,invite,review]));
+  let oldClaim = "";
+  for(let attempt=1;attempt<=3;attempt++) {
+    const token=await claim();
+    if(oldClaim) await expect(finish(oldClaim,true)).rejects.toMatchObject({code:"42501"});
+    await finish(token,attempt===1?null:false);
+    if(attempt===1) expect((await db.query("select delivery_status from school_invitations where id=$1",[invite])).rows).toEqual([{delivery_status:"unknown"}]);
+    await expect(reset(true)).rejects.toMatchObject({code:"22023"});
+    await db.query("update school_invitations set last_delivery_attempt_at=now()-interval '11 minutes' where id=$1",[invite]);
+    await expect(reset(false)).rejects.toMatchObject({code:"22023"});
+    if(attempt<3) await reset(true); else await expect(reset(true)).rejects.toMatchObject({code:"22023"});
+    oldClaim=token;
+  }
+  await expect(claim()).rejects.toMatchObject({code:"22023"});
+  expect((await db.query("select delivery_attempts from school_invitations where id=$1",[invite])).rows).toEqual([{delivery_attempts:3}]);
 });

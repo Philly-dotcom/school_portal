@@ -6,7 +6,7 @@ A single-school portal with school-aware ownership and access boundaries, built 
 
 ## Current milestone
 
-The current Phase 1 increments include:
+The foundation increments include:
 - A responsive public foundation preview: overview, module roadmap, roles, settings preview and setup guide.
 - Password sign-in and sign-out wiring, cookie refresh, and a protected school workspace.
 - A school-settings form restricted to active school administrators.
@@ -18,7 +18,7 @@ The current Phase 1 increments include:
 
 **The dedicated backend is now configured locally.** On 2026-09-30, read-only checks confirmed Supabase connectivity, denied anonymous database reads, and a signed-out dashboard redirect to login. The user confirmed that School Admin sign-in, dashboard and settings work. A subsequent check confirmed public sign-ups are disabled. Preview pages contain no school data and do not bypass authentication. Full hosted permission, session lifecycle, email and deployment testing remains outstanding; see [verification](docs/VERIFICATION.md).
 
-Public sign-ups have now been independently verified disabled. The new account-management migration must be applied before **People & access** works. SMTP is not configured, so recovery and invitation emails remain disabled. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). Academic setup, school registers, teaching assignments, the weekly timetable, enrollment lifecycle and record corrections now exist (migrations 003–009) for administrators. Migrations 010–012 add **sign-in links** with scoped read access for teachers, guardians and students ([LOGIN_LINKS](docs/LOGIN_LINKS.md)), **bulk invitations** and delivery reset, an append-only audit trail, recoverable correction history and safer account deletion. MFA is enabled in configuration but not yet required for administrators ([AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Attendance, marks and finance are not implemented. Phase 1 is not complete and this is not ready for real learner data.
+Current work is **Phase 2: Academic Setup**, with Phase 1 readiness still open. Public sign-ups were independently verified disabled in September; the user reported that **People & access** lists their admin. SMTP settings were reportedly saved, but a registered/verified sending domain and end-to-end delivery are not ready, so recovery and invitation emails remain disabled. Confirm current hosted settings rather than treating historical checks as fresh verification. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). Academic setup, school registers, teaching assignments, the weekly timetable, enrollment lifecycle and record corrections now exist (migrations 003–009) for administrators. The user reports migrations 009–012 applied successfully on 2026-10-03 in the fictional-data Supabase project; hosted workflow/security verification remains pending. Migrations 010–012 add **sign-in links** with scoped read access for teachers, guardians and students ([LOGIN_LINKS](docs/LOGIN_LINKS.md)), **bulk invitations** and delivery reset, an append-only audit trail, recoverable correction history and safer account deletion. MFA is enabled in configuration but not yet required for administrators ([AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Attendance, marks and finance are not implemented. Phase 1 is not complete and this is not ready for real learner data.
 
 ## Run locally
 
@@ -65,7 +65,7 @@ Follow [Supabase setup](docs/SUPABASE_SETUP.md). Do not reuse another project's 
 - [Account management, SMTP and invitation setup](docs/ACCOUNT_MANAGEMENT.md)
 - [Sign-in links and role-scoped access](docs/LOGIN_LINKS.md)
 - [Auth configuration, security headers and personal-data handling](docs/AUTH_AND_PRIVACY.md)
-- [Roadmap and remaining Phase 1 work](docs/ROADMAP.md)
+- [Current roadmap and remaining phase requirements](docs/ROADMAP.md)
 
 ## Scope
 

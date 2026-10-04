@@ -94,3 +94,19 @@ No hosted SQL was executed. Migration 007 activation and browser validation rema
 npm run check passed: lint, TypeScript, 85 tests across 16 files and production build. Embedded PostgreSQL tests execute migration 008 and verify adjacent lessons, teacher clashes across classes, class clashes across teachers, exact weekday recurrence overlap, invalid/no-occurrence date ranges, different weekdays, school-isolated reads, non-admin/suspended/inactive/anonymous mutation denial, direct-write denial, removal audit and preservation of enrollments/assignments. Action tests cover trusted school context, input conversion/validation, conflict messages and explicit removal confirmation.
 
 Migration 007 is now user-reported applied. Migration 008 remains local only. No hosted SQL, browser workflow test or independent concurrent database-session test was performed by this increment. Timetable mutation RPCs serialize school writes; this needs hosted concurrent-save validation. Email remains disabled.
+
+
+## 2026-10-02 — pre-migration repair validation
+
+Read `REPAIR_REPORT.md` for the current complete evidence and staging checklist. Corrected migrations 010–012 remain local; 001–009 are unchanged. Final-schema fixtures cover dated access, stale links, explicit guardian grants, bounded delivery retries and owner-only scoped cleanup. A populated pre-010 database is upgraded in migration order. Production browser checks pass with a disconnected backend; no hosted acceptance, SMTP delivery, or real multi-session concurrency result is implied.
+
+All six production browser tests passed with no retries. Windows teardown required stopping the identified test server; the runner then exited successfully and port 3001 was closed. Full dependency audit reported zero vulnerabilities. The heuristic working-tree secret scan found no matching secrets. No emails, cloud changes, migrations, deployment or pushes were performed.
+
+Final `npm run check`: lint, TypeScript, all 144 tests across 24 files, and production build passed. Tests are fictional/local; hosted staging checks remain pending.
+
+
+## 2026-10-03 — architecture consistency cleanup
+
+Updated the current roadmap and corrected stale setup/access descriptions in the README and teaching guide/UI. Moved guardian grant input validation to the existing validation module without changing its rules. Replaced the account-management row cast with the exact register-login RPC response type, reusing the shared Role type. No migration, permission rule, hosted state or phase scope changed in this cleanup. Existing repair changes remain pending in the working tree.
+
+Local `npm run check` passed: lint, TypeScript, all 144 tests across 24 files and the production build. Browser and hosted checks were not repeated for this documentation/type/validation-location cleanup; prior browser results remain historical evidence.

@@ -105,3 +105,13 @@ Invitations expire after seven days and can be revoked. Existing memberships, es
 ## Remaining before live use
 
 Hosted integration tests, admin MFA, account recovery procedures, email abuse controls/CAPTCHA where appropriate, monitoring and backup/restore remain part of Phase 1. Do not treat this local increment as production approval.
+
+## Pending migration 011 repair: management and retries
+
+Invitation history is paginated in pages of 50 with stable created-at/ID ordering. Older pending invitations remain reachable beyond the former 100-row cutoff. Bulk creation still uses the existing invitation/acceptance system, 200 rows per transaction and 500 per school per day; malformed rows (including null roles on duplicates) reject the whole transaction.
+
+Each invitation has at most three delivery claims for its lifetime and a 10-minute retry cooldown, enforced in SQL. Reset requires an administrator to check provider logs and explicitly confirm no message was sent. `unknown` means the provider outcome could not be established; do not equate it with failure. `sending` is also ambiguous after a timeout. Accepted, revoked, expired, sent and exhausted invitations cannot be reset; obsolete completion claims are rejected. No automatic resend occurs. Creating a replacement is a separate, deliberate invitation action subject to creation limits.
+
+The Edge Function also requires `SCHOOL_PORTAL_INVITATION_DELIVERY_ENABLED=true` in its own runtime. This is separate from the web flags. Leave all gates false until a registered domain, verified sender, SMTP, templates and exact redirects are tested. Do not deploy or configure the function during this local repair. When later authorized, deploy the corrected sender and matching 011 schema together; keep delivery off during the change.
+
+Password revocation failures now display a warning and a retry action. See AUTH_AND_PRIVACY.md for access-token expiry limits and the two-browser staging test.

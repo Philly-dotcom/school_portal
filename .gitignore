@@ -12,3 +12,4 @@ test-results/
 
 # Supabase CLI state (holds the linked project reference after `supabase link`)
 supabase/.temp/
+AGENTS.md

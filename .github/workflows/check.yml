@@ -20,8 +20,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      # Runtime dependencies only: dev-tool advisories should not block a release.
-      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit --audit-level=high
       # lint + typecheck + unit/database tests (embedded PostgreSQL runs every migration) + build
       - run: npm run check
   e2e:
@@ -37,6 +36,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+        env:
+          SCHOOL_PORTAL_E2E_PRODUCTION: 'true'
       - if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
