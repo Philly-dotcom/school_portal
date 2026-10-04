@@ -17,3 +17,4 @@ end;
 $$;
 revoke all on function public.list_linkable_members(uuid) from public,anon;
 grant execute on function public.list_linkable_members(uuid) to authenticated;
+

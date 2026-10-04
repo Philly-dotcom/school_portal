@@ -2,7 +2,10 @@ import { z } from "zod";
 
 const schema = z.object({
   url: z.url(),
-  key: z.string().min(20).refine((value) => !value.startsWith("sb_secret_")),
+  key: z
+    .string()
+    .min(20)
+    .refine((value) => !value.startsWith("sb_secret_")),
 });
 
 export function getSupabaseConfig() {

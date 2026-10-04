@@ -1,6 +1,6 @@
 # Pre-migration repair scope
 
-2026-10-02. Architecture checked against PROJECT_CONTEXT.md, ARCHITECTURE.md, migrations 001–012, their RPC callers, forms, grants and tests. Hosted migrations 010–012 remain unapplied. This work changes those files in place; migrations 001–009 and their order remain intact.
+Historical plan from 2 October. At that time 010–012 were unapplied, so the repair changed them in place. The user has since applied 009–013. Do not use this plan to rewrite or rerun those files now. Architecture was checked against PROJECT_CONTEXT.md, ARCHITECTURE.md, migrations 001–012, their callers, forms, grants and tests. Current status is in RESUME.md.
 
 ## Preserved lifecycle
 

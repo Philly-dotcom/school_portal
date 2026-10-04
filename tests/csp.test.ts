@@ -6,7 +6,14 @@ describe("content security policy", () => {
     const csp = buildCsp("abc123");
     expect(csp).toContain("script-src 'self' 'nonce-abc123' 'strict-dynamic'");
     expect(csp).not.toMatch(/script-src[^;]*'unsafe-(inline|eval)'/);
-    for (const directive of ["frame-ancestors 'none'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "default-src 'self'"]) expect(csp).toContain(directive);
+    for (const directive of [
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "default-src 'self'",
+    ])
+      expect(csp).toContain(directive);
     expect(csp).not.toMatch(/https?:\/\//);
   });
   it("only relaxes eval and websockets in development", () => {

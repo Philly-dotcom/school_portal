@@ -1,7 +1,7 @@
 // Content-Security-Policy with a per-request nonce. The app loads nothing from other origins
 // (the browser never talks to Supabase; all backend calls happen on the server), so the policy
 // can be tight. style-src keeps 'unsafe-inline' because React inline style attributes are used;
-// scripts, the dangerous part, are nonce-only.
+// scripts, the dangerous part, are nonce-only.NOTE this came from claude AI as a suggestion after system evaluation. 
 export function buildCsp(nonce: string, development = false) {
   const directives = [
     "default-src 'self'",

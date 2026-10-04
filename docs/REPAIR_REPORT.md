@@ -2,6 +2,8 @@
 
 ## Outcome and architecture
 
+This report records the October 2 repair. The user subsequently applied 009–013; statements below about unapplied migrations describe the earlier repair session. Use RESUME.md for current instructions.
+
 The repairs preserve the existing Next.js/TypeScript/Supabase application, navigation, ownership model and lifecycle. Auth identities remain separate from school memberships, which remain separate from register records. Register/login links are explicit. School boundaries remain enforced by verified server context, composite ownership constraints and RLS. Enrollments retain transfer/withdrawal history; invitations still use one prepare → send → accept → link workflow. Supabase remains the Auth/data authority. No platform-owner or multi-school SaaS UI was added.
 
 Only migrations **010, 011 and 012** changed, in place, in their existing order. No migration was applied to hosted Supabase. The user’s `school_portal_improvements.patch` was left untouched.

@@ -2,7 +2,7 @@
 
 The user confirmed that the class and academic year labeled “Thapelo” were accidental entries caused by the earlier generic Name labels. Screenshot evidence shows one class under each duplicate grade. Class 10A in 2027 has one enrollment and one teaching assignment; the mistaken class has neither.
 
-Prepared operator script: `supabase/repairs/review_grade10_typo.sql`.
+Historical operator script: [archived Grade 10 repair](../archive/2026-10/review_grade10_typo.sql). Moved on 4 October without changing its contents. This guide describes the earlier specific repair, not a setup step to repeat. Its regression test still rehearses the archived copy locally.
 
 ## Preview first
 

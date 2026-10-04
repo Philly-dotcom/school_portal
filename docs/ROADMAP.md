@@ -1,8 +1,10 @@
 # Delivery roadmap
 
-Updated 2026-10-03 after the architecture audit. This is the current status map; dated verification and resume entries are historical evidence, not instructions to reapply migrations.
+Updated 4 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
 
 ## Current position
+
+You have confirmed applying migration 013 after 009–012. School registers now loads and remains available after refresh; all seven admin views loaded in the 4 October connected check. The remaining work is workflow and permission testing, not repeating migrations. See VERIFICATION.md for the limits of this read-only check.
 
 **Phase 2: Academic Setup**, with Phase 1 operational readiness still open. The user authorized development without email. No Phase 3 transition is approved by a local test result alone. Preserve the original six-phase product plan, one-school-first experience and school-aware ownership.
 
@@ -48,7 +50,7 @@ Academic CSV imports are **optional and undecided**. They appeared in an expande
 
 ### Next sequence
 
-Finish this targeted consistency cleanup and local checks → agree the remaining acceptance/scope decisions → confirm a staging target and migration baseline → rehearse/test the current schema → complete the agreed Phase 2 gaps. Do not add attendance, homework, announcements or documents merely because foundation tests pass.
+Admin screen loading after 013 is checked. Next: test existing workflows with fictional records → arrange separate test accounts for role and school-isolation checks → finish the agreed Phase 2 gaps. Attendance, homework, announcements and documents come after that, not simply after a green local test run.
 
 ## Phase 3: daily operations
 

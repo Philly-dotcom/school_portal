@@ -1,6 +1,6 @@
 # Weekly timetable foundation
 
-Apply `supabase/migrations/202610010008_timetable.sql` once in the dedicated School Portal project after 001–007. This increment has not applied hosted SQL. Refresh the local app (rebuild/restart if using the production preview) and open **Timetable** as School Admin.
+Migration 008 introduced the timetable. Hosted creation and persistence were checked with fictional lessons earlier; do not reapply it. Open **Timetable** as School Admin to review the existing schedule. Conflict, removal and concurrent-save checks are separate from confirming that the page loads.
 
 ## Workflow
 

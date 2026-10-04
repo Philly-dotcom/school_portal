@@ -1,72 +1,86 @@
 # School Portal
 
-**Resuming work?** Start with [the saved progress checkpoint](docs/RESUME.md).
+School Portal is a portal for one school, built so we can add more schools later without mixing their records. We are using Next.js, TypeScript, Tailwind and Supabase.
 
-A single-school portal with school-aware ownership and access boundaries, built with Next.js, TypeScript, Tailwind and Supabase. This repository and all future cloud resources belong only to School Portal.
+This project lives at `C:\Users\moses\Documents\School_portal`. Its database, accounts and decisions belong to this project only.
 
-## Current milestone
+## Where we are — 4 October 2026
 
-The foundation increments include:
-- A responsive public foundation preview: overview, module roadmap, roles, settings preview and setup guide.
-- Password sign-in and sign-out wiring, cookie refresh, and a protected school workspace.
-- A school-settings form restricted to active school administrators.
-- A versioned database migration for schools, profiles, school memberships, multiple roles and audit events.
-- Automated tests executing the migration and access policies against two fictional schools in embedded PostgreSQL.
-- Administrator member management, versioned role/status edits, last-admin protection and access audit details.
-- Prepared/revocable invitations, recipient acceptance, password recovery and password-setting screens.
-- An isolated Supabase invitation-email function (not yet deployed); email flags are off until SMTP setup.
+We are in **Phase 2: Academic Setup**. Much of the admin side is built, but we still have testing and a few missing workflows to finish. Some Phase 1 checks, especially account recovery and email delivery, are also open.
 
-**The dedicated backend is now configured locally.** On 2026-09-30, read-only checks confirmed Supabase connectivity, denied anonymous database reads, and a signed-out dashboard redirect to login. The user confirmed that School Admin sign-in, dashboard and settings work. A subsequent check confirmed public sign-ups are disabled. Preview pages contain no school data and do not bypass authentication. Full hosted permission, session lifecycle, email and deployment testing remains outstanding; see [verification](docs/VERIFICATION.md).
+You have confirmed that migrations **009–013** have run in the dedicated Supabase project. Migration 013 fixes the email-type mismatch that stopped School registers from loading. The register now loads and still works after refresh. All seven admin views loaded in the connected browser check on 4 October. That checks page loading, not every save or permission rule; see [the verification log](docs/VERIFICATION.md). Do not rerun migrations that have already been applied.
 
-Current work is **Phase 2: Academic Setup**, with Phase 1 readiness still open. Public sign-ups were independently verified disabled in September; the user reported that **People & access** lists their admin. SMTP settings were reportedly saved, but a registered/verified sending domain and end-to-end delivery are not ready, so recovery and invitation emails remain disabled. Confirm current hosted settings rather than treating historical checks as fresh verification. Follow [account-management activation](docs/ACCOUNT_MANAGEMENT.md). Academic setup, school registers, teaching assignments, the weekly timetable, enrollment lifecycle and record corrections now exist (migrations 003–009) for administrators. The user reports migrations 009–012 applied successfully on 2026-10-03 in the fictional-data Supabase project; hosted workflow/security verification remains pending. Migrations 010–012 add **sign-in links** with scoped read access for teachers, guardians and students ([LOGIN_LINKS](docs/LOGIN_LINKS.md)), **bulk invitations** and delivery reset, an append-only audit trail, recoverable correction history and safer account deletion. MFA is enabled in configuration but not yet required for administrators ([AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Attendance, marks and finance are not implemented. Phase 1 is not complete and this is not ready for real learner data.
+The latest full local check passed after cleanup on 4 October: **143 tests in 24 files**, lint, TypeScript and the production build. Two tests for an unused helper were retired; active permission tests remain. That result does not prove the hosted permissions or email setup work. See [the cleanup notes](docs/CLEANUP.md).
 
-## Run locally
+| Area | What is available | What still needs attention |
+| --- | --- | --- |
+| Sign-in and school access | Password login, verified school membership and role checks | Full session and hosted permission tests; administrator recovery |
+| People & access | Member roles/status, prepared invitations, invitation history and bulk preparation | Email delivery is off; invitation and recovery delivery remain untested |
+| Academic setup | Years, terms, grades, subjects, classes and name corrections | Review test-data dates; date/relationship corrections and year rollover are not built |
+| School registers | Students, teachers, guardians, family links and enrollment | Hosted tests of corrections, login links and guardian access |
+| Enrollment | Transfers and withdrawals that keep placement history | Hosted workflow and simultaneous-save tests |
+| Teaching assignments | Assign a teacher to a subject and class for a date range | Ending, replacing and correcting assignments safely |
+| Timetable | Admin weekly lesson planning and clash checks | Hosted conflict/removal tests and later role-facing views |
 
-Use Node.js 22 or later (Node 24 was used for this milestone).
+Teacher, student and guardian access rules exist in the database. Their dedicated record screens are not built yet. Adding a student record does not create a login, and recording a family relationship does not automatically give a guardian access.
+
+Attendance, homework, announcements, PDF uploads, marks, report cards, fees, notifications and AI are still ahead. The public `/preview` page is a design preview, not a working version of those modules. We are still using fictional records.
+
+## Catching up
+
+Read these in this order:
+
+1. [Current checkpoint](docs/RESUME.md) — what we just did and what comes next.
+2. [Architecture](docs/ARCHITECTURE.md) — how a browser request reaches Supabase and gets checked.
+3. [File guide](docs/FILE_GUIDE.md) — what every maintained project file is for.
+4. [Test guide](tests/README.md) — what each test file checks and how to run it.
+5. [Roadmap](docs/ROADMAP.md) — what remains in each phase.
+
+The [documentation index](docs/README.md) points to the more detailed setup and feature guides. You do not need to read all the SQL before using the app.
+
+## Run the app
+
+Use Node.js 22 or later; our checks have used Node 24. From the project folder:
 
 ```powershell
-npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. With no backend configuration, the root opens `/preview`. The app binds to localhost by default (`npm run start:public` binds all interfaces; see [AUTH_AND_PRIVACY](docs/AUTH_AND_PRIVACY.md)). Copy `.env.example` to `.env.local` to connect a backend.
+Open http://127.0.0.1:3000. If dependencies have not been installed, run `npm ci` first. You do not need to reinstall them every time you start the app.
+
+The existing `.env.local` connects this checkout to the dedicated Supabase project. Keep it private. Do not replace it while following a fresh-install guide. For a new checkout, use [.env.example](.env.example) and [Supabase setup](docs/SUPABASE_SETUP.md). Both environment files use the same six web-app variable names; the example contains placeholders. [Environment settings](docs/ENVIRONMENT.md) separates these from CLI and invitation-function settings. The Next.js app uses a publishable key and the signed-in user's permissions; it must not contain a service-role key.
+
+## Run checks
 
 ```powershell
 npm run check
+```
+
+This runs lint, TypeScript, the local unit/database tests and a production build. It does not run browser tests or apply migrations to Supabase.
+
+For browser checks:
+
+```powershell
 npm run test:e2e
 ```
 
-`check` runs ESLint, TypeScript, unit/database tests and a production build. Browser tests use installed Microsoft Edge on Windows, or Playwright Chromium on other platforms. They run one worker to limit memory usage. They start a local development server on port 3001 and explicitly clear backend configuration so tests never access a real school.
+Those tests start their own disconnected app on port 3001. They do not use your signed-in session or write to your hosted school. On Windows they use Microsoft Edge. One production-only security check is skipped in this default run; [the test guide](tests/README.md) explains how to include it.
 
-## Connect a dedicated backend
+## How the files fit together
 
-Follow [Supabase setup](docs/SUPABASE_SETUP.md). Do not reuse another project's database, storage, keys or business rules. Configure only the dedicated project URL, publishable key and school UUID in `.env.local`. No service-role key is needed by this app.
+```text
+Browser page or form
+  → Next.js server page / server action
+  → verified user, school membership and permission checks
+  → Supabase query or database function
+  → PostgreSQL permissions and row-level security
+  → result shown in the portal
+```
 
-## Project map
+`src/app` contains routes and form handlers. `src/components` contains the screens and forms. Some server-rendered panels also load their own data. `src/lib` holds shared validation, configuration and access helpers. `supabase/migrations` holds the database changes, in order. There is no separate Express backend or generic repository/service layer in the current app.
 
-| Location | Purpose |
-| --- | --- |
-| `src/app/preview` | Public, static design preview with no backend reads |
-| `src/app/login` | Server-side sign-in and sign-out |
-| `src/app/dashboard` | Protected workspace and school-settings action |
-| `src/lib/auth-context.ts` | Server-verified identity and active school context |
-| `src/proxy.ts` | Per-request CSP nonce, plus session-cookie refresh for authenticated routes |
-| `src/lib/permissions.ts` | `isSchoolAdminContext`, the one admin check used by every administrator action |
-| `supabase/migrations` | Versioned schema, policies and audit triggers |
-| `tests` | Foundation permission and database tests |
-| `e2e` | Browser checks for local preview and unconfigured access |
-| `docs` | Decisions, architecture, setup and remaining work |
+## What we are deliberately leaving for later
 
-## Planning documents
+We are not building SaaS billing, self-service school registration, custom domains or a platform-owner dashboard yet. The database already carries school ownership so those decisions can be made later.
 
-- [Project decisions](docs/PROJECT_CONTEXT.md)
-- [Architecture and access model](docs/ARCHITECTURE.md)
-- [Supabase setup and live verification](docs/SUPABASE_SETUP.md)
-- [Account management, SMTP and invitation setup](docs/ACCOUNT_MANAGEMENT.md)
-- [Sign-in links and role-scoped access](docs/LOGIN_LINKS.md)
-- [Auth configuration, security headers and personal-data handling](docs/AUTH_AND_PRIVACY.md)
-- [Current roadmap and remaining phase requirements](docs/ROADMAP.md)
-
-## Scope
-
-One school first; school-aware data ownership from the beginning. No SaaS subscription billing, self-service school registration, custom domains, platform dashboard, AI or n8n in this milestone. Future academic features will receive their own relationship checks, policies and tests; the foundation tests do not establish that those unbuilt modules are secure.
+Email stays off until we have a registered sending domain and have tested delivery. PDF storage, notification channels and automations have not been connected. See [the agreed product decisions](docs/PROJECT_CONTEXT.md) before adding scope.

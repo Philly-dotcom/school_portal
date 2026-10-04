@@ -26,7 +26,9 @@ export async function proxy(request: NextRequest) {
         setAll(values) {
           values.forEach(({ name, value }) => request.cookies.set(name, value));
           response = forward();
-          values.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          values.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
         },
       },
     });
@@ -39,4 +41,8 @@ export async function proxy(request: NextRequest) {
 }
 
 // Run on pages, not on static assets.
-export const config = { matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"] };
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
+};

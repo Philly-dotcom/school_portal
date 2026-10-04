@@ -1,8 +1,8 @@
 # Activate account management
 
-This is the next Phase 1 increment. Its code and migration are local. The new migration and invitation sender have **not** been applied/deployed to your hosted project by this work. No emails have been sent.
+Member management is already active in the dedicated test project. The user applied migration 002 earlier and has now confirmed 009–013. Setup steps below are for a fresh project; do not repeat migrations or administrator provisioning in the current one. The invitation sender has not been confirmed deployed or tested, and no email delivery is claimed.
 
-Public sign-ups were independently verified disabled on 2026-09-30. Keep them disabled. The user has not configured custom SMTP, so invitation and recovery email flags remain off by default.
+Public sign-ups were verified disabled on 30 September. Keep them disabled. The user saved Resend SMTP settings but has no registered sending domain. Invitation and recovery email flags remain off until delivery is ready and tested.
 
 ## 1. Enable member management first (no email required)
 

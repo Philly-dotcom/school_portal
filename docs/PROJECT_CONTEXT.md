@@ -6,7 +6,7 @@ School Portal is completely isolated from the user's other projects. No architec
 
 ## Authorization and current stage
 
-On 2026-09-29 the user authorized starting Phase 1 after reviewing the architecture. The user confirmed there is no dedicated Supabase project yet and requested the local app and setup instructions. Local implementation is authorized; public deployment and external provisioning have not been requested.
+The user authorized Phase 1 on 29 September and later Phase 2 development without email. A dedicated Supabase project now exists, with fictional records and a working test administrator. Migrations 009–013 are user-confirmed applied as of 4 October. Current work is documentation and hosted verification of existing features; see RESUME.md. Public deployment and additional cloud resources are not part of that authorization.
 
 ## Product strategy
 

@@ -2,7 +2,7 @@
 
 ## Activate
 
-After the reviewed Grade 10 cleanup and migration 006 are complete, apply `supabase/migrations/202610010007_record_corrections.sql` once in the dedicated School Portal project. Do not rerun earlier migrations. This increment has not applied any hosted SQL.
+Migration 007 introduced corrections, and the existing test project now has the later migrations through user-confirmed 013. Do not rerun 007 or the earlier Grade 10 repair from this guide. Review the current fictional records and use the checks below to verify the editors.
 
 Refresh Academic setup or School registers (restart/rebuild if using a production preview). Each academic/person record has an **Edit [name]** control and specific input labels. Academic records allow name corrections. Students, teachers and guardians allow full-name and school-reference corrections.
 

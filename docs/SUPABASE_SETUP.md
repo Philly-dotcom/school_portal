@@ -6,11 +6,11 @@ The user reported completing setup on 2026-09-30. Local configuration and Supaba
 
 Create a dedicated School Portal project in your own Supabase account. Review region, pricing and account ownership before provisioning. Keep its database password in your password manager, not this repository or chat. Use synthetic data initially.
 
-For the first controlled pilot, disable public sign-ups. Do not enable unrestricted registration merely to test login. This milestone supports password sign-in for pre-provisioned accounts, not invitation acceptance or password recovery screens.
+Keep public sign-ups disabled. Do not enable unrestricted registration to test login. Password sign-in works with provisioned test accounts. Invitation acceptance and recovery screens also exist, but email delivery remains disabled and unverified.
 
 ## 2. Apply the migration
 
-> **Migration hold (2026-10-02):** 010–012 are edited locally and have NOT been applied to hosted Supabase. Rehearse the final chain with synthetic data in an explicitly approved staging project first. Keep 001–009 and migration order intact; never re-run an already applied file. Verify hosted migration history rather than inferring it from local files. Do not push Auth configuration or migrations until the staging checklist in `REPAIR_REPORT.md` is approved.
+> **Existing project, 4 October:** migrations 009–013 are user-confirmed applied. Do not rerun them or recreate the administrator. The following provisioning example is for a fresh project only. A fresh approved setup needs the complete ordered migration chain, 001–013; the foundation example below is only the first step. Applying SQL does not push Auth configuration or prove hosted workflows work. See RESUME.md and VERIFICATION.md for current progress.
 
 
 
@@ -46,7 +46,7 @@ begin
 end $$;
 ```
 
-The template must not be run twice for the same account. Provisioning is owner-only for now: there is no app role-management screen.
+Do not run this template twice for the same account. The first administrator is provisioned by the database owner. After setup, People & access provides controlled member role/status changes; it is not a public school-registration screen.
 
 ## 4. Configure locally
 
@@ -76,6 +76,6 @@ Do not use real learner data until invitations/recovery, privileged-account prot
 
 ## Remaining authentication work
 
-The next local increment now implements member management, recovery and invitation acceptance. Follow [account-management activation](ACCOUNT_MANAGEMENT.md) to apply its migration and configure email. The historical setup below describes the first increment; hosted integration checks and admin MFA remain outstanding.
+Member management, recovery and invitation acceptance are implemented. Account-management migrations are already in the current project. Follow [account management](ACCOUNT_MANAGEMENT.md) for the remaining email setup and verification, not to reapply its migration. Hosted integration checks and required admin MFA remain outstanding.
 
-Before live use, select/configure transactional SMTP, implement controlled invitation and recovery callbacks, confirm redirect URL allowlists, add admin MFA and complete abuse/rate-limit checks. The default email sender is not a production delivery plan. See [Supabase SMTP guidance](https://supabase.com/docs/guides/auth/auth-smtp).
+Before live use, finish the registered-domain/SMTP setup, test the existing invitation and recovery callbacks, confirm redirect URL allowlists, settle admin MFA enforcement and complete abuse/rate-limit checks. See [Supabase SMTP guidance](https://supabase.com/docs/guides/auth/auth-smtp).

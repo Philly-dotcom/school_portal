@@ -1,6 +1,6 @@
 # Enrollment transfers and withdrawals
 
-Local Phase 2 increment, 2026-10-01. Apply `supabase/migrations/202610010009_enrollment_lifecycle.sql` after migrations 001–008 in the dedicated School Portal project. The agent has not applied this migration remotely. Existing placement dates and links are preserved; version and closure fields are added.
+Migration 009 introduced this Phase 2 feature on 1 October. The user has confirmed applying it, followed by 010–013. Do not rerun it. Existing placement dates and links are preserved; version and closure fields support history-preserving changes.
 
 ## Behavior
 
@@ -26,9 +26,9 @@ The register UI still loads before migration 009, with lifecycle controls unavai
 
 Local `npm run check` passed lint, TypeScript, 90 tests across 17 files and production build. The actual SQL ran in embedded PostgreSQL with fictional schools. Tests cover school isolation, non-admin/suspended/anonymous denial, stale changes, same-class/cross-year/foreign destinations, date bounds, inclusive overlap rejection, transfer and withdrawal history, re-entry, audit data and rollback after a forced audit failure. Server-action tests cover permission checks, trusted school identity, validation and safe error handling.
 
-Hosted activation and browser workflow verification for migration 009 remain pending. Use only fictional learners, preferably a separate test learner if keeping the original demo dataset intact matters:
+Migration application is confirmed by the user; the following hosted workflow checks remain to be completed. Use only fictional learners, preferably a separate test learner to preserve the original demo dataset:
 
-1. Apply 009 once, then reload School registers. Confirm existing dates and enrollments remain intact.
+1. Reload School registers without reapplying 009. Confirm existing dates and enrollments remain intact.
 2. Transfer a fictional learner to a second class in the same year partway through their date range. Confirm two rows, adjacent dates and the retained original end date.
 3. Submit an old form from a second tab. Confirm rejection and no duplicate replacement.
 4. Withdraw the replacement later in its date range. Confirm history remains; create re-entry starting the following day.

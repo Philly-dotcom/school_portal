@@ -1,5 +1,43 @@
 # Foundation verification
 
+## Environment and file cleanup — 4 October 2026
+
+`npm run check` passed lint, TypeScript, 143 tests across 24 files and production build. Two tests of an unused permission helper were removed with that helper; the active admin-helper test was moved to permissions.test.ts. Database boundary tests remain. The archived repair script's regression tests passed using its new path.
+
+All 13 migrations are byte-for-byte unchanged against pre-cleanup hashes. `.env.local` is unchanged, ignored and untracked; the template now matches its six app variable names without copying values. The archive moves preserved file hashes. Relative links in 27 documentation files resolve. No hosted data/configuration, email or account changes were made; no new hosted verification was performed for this cleanup. See CLEANUP.md and ENVIRONMENT.md.
+
+## Migration 013 application — 4 October 2026
+
+The user confirms migration 013 ran in the dedicated Supabase project. It is no longer pending application. The investigation below records what happened before that confirmation; its hosted-error warning is historical.
+
+Connected browser checks after that confirmation, using the existing School Admin session:
+
+| View | Observed result |
+| --- | --- |
+| Overview | Verified School Admin dashboard loaded. |
+| Academic setup | Existing structure and create/edit controls loaded. |
+| School registers | Three students, three teachers, three guardians, three family links and three enrollments displayed. The unavailable error was absent, including after a full page reload. |
+| Teaching assignments | Three existing assignments and the creation form loaded. |
+| Timetable | Four existing weekly lessons displayed across Monday and Tuesday. |
+| People & access | One active School Admin, zero invitations, recent audit activity and the email-disabled message displayed. |
+| School settings | School name and Africa/Johannesburg timezone loaded. |
+
+This confirms the register-loading regression is resolved in the connected app. It does not independently inspect every deployed function or policy. The guardian relationships displayed child access as not granted. No save, role change, grant, deletion, email send or hosted SQL was performed during this pass. The running server was left alone.
+
+Still open: correction/transfer/withdrawal and timetable conflict/removal saves, stale forms and concurrent sessions, sign-out/recovery, and real-session denied reads/writes for other roles and a second fictional school. The current school lists only the admin; separate test logins are needed for the role checks. Existing records have future 2027 dates, so tests of current teacher access must deliberately account for those dates.
+
+The documentation was updated, with each maintained file described across FILE_GUIDE.md, docs/README.md and tests/README.md. Local documentation links and inventory coverage were checked. Application code, tests and SQL were not edited in this documentation pass. The earlier 145-test result below was not rerun for these Markdown-only changes; the user plans to run checks too.
+
+## Connected register-query investigation — 2026-10-04
+
+Validation completed October 4: `npm run check` passed lint, TypeScript, **145 tests across 24 files**, and the production build. This validates the local correction, not its hosted application.
+
+Read-only browser checks on October 3 loaded the signed-in admin dashboard, People & access and Academic setup. School registers showed its generic unavailable message. One active School Admin and zero invitations were visible; no hosted writes or email sends were performed. This is limited smoke evidence, not hosted RLS/workflow completion.
+
+Local reproduction with `auth.users.email varchar(255)` produced SQLSTATE 42804 in migration 010's `list_linkable_members`, whose fifth result column is declared text. Supabase's [Auth schema](https://github.com/supabase/postgres/blob/develop/migrations/schema-17.sql) uses character varying(255). Previous local fixtures used text and masked the incompatibility. Migration 013 adds an explicit text cast without changing the signature, access boundaries or stored data. The deployed SQL error was not captured, so resolution of the hosted screen remains unverified until 013 is applied and the page reloaded.
+
+The populated upgrade test checks the failure at 012 and successful reads plus non-admin/cross-school denial after 013. Membership-link tests cover verified versus unverified emails. No separate teacher/student/guardian sessions were available for hosted verification.
+
 ## Enrollment lifecycle — 2026-10-01
 
 `npm run check` passed lint, TypeScript, 90 tests across 17 files and production build. Migration 009 ran in embedded PostgreSQL: transfer/withdrawal history, overlap protection, stale forms, invalid/cross-school/cross-year destinations, re-entry, permission denials, audit and atomic rollback tested. Server-action validation/authorization tests passed. Hosted migration 009, UI workflows and independent concurrent sessions remain unverified; see `ENROLLMENT_LIFECYCLE.md`.

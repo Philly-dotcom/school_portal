@@ -1,6 +1,6 @@
 # Auth configuration, security headers and personal-data handling
 
-Current repair is local-only. The configuration commands below are future, explicitly approved staging/deployment steps; do not run them as part of this repair.
+As of 4 October, migrations 009–013 are user-confirmed applied. Hosted Auth configuration, MFA enforcement and the privacy-cleanup procedure have not been fully verified. The commands below are controlled setup/operational steps, not a checklist to run automatically while reading this guide.
 
 ## 1. Auth settings are version-controlled (`supabase/config.toml`)
 The file now documents the intended hosted Auth settings: sign-ups off, 12-character minimum enforced by Supabase Auth itself (the form check alone can be bypassed with the public key), refresh-token rotation, confirmed email changes, rate limits, TOTP MFA enabled, and a 24-hour email-link lifetime.
@@ -8,7 +8,7 @@ The file now documents the intended hosted Auth settings: sign-ups off, 12-chara
 Nothing changes on the hosted project until you apply it:
 
 1. Create a **staging** Supabase project and `supabase link` to it.
-2. Export the variables the file references (`SCHOOL_PORTAL_SITE_URL`, `SCHOOL_PORTAL_PASSWORD_REDIRECT_URL` and `SCHOOL_PORTAL_INVITATION_REDIRECT_URL`; the latter must include `/account/password?flow=invite`).
+2. Export the CLI variables described in [Environment settings](ENVIRONMENT.md): `SCHOOL_PORTAL_SITE_URL`, `SCHOOL_PORTAL_PASSWORD_REDIRECT_URL` and `SCHOOL_PORTAL_INVITATION_REDIRECT_URL`; the latter must include `/account/password?flow=invite`. These redirect variables are intentionally absent from the web-app env files.
 3. Run `supabase config push`, read the diff it prints, and check sign-in, recovery and invitation links.
 4. After staging validation and separate deployment authorization, repeat for production. If the CLI reports a key it does not recognise, fix it rather than ignoring the warning.
 

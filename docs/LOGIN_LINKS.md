@@ -23,11 +23,11 @@ New tables that hold learner data must follow the same pattern: no policy `using
 
 Policy performance note: helpers run per row. This is fine for a single school; if registers grow into the tens of thousands, review query plans (`explain analyze`) before adding more modules.
 
-The dashboard UI is still administrator-focused. The database now permits scoped reads for other roles; building the teacher, guardian and student screens is the next step and should query only through the authenticated client so these policies apply.
+The dashboard UI is still administrator-focused. Dedicated teacher, guardian and student screens belong to the later role-facing work in Phase 3. Finish the current Phase 2 checks first. Those future screens must query through the authenticated client so the same policies apply.
 
 ## Pre-deployment repair rules (2026-10-02)
 
-Migration 010 is still unapplied to hosted Supabase. `link_register_to_member` now requires `expected_version`. A stale form fails with 40001; reload and review before retrying. Both SQL and the UI require an active same-school membership with the matching role. Existing inactive links remain visible for removal; suspension does not silently unlink or reactivate anyone. The selector shows verified Auth email and the full stable membership ID alongside the editable display name, and requires confirmation.
+Migration 010 is user-confirmed applied, followed by 013's email-return-type fix. Hosted linking and role-specific access still need testing. `link_register_to_member` requires `expected_version`: an old form fails with 40001 instead of overwriting a newer edit. Reload and review before retrying. Both SQL and the UI require an active same-school membership with the matching role. Existing inactive links remain visible for removal. The selector shows verified Auth email and the full membership ID alongside the editable display name, and requires confirmation.
 
 Guardian relationships remain historical family records. New and existing rows have `access_enabled=false`; login linking alone does not grant access to children. The School Admin explicitly grants/revokes child access through the versioned, audited `set_guardian_access` RPC and the Guardian links form. Removing that grant preserves the relationship and immediately removes derived child access. Reactivation restores only still-granted relationships.
 
