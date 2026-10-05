@@ -6,6 +6,8 @@ Migration 009 introduced this Phase 2 feature on 1 October. The user has confirm
 
 School Admin can expand **Transfer or withdraw** on an unclosed enrollment in School registers.
 
+The destination selector searches classes by name in pages of 25. Results are restricted to this enrollment's academic year and exclude its current class. Leave the search blank to browse; a class on another search page remains selectable. This removes the old 500-class form limit. Withdrawal does not need a class choice. Database validation still rejects forged cross-year or cross-school destinations independently of the search filter.
+
 - **Transfer:** choose another class in the same academic year and the first day in that class. This day must be after the old placement starts and no later than its end. The old row ends the preceding day and is marked transferred. A new row starts on the chosen day and retains the original end date. Both changes and the audit event commit together.
 - **Withdrawal:** choose the last enrolled day, inclusive, within the existing placement. Its record stays visible with its shortened end date and withdrawal label.
 - Closed rows cannot be changed again. Stale forms fail instead of overwriting newer decisions.

@@ -32,3 +32,13 @@ Migration 010 is user-confirmed applied, followed by 013's email-return-type fix
 Guardian relationships remain historical family records. New and existing rows have `access_enabled=false`; login linking alone does not grant access to children. The School Admin explicitly grants/revokes child access through the versioned, audited `set_guardian_access` RPC and the Guardian links form. Removing that grant preserves the relationship and immediately removes derived child access. Reactivation restores only still-granted relationships.
 
 Teacher rosters and enrollment reads require today's school-local date within BOTH the teaching assignment and enrollment. A future transfer keeps access with the existing teacher until its effective date. Students/authorized guardians retain their own enrollment history and class labels, but lessons require a current placement and an actual lesson occurrence overlapping that placement. History is not deleted to implement current access.
+
+## Searchable account choices — migration 015
+
+Added on 5 October 2026; you have confirmed applying migration 015. Do not reapply it. Earlier migrations stay intact. Browser verification remains on hold.
+
+Open **Link sign-in**, enter a name or verified email and press **Search choices**. A blank search browses eligible accounts, 25 at a time. Accounts already linked to another record of this type are excluded in the database before paging. An existing inactive or wrong-role link remains visible for deliberate removal, but is not offered as a new eligible choice. Choose **No linked login**, confirm, then save to unlink.
+
+Searching grants no access and sends no email. The existing save RPC still checks role, ownership and record version; a search result can become stale if another admin changes an account. Current link IDs remain in the form payload while search is busy, preventing an omitted disabled selector from being interpreted as an unlink.
+
+The SQL search checks active School Admin authority and target-record ownership, allowlists the three person record types, bounds page/text input and reveals email only when verified. Local tests cover paging beyond 500, ownership exclusion, school/role denial and verified-email search. Browser checks are on hold at the user's request.

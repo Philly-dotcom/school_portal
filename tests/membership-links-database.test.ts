@@ -625,3 +625,56 @@ describe("link and access regressions on the final schema", () => {
     }
   });
 });
+
+describe("paged register account search", () => {
+  const search = (user: string, school = A, kind = "teachers", record = ids.t2, query = "", page = 1) =>
+    asUser(user, () => db.query<{ id: string; verified_email: string | null }>(
+      "select * from search_register_members($1,$2,$3,$4,$5)", [school, kind, record, query, page]));
+
+  it("denies foreign-school, non-admin, anonymous and malformed requests", async () => {
+    for (const user of [adminB, teacherU, guardianU, studentU])
+      await expect(search(user)).rejects.toMatchObject({ code: "42501" });
+    await expect(search(adminA, B)).rejects.toMatchObject({ code: "42501" });
+    await expect(search(adminA, A, "teachers", id(999999))).rejects.toMatchObject({ code: "42501" });
+    await expect(search(adminA, A, "profiles")).rejects.toMatchObject({ code: "22023" });
+    await expect(search(adminA, A, "teachers", ids.t2, "", 0)).rejects.toMatchObject({ code: "22023" });
+    await db.exec("set role anon");
+    try {
+      await expect(db.query("select * from search_register_members($1,'teachers',$2,'',1)", [A, ids.t2])).rejects.toMatchObject({ code: "42501" });
+    } finally { await db.exec("reset role"); }
+  });
+
+  it("filters ownership before pagination beyond 500 records and searches email only when verified", async () => {
+    await db.exec("begin");
+    try {
+      // All synthetic; rolled back after the assertion. First 505 accounts are taken.
+      await db.exec(`insert into auth.users(id,email,email_confirmed_at)
+        select md5('search-test-'||n)::uuid,'search-'||n||'@example.invalid',case when n=531 then null else now() end
+        from generate_series(1,532) n;
+        insert into profiles(user_id,display_name)
+        select md5('search-test-'||n)::uuid,'Search fixture '||lpad(n::text,4,'0') from generate_series(1,532) n;`);
+      await db.query(`insert into school_memberships(id,school_id,user_id)
+        select md5('search-test-'||n)::uuid,$1,md5('search-test-'||n)::uuid from generate_series(1,532) n`, [A]);
+      await db.query(`insert into membership_roles(membership_id,school_id,role)
+        select md5('search-test-'||n)::uuid,$1,'teacher' from generate_series(1,532) n`, [A]);
+      await db.query(`insert into teachers(school_id,full_name,reference,membership_id)
+        select $1,'Search fixture '||n,'SEARCH-'||n,md5('search-test-'||n)::uuid from generate_series(1,505) n`, [A]);
+      const page1 = await search(adminA, A, "teachers", ids.t2, "Search fixture", 1);
+      const page2 = await search(adminA, A, "teachers", ids.t2, "Search fixture", 2);
+      expect(page1.rows).toHaveLength(26); // one lookahead row for the action
+      expect(page2.rows).toHaveLength(2);
+      expect(new Set([...page1.rows.slice(0,25), ...page2.rows].map(r => r.id)).size).toBe(27);
+      expect((await search(adminA, A, "teachers", ids.t2, "search-531@")).rows).toHaveLength(0);
+      expect((await search(adminA, A, "teachers", ids.t2, "search-532@")).rows).toHaveLength(1);
+      expect((await search(adminA, A, "teachers", ids.t2, "%")).rows).toHaveLength(0);
+      await db.exec("update school_memberships set status='suspended' where id=md5('search-test-532')::uuid");
+      expect((await search(adminA, A, "teachers", ids.t2, "search-532@")).rows).toHaveLength(0);
+      await db.exec("delete from membership_roles where membership_id=md5('search-test-530')::uuid");
+      expect((await search(adminA, A, "teachers", ids.t2, "Search fixture 0530")).rows).toHaveLength(0);
+      // An existing account is eligible for its own record, but not another one.
+      const owned = (await db.query<{id:string}>("select id from teachers where reference='SEARCH-1' and school_id=$1",[A])).rows[0].id;
+      expect((await search(adminA, A, "teachers", owned, "Search fixture 0001")).rows).toHaveLength(1);
+      expect((await search(adminA, A, "teachers", ids.t2, "Search fixture 0001")).rows).toHaveLength(0);
+    } finally { await db.exec("rollback"); }
+  });
+});

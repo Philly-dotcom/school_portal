@@ -1,6 +1,6 @@
 # Tests: what they check and how to run them
 
-Updated 4 October 2026. The latest full local run passed **154 tests in 25 files**, plus lint, TypeScript and the production build, after adding assignment lifecycle 014. The earlier cleanup retired two tests of the unused `canManageSchool` helper and moved the active admin-helper test into permissions.test.ts. No hosted test success is implied. These numbers describe that run; your next run is a new result.
+Updated 5 October 2026. The latest full local run passed **218 tests in 32 files**, plus lint, TypeScript and production build, after adding timetable assignment search. Six additional tests cover bounded search/date results, safe errors, filter/form wiring and SQL matching/isolation beyond 500 assignments. No hosted test success is implied. Browser checks are on hold.
 
 ## Start here
 
@@ -45,6 +45,11 @@ All files below are in this folder. A test with an expected permission error is 
 | [permissions.test.ts](permissions.test.ts) | Checks role parsing and the active admin-context helper used by server actions. Identity, membership and school isolation are checked by the database/action suites. |
 | [database.test.ts](database.test.ts) | Runs the foundation SQL against two fictional schools. Checks RLS, school settings permissions, ownership references and audit behavior. |
 | [academic-actions.test.ts](academic-actions.test.ts) | Checks admin authorization, validated academic input and safe error handling with mocked database calls. |
+| [academic-pagination.test.ts](academic-pagination.test.ts) | Checks academic records beyond 500, school-scoped queries, page navigation, off-page labels, availability of search-enabled forms, malformed URLs and query failures. Uses synthetic mocked results, not hosted data. |
+| [register-pagination.test.ts](register-pagination.test.ts) | Checks people and histories beyond 500, independent form choices, current inactive links loaded by ID, related labels, capacity boundaries, page links and safe query/RPC failures. Synthetic mocked reads; no hosted records are inserted. |
+| [register-search-forms.test.ts](register-search-forms.test.ts) | Checks that guardian/enrollment forms use the right searches, transfers pass the original year and excluded class, and closed history stays read-only. Initial markup and props only; interactive browser checks are separate. |
+| [planning-pagination.test.ts](planning-pagination.test.ts) | Checks teaching/timetable records beyond 500, server filtering before paging, retained filter links, partial-schedule wording, off-limit labels, history/removal controls, selection limits, school filters and safe failures. Renders the real timetable UI with mocked reads/actions; hosted behavior is not implied. |
+| [record-search.test.ts](record-search.test.ts) | Checks admin-only searches, verified school ownership, bounded pages beyond 500, invalid requests, class/date details, excluded replacement teachers and safe failures. Also checks literal wildcard escaping in local PostgreSQL and the selector's initial required-field markup. Interactive selection/search behavior remains a browser check. |
 | [academic-database.test.ts](academic-database.test.ts) | Runs academic-structure SQL: school isolation, academic relationships, date constraints, duplicate protection and grade normalization. |
 | [register-actions.test.ts](register-actions.test.ts) | Checks person/relationship/enrollment creation handlers reject non-admin calls, forged ownership and malformed inputs. |
 | [register-database.test.ts](register-database.test.ts) | The larger academic workflow suite: registers, teaching assignments, corrections, timetable clashes/removal and enrollment lifecycle, with SQL permission and ownership checks. |
@@ -110,3 +115,15 @@ If a check fails, keep the test name and nearby error output. Remove credentials
 
 There is no dedicated Storage, attendance, marks or finance test suite yet because those modules have not been built. No coverage percentage is claimed here.
 
+
+## Account search tests
+
+[member-search.test.ts](member-search.test.ts) checks server-derived school context, role checks, invalid/forged input, bounded results, private failures and the hidden current-link payload. `membership-links-database.test.ts` also runs migration 015 and verifies denied anonymous/non-admin/foreign-school searches, malformed requests, ownership filtering before pagination across 532 synthetic accounts, literal search text, verified-email-only search, suspended accounts and missing roles. Existing write-isolation tests continue to cover link mutations.
+
+These are local checks. No hosted migration was applied and browser checks remain on hold.
+
+## Timetable search tests
+
+`record-search.test.ts` checks the assignment RPC parameters, admin context, bounded results, date bounds, invalid filters and safe errors. `register-database.test.ts` runs migration 016 and searches more than 500 fictional assignments, covering teacher references, subject/class/grade/year matching, literal search text and denied school/role/anonymous access. These tests run before the suite deliberately suspends its admin.
+
+[timetable-search-forms.test.ts](timetable-search-forms.test.ts) checks that filter and creation searches remain available without preloaded choices, preserve the active filter ID with empty lesson results and reset pagination when applying a filter. Interactive selection/date changes remain deferred browser checks. Existing timetable SQL save/clash/removal tests remain in the suite.

@@ -1,5 +1,9 @@
 "use client";
 import { useActionState, useState } from "react";
+import Link from "next/link";
+import { RecordSearchSelect } from "./record-search-select";
+import type { RecordChoice } from "@/lib/record-search";
+import { PlanningPagination } from "./planning-pagination";
 import { saveLesson, removeLesson } from "@/app/dashboard/timetable/actions";
 import {
   weekdays,
@@ -45,19 +49,24 @@ export function Timetable({
   assignments,
   lessons,
   timezone,
+  page,
+  hasNext,
+  filter,
 }: {
   assignments: LessonAssignment[];
   lessons: LessonRow[];
   timezone: string;
+  page: number;
+  hasNext: boolean;
+  filter: string;
 }) {
-  const [selected, setSelected] = useState("");
-  const [filter, setFilter] = useState("");
+  const [assignment, setAssignment] = useState<RecordChoice | null>(null);
+  const [filterChoice, setFilterChoice] = useState(filter);
   const [state, action, pending] = useActionState(saveLesson, {
     error: "",
     saved: false,
   });
-  const assignment = assignments.find((a) => a.id === selected);
-  const filtered = lessons.filter((l) => !filter || l.assignment_id === filter);
+  const currentFilter = assignments.find((a) => a.id === filter);
   return (
     <>
       <div className="quiet-note">
@@ -68,29 +77,43 @@ export function Timetable({
         </p>
       </div>
       <div className="academic-grid">
-        <section className="content-panel">
+        <section className="content-panel" id="timetable">
           <h2>Weekly timetable</h2>
-          <div className="access-form">
-            <label>
-              Filter by teaching assignment
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="">All assignments</option>
-                {assignments.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <p className="small muted">
+            Showing up to 50 recurring lessons on this page, not the complete
+            weekly schedule. Saving still checks conflicts against all lessons.
+          </p>
+          {filter && (
+            <p className="small muted">
+              Filtered assignment:{" "}
+              {assignments.find((a) => a.id === filter)?.label ??
+                "Unavailable assignment"}
+              . <Link href="/dashboard?view=timetable">Clear filter</Link>
+            </p>
+          )}
+          <p className="small muted">Search by teacher name/reference, subject, class, grade or year.</p>
+          <form action="/dashboard" method="get" className="access-form">
+            <input type="hidden" name="view" value="timetable" />
+            <input type="hidden" name="assignment" value={filterChoice} />
+            <RecordSearchSelect
+              kind="teaching_assignments"
+              name="filterChoice"
+              label="Filter by teaching assignment"
+              required={false}
+              emptyLabel="All assignments"
+              initialChoice={filter ? {
+                id: filter,
+                label: currentFilter?.label ?? "Unavailable assignment",
+              } : null}
+              onChange={(choice) => setFilterChoice(choice?.id ?? "")}
+            />
+            <button className="button secondary">Apply filter</button>
+          </form>
           {weekdays.map((day, i) => (
             <section key={day} style={{ marginTop: 20 }}>
               <h3>{day}</h3>
               <ul className="academic-list">
-                {filtered
+                {lessons
                   .filter((l) => l.weekday === i + 1)
                   .map((l) => (
                     <li key={l.id}>
@@ -109,34 +132,29 @@ export function Timetable({
                     </li>
                   ))}
               </ul>
-              {!filtered.some((l) => l.weekday === i + 1) && (
-                <p className="small muted">No lessons scheduled.</p>
+              {!lessons.some((l) => l.weekday === i + 1) && (
+                <p className="small muted">No lessons on this page.</p>
               )}
             </section>
           ))}
+          <PlanningPagination
+            view="timetable"
+            page={page}
+            hasNext={hasNext}
+            assignment={filter}
+          />
         </section>
         <section className="content-panel">
           <h2>Add a weekly lesson</h2>
           <form action={action} className="access-form">
-            <label>
-              Teaching assignment
-              <select
-                name="assignment_id"
-                value={selected}
-                onChange={(e) => setSelected(e.target.value)}
-                required
-                disabled={pending || !assignments.length}
-              >
-                <option value="" disabled>
-                  Select teacher, subject and class
-                </option>
-                {assignments.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <input type="hidden" name="assignment_id" value={assignment?.id ?? ""} />
+            <RecordSearchSelect
+              kind="teaching_assignments"
+              name="lessonChoice"
+              label="Teaching assignment"
+              disabled={pending}
+              onChange={setAssignment}
+            />
             <label>
               Weekday
               <select name="weekday" defaultValue="1" disabled={pending}>
@@ -158,17 +176,22 @@ export function Timetable({
             </label>
             <label>
               Lesson end time
-              <input type="time" name="end_time" required disabled={pending} />
+              <input
+                type="time"
+                name="end_time"
+                required
+                disabled={pending}
+              />
             </label>
             <label>
               Schedule from
               <input
-                key={`start-${selected}`}
+                key={`start-${assignment?.id}`}
                 type="date"
                 name="starts_on"
-                defaultValue={assignment?.starts_on}
-                min={assignment?.starts_on}
-                max={assignment?.ends_on}
+                defaultValue={assignment?.startsOn}
+                min={assignment?.startsOn}
+                max={assignment?.endsOn}
                 required
                 disabled={pending || !assignment}
               />
@@ -176,19 +199,16 @@ export function Timetable({
             <label>
               Schedule until
               <input
-                key={`end-${selected}`}
+                key={`end-${assignment?.id}`}
                 type="date"
                 name="ends_on"
-                defaultValue={assignment?.ends_on}
-                min={assignment?.starts_on}
-                max={assignment?.ends_on}
+                defaultValue={assignment?.endsOn}
+                min={assignment?.startsOn}
+                max={assignment?.endsOn}
                 required
                 disabled={pending || !assignment}
               />
             </label>
-            {!assignments.length && (
-              <p className="muted">Create a teaching assignment first.</p>
-            )}
             <p className="small muted">
               Repeats each selected weekday within this inclusive date range.
               Adjacent lessons may share an end/start time.

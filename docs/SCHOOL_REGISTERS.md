@@ -30,7 +30,17 @@ Names and references can be corrected through versioned forms. Transfers/withdra
 
 The management screen and writes require an active School Admin. Linked non-admin accounts have the limited database reads described in LOGIN_LINKS.md. Composite foreign keys reject cross-school relationships; the database also checks class/year consistency and enrollment dates. Audit events identify the action and record; restricted correction history separately retains prior values. The app uses no elevated credentials.
 
-The initial UI supports up to 500 entries in each related list. It shows a capacity notice instead of incomplete lists when that is exceeded. Pagination/search are required before larger school pilots. Only names and internal references are collected at this stage; contact details and other personal fields need an agreed purpose before addition.
+Students, teachers, guardians, guardian links and enrollment history each show 50 records per page, with separate page controls. People sort by name then ID, guardian links by ID, and enrollment history by start date then ID. Records after the old 500-row limit remain reachable. Empty pages have links back to earlier pages. New or renamed records can move between pages because these are live lists, not fixed snapshots.
+
+Guardian linking and initial enrollment now use searchable student, guardian and class choices, with 25 results per page. Search by name, or leave the search blank and press **Search choices** to browse. Names include the school reference to distinguish people with the same name. Your selected record stays selected while browsing. Choosing a class supplies its academic year and date bounds. These forms no longer depend on a 500-record choice list.
+
+Transfer destinations use the same class search, limited to the enrollment's academic year and excluding its current class. Withdrawals need no destination. Saving still validates school ownership, year, dates, version and overlap rules; changing a search request cannot bypass those checks. Existing guardian access controls and closed enrollment history remain unchanged.
+
+Sign-in linking now searches matching active memberships in pages of 25 by name or verified email. You confirmed applying migration 015; do not reapply it. SQL excludes accounts linked to any other person of the same type before pagination, including off-page records. Only current links on the visible page are loaded initially; inactive links remain visible for deliberate removal. Save-time ownership, role, confirmation and version checks remain in force. Browser checks are on hold.
+
+Only names and internal references are collected at this stage; contact details and other personal fields need an agreed purpose before addition.
+
+To check pagination in the connected app, use fictional records: navigate one list to page two, confirm the other lists keep their positions, and check that guardian/enrollment labels and dropdown choices still include off-page people. A list with fewer than 51 records correctly has no Next link. Automated tests simulate larger lists without inserting hosted records.
 
 ## Next
 

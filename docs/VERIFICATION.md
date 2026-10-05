@@ -1,5 +1,55 @@
 # Foundation verification
 
+## Timetable assignment search — 5 October 2026
+
+The final full `npm run check` passed: lint, TypeScript, **218 tests in 32 files**, and production build.
+
+Timetable filters and lesson forms now search assignments without preloading capped catalogs. Migration 015 application is user-confirmed; new migration 016 has not been applied to hosted Supabase. Browser checks remain on hold.
+
+The targeted register SQL suite passed all 14 tests, including 502 synthetic assignments, matching by related names/reference, date bounds, literal search text and denied school/role/anonymous access. During development, the new tests exposed fixture-ordering, date representation and SQL alias errors in the test code; these were corrected. Cleanup now preserves the original SQL error. The large embedded-SQL test has a 60-second timeout instead of the default five seconds. This is capacity correctness coverage, not a hosted latency benchmark.
+
+No hosted data, existing migrations, save-time clash rules, email or deployment settings were changed.
+
+## Sign-in account search — 5 October 2026
+
+`npm run check` passed lint, TypeScript, **212 tests in 31 files** and production build. New tests cover trusted school context, malformed input, safe errors, retained current-link payload and SQL eligibility across 532 fictional memberships, including off-page ownership, role/status filtering, verified-email visibility and denied anonymous/non-admin/cross-school searches. Register tests now expect account search to remain available above 500 records and resolve current inactive links by ID.
+
+Migration 015 adds a read-only eligibility search. It has not been applied to hosted Supabase. Existing migrations and link-save rules are unchanged. No browser checks, hosted writes, email, deployment or cloud changes were performed. Browser checks are on hold at the user's request. Timetable search is the next development item.
+
+## Register relationship and enrollment searches — 5 October 2026
+
+`npm run check` passed lint, TypeScript, **206 tests in 30 files**, and production build. Eight additional tests check student/guardian choices past 500, same-school/same-year transfer results, current-class exclusion, malformed filter rejection, form search parameters, confirmation/version fields and read-only closed history. Existing register tests now expect relationship/enrollment forms to remain available above their former reference limits. The first full check caught a leftover type in a test mock; it was removed and the complete check reran successfully.
+
+No hosted writes, browser checks, migrations, enrollment mutations, account-link rules or permission policies changed. The user is doing the browser checks. Include guardian linking, initial enrollment date bounds, transfer search in the correct year, switching to withdrawal, and retained selections when paging. Sign-in account linking and timetable selectors still retain their existing capacity guards.
+
+## Academic and teaching searchable selectors — 5 October 2026
+
+`npm run check` passed lint, TypeScript, **198 tests in 29 files**, and production build. Fourteen new tests cover non-admin/inactive-context denial, invalid/forged input, bounded choices beyond 500, school-scoped class details, replacement exclusions, safe errors and initial required-selector markup. Literal percent/underscore/backslash search patterns were checked with local PostgreSQL. Existing academic/teaching pagination tests now verify that the converted forms remain available above the former reference cap.
+
+The user said they will perform browser checks. Interactive search, retained selection while paging, class/date propagation and actual saves have not been independently verified in this increment. No hosted records, migrations, email settings or cloud resources were changed. The existing grade-helper wording and invitation example edits were preserved. Register/account-linking and timetable selectors retain their capacity guards for now.
+
+## Teaching and timetable pagination — 4 October 2026
+
+`npm run check` passed lint, TypeScript, **184 tests in 28 files**, and production build. Twelve new tests cover assignment/lesson records beyond 500, school-scoped reads, assignment filtering before the page range, filter-preserving links, malformed filters, partial-schedule wording, off-limit labels, retained history/removal controls, selector capacity boundaries and safe failures. The timetable is rendered with mocked reads and actions; no hosted records are inserted.
+
+No migrations, scheduling mutations, conflict checks or permission rules changed. No connected-browser verification, emails or deployment were performed. The pre-existing development paths in `next-env.d.ts` were restored after the production build rewrote that generated file. Existing user edits and all migrations were preserved. Searchable selectors and connected page/filter verification remain Phase 2 work.
+
+## Register pagination — 4 October 2026
+
+`npm run check` passed lint, TypeScript, **172 tests in 27 files**, and production build. The 11 new register tests cover people and histories beyond 500, complete off-page choices, membership links owned by off-page people, related labels beyond reference limits, exact/over-limit capacity behavior, empty-page navigation and safe read/RPC failures. The academic tests also pass after extracting the shared page helper. A final focused rerun passed all 18 pagination tests after narrowing year/grade label lookups to visible enrollments.
+
+These are local tests with synthetic mocked register reads. No connected-browser check, hosted writes, emails or migrations were performed. Existing SQL security tests still pass; mocked school filters do not constitute new hosted RLS verification. Searchable selectors remain unfinished, so this is list/history pagination rather than unrestricted large-school readiness.
+
+## Phase 2 continuation — 4 October 2026
+
+The user confirmed applying migration 014 and then completing all pending tests with fictional records. Development is proceeding on that confirmation. No detailed per-scenario results accompanied it, so this is recorded as user-reported completion rather than independently observed role/session/concurrency evidence. Email delivery remains disabled and unverified.
+
+Academic setup now pages each of its five lists separately. New local tests cover records past the old 500-row cutoff, stable ordering and school filters, independent form choices and labels, capacity guards, empty pages, invalid URL parameters and safe query failures. No hosted data or migrations were changed for this increment. Connected browser verification of the new page controls remains separate.
+
+`npm run check` passed: lint, TypeScript, **161 tests across 26 files**, and production build. No email, hosted mutation, deployment or browser verification was performed in this increment. The existing user edits to grade guidance and invitation example copy were preserved.
+
+The dated entries below retain their original migration/testing status as history; 014 is no longer pending application.
+
 ## Teaching-assignment lifecycle — 4 October 2026
 
 Local migration 014 and the admin end/replace workflow passed `npm run check`: lint, TypeScript, **154 tests across 25 files**, and production build. Migrations 001–013 were not changed. The new migration has not been applied to Supabase and no hosted record was changed.

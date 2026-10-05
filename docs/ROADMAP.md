@@ -1,10 +1,10 @@
 # Delivery roadmap
 
-Updated 4 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
+Updated 5 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
 
 ## Current position
 
-You have confirmed applying migration 013 after 009–012. School registers now loads and remains available after refresh; all seven admin views loaded in the 4 October connected check. The remaining work is workflow and permission testing, not repeating migrations. See VERIFICATION.md for the limits of this read-only check.
+You have confirmed applying migrations through 015. The earlier fictional-data tests were reported complete before the recent search changes; browser checks of the new controls remain on hold. Phase 2 development is continuing on that user-reported outcome. Individual hosted security/concurrency evidence remains separate from local checks. See VERIFICATION.md; do not repeat applied migrations.
 
 **Phase 2: Academic Setup**, with Phase 1 operational readiness still open. The user authorized development without email. No Phase 3 transition is approved by a local test result alone. Preserve the original six-phase product plan, one-school-first experience and school-aware ownership.
 
@@ -28,9 +28,9 @@ Still open before live use:
 | School registers | Students, teachers, guardians; name/reference corrections | Verify corrections and capacity behavior in the intended school dataset. |
 | Relationships and access | Guardian relationships, explicit child grants, versioned login links, dated role-scoped reads | Hosted verification of new grants/linking, suspension and cross-school denial. No teacher/student/guardian record screens yet. |
 | Enrollment | Dated placement, history-preserving transfers/withdrawals and overlap protection | Hosted lifecycle and simultaneous-save tests, including future transfers. |
-| Teaching assignments | Dated creation/listing; local 014 adds versioned end/replacement with retained history | Apply and verify 014. Subject/class/start-date corrections remain outside this editor; timetable changes must be reviewed separately. |
+| Teaching assignments | Dated creation/listing and versioned end/replacement with retained history; 014 application and testing user-confirmed | Subject/class/start-date corrections remain outside this editor; timetable changes must be reviewed separately. |
 | Timetable foundations | Admin creation/listing/filtering/removal with clash checks | Hosted removal/conflict/concurrency checks. Role-facing daily use belongs to Phase 3. |
-| Capacity | Invitation pagination only; academic/register/teaching/timetable limits remain | Paginate required lists or explicitly accept a measured pilot capacity before declaring readiness. Related history lists also count toward limits. |
+| Capacity | All Phase 2 display lists have pagination; academic, teaching, guardian-link, enrollment, account-link and timetable choices are searchable | 015 application is user-confirmed. Timetable search requires new migration 016; its hosted application is pending. Browser checks are on hold at the user's request. |
 
 Existing hosted evidence: the user tested academic setup, school registers and teaching assignments. Later synthetic admin creation workflows, including timetable lessons, were exercised in the connected app. Those checks do not prove all hosted policies, edits or concurrent operations.
 
@@ -50,7 +50,7 @@ Academic CSV imports are **optional and undecided**. They appeared in an expande
 
 ### Next sequence
 
-Admin screen loading after 013 is checked. Next: test existing workflows with fictional records → arrange separate test accounts for role and school-isolation checks → finish the agreed Phase 2 gaps. Attendance, homework, announcements and documents come after that, not simply after a green local test run.
+With 014 and earlier pending testing confirmed by the user, Phase 2 list pagination and academic/teaching/register relationship/enrollment searches are implemented locally. Account-link search migration 015 is now user-confirmed applied. Timetable search is implemented locally with migration 016 pending application. The planned search conversions are complete locally; correction scope and acceptance checks remain. Browser checks are on hold; keep that gap separate from local automated checks. Attendance, homework, announcements and documents come after the agreed Phase 2 gaps are closed.
 
 ## Phase 3: daily operations
 

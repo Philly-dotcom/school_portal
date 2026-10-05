@@ -1,12 +1,10 @@
 "use client";
 import { useActionState, useState } from "react";
 import { createRegisterRecord } from "@/app/dashboard/registers/actions";
-import {
-  classLabel,
-  personLabels,
-  type PersonKind,
-  type RegisterOptions,
-} from "@/lib/register-validation";
+import { personLabels, type PersonKind } from "@/lib/register-validation";
+
+import { RecordSearchSelect } from "./record-search-select";
+import type { RecordChoice } from "@/lib/record-search";
 
 function Feedback({
   error,
@@ -72,25 +70,12 @@ export function PersonForm({ kind }: { kind: PersonKind }) {
     </form>
   );
 }
-export function RelationshipForm({
-  options,
-  enrollment,
-}: {
-  options: RegisterOptions;
-  enrollment: boolean;
-}) {
+export function RelationshipForm({ enrollment }: { enrollment: boolean }) {
   const [state, action, pending] = useActionState(createRegisterRecord, {
     error: "",
     saved: false,
   });
-  const [classId, setClassId] = useState("");
-  const selected = options.classes.find((c) => c.id === classId);
-  const year = options.academic_years.find(
-    (y) => y.id === selected?.academic_year_id,
-  );
-  const blocked =
-    !options.students.length ||
-    (enrollment ? !options.classes.length : !options.guardians.length);
+  const [selected, setSelected] = useState<RecordChoice | null>(null);
   return (
     <form action={action} className="access-form">
       <input
@@ -98,59 +83,35 @@ export function RelationshipForm({
         name="kind"
         value={enrollment ? "enrollments" : "student_guardians"}
       />
-      <label>
-        Student
-        <select
-          name="student_id"
-          required
-          defaultValue=""
-          disabled={pending || blocked}
-        >
-          <option value="" disabled>
-            Select a student
-          </option>
-          {options.students.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.full_name} · {s.reference}
-            </option>
-          ))}
-        </select>
-      </label>
+      <RecordSearchSelect
+        kind="students"
+        name="student_id"
+        label="Student"
+        disabled={pending}
+      />
       {enrollment ? (
         <>
-          <label>
-            Class and academic year
-            <select
-              name="class_id"
-              required
-              value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-              disabled={pending || blocked}
-            >
-              <option value="" disabled>
-                Select a class
-              </option>
-              {options.classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {classLabel(c, options)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <RecordSearchSelect
+            kind="classes"
+            name="class_id"
+            label="Class and academic year"
+            disabled={pending}
+            onChange={setSelected}
+          />
           <input
             type="hidden"
             name="academic_year_id"
-            value={selected?.academic_year_id ?? ""}
+            value={selected?.academicYearId ?? ""}
           />
           <label>
             Enrollment start date
             <input
               name="starts_on"
               type="date"
-              min={year?.starts_on}
-              max={year?.ends_on}
+              min={selected?.startsOn}
+              max={selected?.endsOn}
               required
-              disabled={pending || blocked || !year}
+              disabled={pending || !selected}
             />
           </label>
           <label>
@@ -158,10 +119,10 @@ export function RelationshipForm({
             <input
               name="ends_on"
               type="date"
-              min={year?.starts_on}
-              max={year?.ends_on}
+              min={selected?.startsOn}
+              max={selected?.endsOn}
               required
-              disabled={pending || blocked || !year}
+              disabled={pending || !selected}
             />
           </label>
           <p className="small muted">
@@ -173,24 +134,12 @@ export function RelationshipForm({
         </>
       ) : (
         <>
-          <label>
-            Parent / guardian
-            <select
-              name="guardian_id"
-              required
-              defaultValue=""
-              disabled={pending || blocked}
-            >
-              <option value="" disabled>
-                Select a guardian
-              </option>
-              {options.guardians.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.full_name} · {g.reference}
-                </option>
-              ))}
-            </select>
-          </label>
+          <RecordSearchSelect
+            kind="guardians"
+            name="guardian_id"
+            label="Parent / guardian"
+            disabled={pending}
+          />
           <label>
             Relationship to student
             <input
@@ -198,7 +147,7 @@ export function RelationshipForm({
               required
               maxLength={60}
               placeholder="e.g. Parent or legal guardian"
-              disabled={pending || blocked}
+              disabled={pending}
             />
           </label>
           <p className="small muted">
@@ -207,19 +156,13 @@ export function RelationshipForm({
           </p>
         </>
       )}
-      {blocked && (
-        <p className="muted">
-          Add a student and{" "}
-          {enrollment ? "a class in Academic setup" : "a guardian"} first.
-        </p>
-      )}
       <Feedback
         {...state}
         message={enrollment ? "Student enrolled." : "Guardian linked."}
       />
       <button
         className="button primary"
-        disabled={pending || blocked || (enrollment && !year)}
+        disabled={pending || (enrollment && !selected)}
       >
         {pending ? "Saving…" : enrollment ? "Enroll student" : "Link guardian"}
       </button>

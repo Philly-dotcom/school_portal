@@ -4,13 +4,13 @@ School Portal is a portal for one school, built so we can add more schools later
 
 This project lives at `C:\Users\moses\Documents\School_portal`. Its database, accounts and decisions belong to this project only.
 
-## Where we are — 4 October 2026
+## Where we are — 5 October 2026
 
 We are in **Phase 2: Academic Setup**. Much of the admin side is built, but we still have testing and a few missing workflows to finish. Some Phase 1 checks, especially account recovery and email delivery, are also open.
 
-You have confirmed that migrations **009–013** have run in the dedicated Supabase project. Migration 013 fixes the email-type mismatch that stopped School registers from loading. The register now loads and still works after refresh. All seven admin views loaded in the connected browser check on 4 October. That checks page loading, not every save or permission rule; see [the verification log](docs/VERIFICATION.md). Do not rerun migrations that have already been applied.
+You have confirmed that migrations **009–015** have run in the dedicated Supabase project. You also completed the earlier fictional-data tests before the recent search changes; the newer browser checks are on hold. We are continuing Phase 2 on that basis. This is your reported test outcome; individual hosted security and concurrency results have not been independently recorded here. See [the verification log](docs/VERIFICATION.md). Do not rerun migrations that have already been applied.
 
-The latest full local check passed after the assignment-lifecycle work on 4 October: **154 tests in 25 files**, lint, TypeScript and the production build. Migration **014 is local and pending application**; see [Teaching assignments](docs/TEACHING_ASSIGNMENTS.md). These checks do not prove hosted workflow or email readiness. Earlier cleanup results remain in [the cleanup notes](docs/CLEANUP.md).
+The latest full local check passed on 5 October: **218 tests in 32 files**, lint, TypeScript and the production build. All Phase 2 display lists have 50-record pages. Academic, teaching, guardian-link and enrollment forms now search choices in pages of 25. Transfer choices stay within the enrollment's year. Sign-in account linking and timetable choices now use search. You confirmed applying **015**; new **migration 016** still needs hosted application for timetable search. Browser checks are on hold at your request. Earlier cleanup results remain in [the cleanup notes](docs/CLEANUP.md).
 
 | Area | What is available | What still needs attention |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ The latest full local check passed after the assignment-lifecycle work on 4 Octo
 | Academic setup | Years, terms, grades, subjects, classes and name corrections | Review test-data dates; date/relationship corrections and year rollover are not built |
 | School registers | Students, teachers, guardians, family links and enrollment | Hosted tests of corrections, login links and guardian access |
 | Enrollment | Transfers and withdrawals that keep placement history | Hosted workflow and simultaneous-save tests |
-| Teaching assignments | Dated creation/listing; local migration 014 adds ending/replacing with history | Apply and verify 014; broader corrections and timetable handover remain separate |
+| Teaching assignments | Dated creation/listing, ending/replacing with history; 014 applied and testing confirmed by you | Broader corrections and timetable handover remain separate |
 | Timetable | Admin weekly lesson planning and clash checks | Hosted conflict/removal tests and later role-facing views |
 
 Teacher, student and guardian access rules exist in the database. Their dedicated record screens are not built yet. Adding a student record does not create a login, and recording a family relationship does not automatically give a guardian access.

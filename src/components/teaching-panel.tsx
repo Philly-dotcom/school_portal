@@ -1,66 +1,31 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { classLabel } from "@/lib/register-validation";
-import type { TeachingOptions, TeachingAssignment } from "@/lib/teaching-validation";
+import { loadPlanning } from "@/lib/planning-data";
+import { listPage } from "@/lib/list-pagination";
 import { TeachingForm } from "./teaching-form";
 import { TeachingEditor } from "./teaching-editor";
-export async function TeachingPanel({ schoolId }: { schoolId: string }) {
-  const client = await createClient();
-  const queries = [
-    ["teachers", "id,full_name,reference", "full_name"],
-    ["subjects", "id,name", "name"],
-    ["classes", "id,name,academic_year_id,grade_id", "name"],
-    ["academic_years", "id,name,starts_on,ends_on", "name"],
-    ["grades", "id,name", "name"],
-    [
-      "teaching_assignments",
-      // Keep reads working before 014: lifecycle fields are optional until applied.
-      "*",
-      "starts_on",
-    ],
-  ] as const;
-  const results = await Promise.all(
-    queries.map(([table, fields, order]) =>
-      client
-        .from(table)
-        .select(fields)
-        .eq("school_id", schoolId)
-        .order(order)
-        .order("id")
-        .limit(501),
-    ),
-  );
-  if (results.some((r) => r.error))
+import { PlanningPagination } from "./planning-pagination";
+
+export async function TeachingPanel({
+  schoolId,
+  page: requestedPage,
+}: {
+  schoolId: string;
+  page?: string | string[];
+}) {
+  const page = listPage(requestedPage);
+  const data = await loadPlanning(schoolId, "teaching", page);
+  if (!data)
     return (
       <section className="content-panel">
         <h2>Teaching assignments are unavailable.</h2>
         <p className="muted">
-          For first-time setup, apply migration
-          202610010005_teaching_assignments.sql to School Portal. Otherwise
-          check your access and connection, then reload.
+          Check your access and connection, then reload. For first-time setup,
+          apply the teaching-assignment migrations to School Portal.
         </p>
       </section>
     );
-  if (results.some((r) => (r.data?.length ?? 0) > 500))
-    return (
-      <section className="content-panel">
-        <h2>This list needs pagination.</h2>
-        <p className="muted">
-          A related list exceeds the initial 500-record limit. Contact the
-          maintainer before continuing; incomplete lists are not shown.
-        </p>
-      </section>
-    );
-  const [teachers, subjects, classes, academic_years, grades, assignments] =
-    results.map((r) => r.data ?? []) as unknown as [
-      TeachingOptions["teachers"],
-      TeachingOptions["subjects"],
-      TeachingOptions["classes"],
-      TeachingOptions["academic_years"],
-      TeachingOptions["grades"],
-      TeachingAssignment[],
-    ];
-  const options = { teachers, subjects, classes, academic_years, grades };
+  const { assignments, labels } = data;
   return (
     <>
       <div className="quiet-note">
@@ -73,37 +38,48 @@ export async function TeachingPanel({ schoolId }: { schoolId: string }) {
         </p>
       </div>
       <div className="academic-grid">
-        <section className="content-panel">
+        <section className="content-panel" id="teaching">
           <h2>Teaching assignments</h2>
           {!assignments.length && (
-            <p className="muted">No teachers assigned yet.</p>
+            <p className="muted">
+              {page === 1
+                ? "No teachers assigned yet."
+                : "No assignments on this page. Return to an earlier page."}
+            </p>
           )}
           <ul className="academic-list">
             {assignments.map((a) => {
-              const t = teachers.find((t) => t.id === a.teacher_id);
-              const c = classes.find((c) => c.id === a.class_id);
+              const teacher = labels.teachers.find(
+                (row) => row.id === a.teacher_id,
+              );
+              const cls = labels.classes.find((row) => row.id === a.class_id);
               return (
                 <li key={a.id}>
                   <strong>
-                    {subjects.find((s) => s.id === a.subject_id)?.name ??
-                      "Subject unavailable"}
+                    {labels.subjects.find((row) => row.id === a.subject_id)
+                      ?.name ?? "Subject unavailable"}
                   </strong>
                   <span>
-                    {t
-                      ? `${t.full_name} · ${t.reference}`
+                    {teacher
+                      ? teacher.full_name + " · " + teacher.reference
                       : "Teacher unavailable"}
                   </span>
                   <span>
-                    {c ? classLabel(c, options) : "Class unavailable"}
+                    {cls ? classLabel(cls, labels) : "Class unavailable"}
                   </span>
                   <span>
                     {a.starts_on} – {a.ends_on}
                   </span>
-                  <TeachingEditor key={`${a.id}:${a.record_version}`} row={a} teachers={teachers} />
+                  <TeachingEditor key={a.id + ":" + a.record_version} row={a} />
                 </li>
               );
             })}
           </ul>
+          <PlanningPagination
+            view="teaching"
+            page={page}
+            hasNext={data.hasNext}
+          />
           <p className="small muted">
             End or replace a teacher while keeping the previous assignment.
             Separate periods for the same teacher must not overlap. Subject,
@@ -112,7 +88,7 @@ export async function TeachingPanel({ schoolId }: { schoolId: string }) {
         </section>
         <section className="content-panel">
           <h2>Assign a teacher</h2>
-          <TeachingForm options={options} />
+          <TeachingForm />
           <div className="invitation-actions">
             <Link className="button secondary" href="/dashboard?view=registers">
               School registers

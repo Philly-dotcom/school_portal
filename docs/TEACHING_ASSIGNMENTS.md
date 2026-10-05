@@ -2,7 +2,7 @@
 
 ## Ending or replacing a teacher — migration 014
 
-Built locally on 4 October. Apply `supabase/migrations/202610040014_teaching_assignment_lifecycle.sql` once after 013 in the dedicated fictional-data project, then reload Teaching assignments. **014 has not been applied by this work.** Existing migrations stay unchanged. Before 014, creation/listing still work and the new controls say changes are not enabled yet.
+Built on 4 October. You have since confirmed applying `supabase/migrations/202610040014_teaching_assignment_lifecycle.sql` in the dedicated fictional-data project and completing the pending tests. Do not reapply it. This confirmation is user-reported; the checks below remain a useful regression checklist. Existing migrations stay unchanged.
 
 Open **End or replace teacher** on an unclosed assignment:
 
@@ -41,7 +41,11 @@ Before 014, each teacher/subject/class combination has one assignment. After 014
 
 The database rejects cross-school teacher/subject/class links, a class paired with the wrong year, and dates outside the year. Creation is audited without names in the audit payload. Reads and writes use the caller's normal database context and RLS. Direct update/delete and caller-supplied IDs are not granted.
 
-Lists are capped at 500 records per related category; larger datasets show a capacity notice rather than partial selections. Pagination is needed before larger pilots.
+Assignments and their history show 50 records per page, ordered by start date and ID. Page controls reach records beyond the old 500-record cutoff. Labels are resolved separately, so off-page teachers, subjects and classes still display correctly.
+
+Creation now uses searchable teacher, subject and class selectors, with 25 choices per search page. Enter a name and press **Search choices**, or leave it blank to browse. Class choices include grade and year, and choosing a class supplies its academic year and date bounds. The replacement editor uses the same teacher search and excludes the current teacher. Selected choices remain selected when browsing other result pages.
+
+These controls no longer load a capped 500-record choice list. School ownership, overlap rules, dates and stale versions are still checked when saving. Register and timetable selectors have not yet been converted and retain their existing guards.
 
 ## Verification boundary
 

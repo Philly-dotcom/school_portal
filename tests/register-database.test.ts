@@ -26,10 +26,19 @@ const rows: Record<
 async function asUser(user: string, fn: () => Promise<void>) {
   await db.exec("set role authenticated");
   await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
+  let failed = false;
   try {
     await fn();
+  } catch (error) {
+    failed = true;
+    throw error;
   } finally {
-    await db.exec("reset role; reset request.jwt.claim.sub");
+    try {
+      await db.exec("reset role; reset request.jwt.claim.sub");
+    } catch (error) {
+      // Preserve the original SQL error if a surrounding test transaction aborted.
+      if (!failed) throw error;
+    }
   }
 }
 async function insert(sql: string, values: string[]) {
@@ -808,6 +817,65 @@ it("preserves enrollment history, prevents overlaps and rejects stale or foreign
     ).toEqual([{ old_end: "2027-12-31" }]);
   });
 });
+
+it("searches timetable assignment labels beyond 500 without crossing schools", async () => {
+  await db.exec("begin");
+  try {
+    await db.query(`insert into teachers(id,school_id,full_name,reference)
+      select md5('timetable-search-'||n)::uuid,$1,'Schedule Teacher '||lpad(n::text,4,'0'),'TS-'||n
+      from generate_series(1,502) n`, [A]);
+    await db.query(`insert into teaching_assignments(school_id,teacher_id,subject_id,class_id,academic_year_id,starts_on,ends_on)
+      select $1,md5('timetable-search-'||n)::uuid,$2,$3,$4,'2027-01-01','2027-12-31'
+      from generate_series(1,502) n`, [A, rows[A].subject, rows[A].class, rows[A].year]);
+    await asUser(adminA, async () => {
+      const result = await db.query<{ label: string; starts_on: string; ends_on: string }>(
+        "select id,label,starts_on::text,ends_on::text from search_timetable_assignments($1,'Schedule Teacher',21)", [A]);
+      expect(result.rows).toHaveLength(2);
+      expect(result.rows[0].label).toContain("Schedule Teacher 0501");
+      expect(result.rows[0].label).toContain("TS-501");
+      expect(result.rows[0].label).toContain("2027-01-01");
+      expect(result.rows[0].starts_on).toBe("2027-01-01");
+      expect(result.rows[0].ends_on).toBe("2027-12-31");
+    });
+    // Capacity is proven above. Keep one synthetic assignment for the remaining
+    // text-field checks so repeated RLS scans do not dominate this unit suite.
+    await db.query(`delete from teaching_assignments where school_id=$1 and teacher_id in
+      (select md5('timetable-search-'||n)::uuid from generate_series(1,501) n)`, [A]);
+    await asUser(adminA, async () => {
+      for (const query of ["TS-502", "Schedule Teacher 0502"]) {
+        expect((await db.query("select * from search_timetable_assignments($1,$2,1)", [A, query])).rows).toHaveLength(1);
+      }
+      const refs = (await db.query<{ subject_label: string; class_label: string; year_label: string; grade_label: string }>(
+        `select s.name as subject_label,c.name as class_label,y.name as year_label,g.name as grade_label from subjects s,classes c
+          join academic_years y on y.id=c.academic_year_id join grades g on g.id=c.grade_id
+          where s.id=$1 and c.id=$2`, [rows[A].subject, rows[A].class])).rows[0];
+      for (const query of Object.values(refs)) {
+        expect((await db.query("select * from search_timetable_assignments($1,$2,1)",[A,query])).rows.length).toBeGreaterThan(0);
+      }
+      expect((await db.query("select * from search_timetable_assignments($1,'%',1)", [A])).rows).toHaveLength(0);
+    });
+    await asUser(adminB, async () => {
+      expect((await db.query("select * from search_timetable_assignments($1,'Schedule Teacher',1)", [B])).rows).toHaveLength(0);
+    });
+  } finally { await db.exec("rollback"); }
+}, 60000);
+
+it("denies timetable search to anonymous, non-admin, foreign-school and invalid contexts", async () => {
+  for (const user of [teacher, guardian, student, adminB, outsider]) {
+    await asUser(user, async () => {
+      await expect(db.query("select * from search_timetable_assignments($1,'',1)", [A])).rejects.toMatchObject({ code: "42501" });
+    });
+  }
+  await asUser(adminA, async () => {
+    await expect(db.query("select * from search_timetable_assignments($1,'',0)", [A])).rejects.toMatchObject({ code: "22023" });
+    await expect(db.query("select * from search_timetable_assignments($1,$2,1)", [A,'x'.repeat(81)])).rejects.toMatchObject({ code: "22023" });
+  });
+  await db.exec("set role anon");
+  try {
+    await expect(db.query("select * from search_timetable_assignments($1,'',1)",[A])).rejects.toMatchObject({ code: "42501" });
+  } finally { await db.exec("reset role"); }
+});
+
 it("blocks suspended admins, inactive schools and anonymous users", async () => {
   await db.query(
     "update school_memberships set status='suspended' where user_id=$1",

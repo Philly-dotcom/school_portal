@@ -108,6 +108,16 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 | [src/lib/grade-name.ts](../src/lib/grade-name.ts) | Normalizes standard grade names so Grade10 and Grade 10 match, without changing unrelated names. |
 | [src/lib/bulk-invitation.ts](../src/lib/bulk-invitation.ts) | Parses pasted invitation CSV and rejects malformed or oversized input. Duplicate invitation handling is enforced separately in the database. |
 | [src/lib/invitation-pagination.ts](../src/lib/invitation-pagination.ts) | Validates invitation page numbers and calculates page ranges. |
+| [src/lib/academic-pagination.ts](../src/lib/academic-pagination.ts) | Validates each academic list's page number and builds links that retain the other lists' positions. |
+| [src/lib/list-pagination.ts](../src/lib/list-pagination.ts) | Shared 50-row page size, safe page-number parsing and allowlisted page-link construction for academic and register lists. |
+| [src/lib/register-pagination.ts](../src/lib/register-pagination.ts) | Defines the five register lists and their URL page parameters. |
+| [src/lib/register-data.ts](../src/lib/register-data.ts) | Server-only register reads: paged rows, independent form choices, capacity flags and school-scoped labels for related records. Uses the existing user client and RLS. |
+| [src/lib/planning-data.ts](../src/lib/planning-data.ts) | Server-only teaching/timetable reads. Loads pages and separate form choices, applies the timetable assignment filter before paging, and resolves missing labels in batches of at most 100 IDs. |
+| [src/lib/planning-pagination.ts](../src/lib/planning-pagination.ts) | Validates timetable filter IDs and builds teaching/timetable page links that preserve the filter. |
+| [src/lib/record-search.ts](../src/lib/record-search.ts) | Allowed search categories, input limits, choice/result types and literal search-pattern escaping. |
+| [src/app/dashboard/search/actions.ts](../src/app/dashboard/search/actions.ts) | Admin-only, school-scoped searches for academic, teaching and register relationship/enrollment choices. Returns small pages, names/references and class year/date details; transfer searches can narrow by year. |
+| [src/components/record-search-select.tsx](../src/components/record-search-select.tsx) | Search box, native required selector and previous/next result buttons. Keeps the selected record while browsing and reports loading/errors without submitting the containing form. |
+| [src/components/planning-pagination.tsx](../src/components/planning-pagination.tsx) | Shared First, Previous and Next controls for teaching history and timetable lessons. |
 | [src/lib/member-label.ts](../src/lib/member-label.ts) | Builds an account label using display name, verified email and membership ID so similar names are distinguishable. |
 
 ## Database and the isolated email function
@@ -128,7 +138,7 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 | [supabase/migrations/202610020011_invitation_bulk_and_reset.sql](../supabase/migrations/202610020011_invitation_bulk_and_reset.sql) | 011: transactional bulk invitations, delivery attempt limits and reviewed retry/reset handling. |
 | [supabase/migrations/202610020012_audit_history_and_cleanup.sql](../supabase/migrations/202610020012_audit_history_and_cleanup.sql) | 012: append-only audit protections, correction snapshots and an owner-only school-member privacy procedure. |
 | [supabase/migrations/202610030013_linkable_members_email_type.sql](../supabase/migrations/202610030013_linkable_members_email_type.sql) | 013: fixes the register-login query's email return type. It replaces one function without changing stored records. |
-| [supabase/migrations/202610040014_teaching_assignment_lifecycle.sql](../supabase/migrations/202610040014_teaching_assignment_lifecycle.sql) | 014: assignment end/replacement history, non-overlapping periods, stale-form checks and timetable date protection. Local, pending hosted application. |
+| [supabase/migrations/202610040014_teaching_assignment_lifecycle.sql](../supabase/migrations/202610040014_teaching_assignment_lifecycle.sql) | 014: assignment end/replacement history, non-overlapping periods, stale-form checks and timetable date protection. Hosted application is user-confirmed. |
 | [supabase/checks/grade_name_duplicates.sql](../supabase/checks/grade_name_duplicates.sql) | Read-only check for names that would collide after grade normalization. |
 | [archive/2026-10/review_grade10_typo.sql](../archive/2026-10/review_grade10_typo.sql) | The archived one-off Grade 10 repair. The regression test still reads this copy; it is not an active setup step. |
 | [supabase/functions/invite-school-user/index.ts](../supabase/functions/invite-school-user/index.ts) | Supabase Edge Function entry point; reads its runtime configuration and supplies clients to the handler. It is outside the Next.js app. |
@@ -163,3 +173,19 @@ These are not handwritten application features:
 
 This inventory covers the maintained project files, not every dependency or generated cache file. No separate API service, storage uploader, marks module or notification worker has been built inside an omitted folder.
 
+
+## Account search added on 5 October
+
+- [search/member-actions.ts](../src/app/dashboard/search/member-actions.ts) validates the request, derives the school from the verified admin context, calls the bounded SQL search and returns safe labels/errors.
+- [Migration 015](../supabase/migrations/202610050015_register_member_search.sql) adds read-only, admin-only eligibility search. It excludes accounts linked elsewhere before paging. Hosted application of 015 is user-confirmed.
+- [member-search.test.ts](../tests/member-search.test.ts) checks server authorization/input handling, bounded output, private errors and preservation of the current login in the form payload. The membership database suite checks actual SQL eligibility and isolation beyond 500 records.
+
+`login-link.tsx` now uses the shared search selector. `register-data.ts` loads only current links for visible people; it no longer preloads complete person/member catalogs. Browser checks are on hold.
+
+## Timetable search added on 5 October
+
+- [Migration 016](../supabase/migrations/202610050016_timetable_assignment_search.sql) adds bounded, school-scoped assignment search under the caller's RLS. Hosted application is pending.
+- [Search actions](../src/app/dashboard/search/actions.ts) now accept `teaching_assignments` and return assignment date bounds alongside labels. Unsupported filters are rejected by `record-search.ts`.
+- [Timetable](../src/components/timetable.tsx) uses searchable choices for its GET filter and lesson form. Hidden fields preserve selected IDs during search; date inputs follow the selected assignment.
+- [Planning data](../src/lib/planning-data.ts) reads only the assignment labels required by visible lessons and the active filter. It no longer loads capped reference catalogs.
+- [Timetable search form tests](../tests/timetable-search-forms.test.ts) check search wiring, preserved filter IDs, empty results and page reset. Actual SQL search/isolation tests are in `register-database.test.ts`; action tests are in `record-search.test.ts`.

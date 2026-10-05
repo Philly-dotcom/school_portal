@@ -1,71 +1,34 @@
-import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { loadRegisters } from "@/lib/register-data";
+import { listPage, maxListPage } from "@/lib/list-pagination";
+import {
+  registerPageHref,
+  type RegisterList,
+  type RegisterPageParams,
+} from "@/lib/register-pagination";
 import {
   classLabel,
   personLabels,
   type PersonKind,
   type PersonRow,
-  type RegisterOptions,
 } from "@/lib/register-validation";
 import { PersonForm, RelationshipForm } from "./register-forms";
 import { RecordEditor } from "./record-editor";
 import { GuardianAccess } from "./guardian-access";
 import { memberLabel } from "@/lib/member-label";
 import { LoginLink } from "./login-link";
-import { linkRoleFor, type RegisterLoginMember } from "@/lib/link-validation";
+import { linkRoleFor } from "@/lib/link-validation";
 import { EnrollmentEditor } from "./enrollment-editor";
-import { type EnrollmentRow } from "@/lib/enrollment-validation";
 
-type LinkRow = {
-  id: string;
-  student_id: string;
-  guardian_id: string;
-  relationship: string;
-  access_enabled: boolean;
-  record_version: number;
-};
-export async function RegistersPanel({ schoolId }: { schoolId: string }) {
-  const client = await createClient();
-  const queries = [
-    [
-      "students",
-      "id,full_name,reference,record_version,membership_id",
-      "full_name",
-    ],
-    [
-      "teachers",
-      "id,full_name,reference,record_version,membership_id",
-      "full_name",
-    ],
-    [
-      "guardians",
-      "id,full_name,reference,record_version,membership_id",
-      "full_name",
-    ],
-    ["classes", "id,name,academic_year_id,grade_id", "name"],
-    ["academic_years", "id,name,starts_on,ends_on", "name"],
-    ["grades", "id,name", "name"],
-    [
-      "student_guardians",
-      "id,student_id,guardian_id,relationship,access_enabled,record_version",
-      "id",
-    ],
-    ["enrollments", "*", "starts_on"],
-  ] as const;
-  const [memberResult, results] = await Promise.all([
-    client.rpc("list_linkable_members", { target_school: schoolId }),
-    Promise.all(
-      queries.map(([table, fields, order]) =>
-        client
-          .from(table)
-          .select(fields)
-          .eq("school_id", schoolId)
-          .order(order)
-          .order("id")
-          .limit(501),
-      ),
-    ),
-  ]);
-  if (memberResult.error || results.some((r) => r.error))
+export async function RegistersPanel({
+  schoolId,
+  pages = {},
+}: {
+  schoolId: string;
+  pages?: RegisterPageParams;
+}) {
+  const data = await loadRegisters(schoolId, pages);
+  if (!data)
     return (
       <section className="content-panel">
         <h2>School registers are unavailable.</h2>
@@ -76,65 +39,54 @@ export async function RegistersPanel({ schoolId }: { schoolId: string }) {
         </p>
       </section>
     );
-  const [
-    students,
-    teachers,
-    guardians,
-    classes,
-    years,
-    grades,
-    links,
-    enrollments,
-  ] = results.map((r) => r.data ?? []) as unknown as [
-    PersonRow[],
-    PersonRow[],
-    PersonRow[],
-    RegisterOptions["classes"],
-    RegisterOptions["academic_years"],
-    RegisterOptions["grades"],
-    LinkRow[],
-    EnrollmentRow[],
-  ];
-  if (results.some((r) => (r.data?.length ?? 0) > 500))
+  const {
+    records: people,
+    labels,
+    members,
+    hasNext,
+  } = data;
+  const links = people.student_guardians;
+  const enrollments = people.enrollments;
+  const navigation = (kind: RegisterList, label: string) => {
+    const page = listPage(pages[`${kind}Page`]);
     return (
-      <section className="content-panel">
-        <h2>This register needs pagination.</h2>
-        <p className="muted">
-          One of the school lists exceeds this initial version’s 500-record
-          limit. Contact the maintainer to enable larger registers before
-          continuing. Incomplete lists are not shown.
-        </p>
-      </section>
+      <nav
+        aria-label={`${label} pages`}
+        className="flex flex-wrap items-center gap-3 py-4"
+      >
+        <span className="muted">Page {page}</span>
+        {page > 1 && (
+          <>
+            <Link prefetch={false} href={registerPageHref(pages, kind, 1)}>
+              First page
+            </Link>
+            <Link
+              prefetch={false}
+              href={registerPageHref(pages, kind, page - 1)}
+            >
+              Previous
+            </Link>
+          </>
+        )}
+        {hasNext[kind] && page < maxListPage && (
+          <Link prefetch={false} href={registerPageHref(pages, kind, page + 1)}>
+            Next
+          </Link>
+        )}
+        {hasNext[kind] && page === maxListPage && (
+          <span>Page limit reached. Contact the maintainer.</span>
+        )}
+      </nav>
     );
-  const people = { students, teachers, guardians };
-  const members = (memberResult.data ?? []) as RegisterLoginMember[];
-  const linkable = (kind: PersonKind, rowId: string) => {
-    const taken = new Set(
-      people[kind]
-        .filter((p) => p.id !== rowId && p.membership_id)
-        .map((p) => p.membership_id),
-    );
-    const current = people[kind].find((p) => p.id === rowId)?.membership_id;
-    return members
-      .filter(
-        (m) =>
-          m.id === current ||
-          (m.status === "active" &&
-            m.roles.includes(linkRoleFor[kind]) &&
-            !taken.has(m.id)),
-      )
-      .map((m) => ({
-        id: m.id,
-        name: memberLabel(m),
-        disabled: m.status !== "active" || !m.roles.includes(linkRoleFor[kind]),
-      }));
   };
-  const options = {
-    students,
-    guardians,
-    classes,
-    academic_years: years,
-    grades,
+  const currentChoice = (kind: PersonKind, membershipId: string | null | undefined) => {
+    if (!membershipId) return null;
+    const member = members.find((m) => m.id === membershipId);
+    return {
+      id: membershipId,
+      label: member ? memberLabel(member) : "Existing login unavailable - unlink deliberately or reload",
+      disabled: !member || member.status !== "active" || !member.roles.includes(linkRoleFor[kind]),
+    };
   };
   const personName = (rows: PersonRow[], id: string) => {
     const row = rows.find((r) => r.id === id);
@@ -148,14 +100,14 @@ export async function RegistersPanel({ schoolId }: { schoolId: string }) {
           relationship here sends no email and grants no portal access; use
           “Link sign-in” on a record to let that person read their own
           information. You can correct names and references, and transfer or
-          withdraw enrollments while keeping their history on. Guardian child access must be explicitly granted below;
-          relationship records alone grant no access. Use fictional records
-          while testing.
+          withdraw enrollments while keeping their history on. Guardian child
+          access must be explicitly granted below; relationship records alone
+          grant no access. Use fictional records while testing.
         </p>
       </div>
       <div className="academic-grid">
         {(Object.keys(personLabels) as PersonKind[]).map((kind) => (
-          <section className="content-panel" key={kind}>
+          <section className="content-panel" key={kind} id={kind}>
             <h2>{personLabels[kind].title}</h2>
             <ul className="academic-list">
               {people[kind].map((p) => (
@@ -179,27 +131,31 @@ export async function RegistersPanel({ schoolId }: { schoolId: string }) {
                     id={p.id}
                     version={p.record_version ?? 1}
                     currentMembershipId={p.membership_id ?? null}
-                    members={linkable(kind, p.id)}
+                    currentChoice={currentChoice(kind, p.membership_id)}
                   />
                 </li>
               ))}
             </ul>
             {!people[kind].length && (
               <p className="muted">
-                No {personLabels[kind].title.toLowerCase()} added yet.
+                {listPage(pages[`${kind}Page`]) === 1
+                  ? `No ${personLabels[kind].title.toLowerCase()} added yet.`
+                  : "No records on this page. Return to an earlier page."}
               </p>
             )}
+            {navigation(kind, personLabels[kind].title)}
             <PersonForm kind={kind} />
           </section>
         ))}
-        <section className="content-panel">
+        <section className="content-panel" id="student_guardians">
           <h2>Guardian links</h2>
           <ul className="academic-list">
             {links.map((l) => (
               <li key={l.id}>
-                <strong>{personName(students, l.student_id)}</strong>
+                <strong>{personName(labels.students, l.student_id)}</strong>
                 <span>
-                  {personName(guardians, l.guardian_id)} · {l.relationship}
+                  {personName(labels.guardians, l.guardian_id)} ·{" "}
+                  {l.relationship}
                 </span>
                 <GuardianAccess
                   key={`${l.id}-${l.record_version}`}
@@ -210,36 +166,45 @@ export async function RegistersPanel({ schoolId }: { schoolId: string }) {
               </li>
             ))}
           </ul>
-          {!links.length && <p className="muted">No guardians linked yet.</p>}
-          <RelationshipForm options={options} enrollment={false} />
+          {!links.length && (
+            <p className="muted">
+              {listPage(pages.student_guardiansPage) === 1
+                ? "No guardians linked yet."
+                : "No links on this page. Return to an earlier page."}
+            </p>
+          )}
+          {navigation("student_guardians", "Guardian links")}
+          <RelationshipForm enrollment={false} />
         </section>
-        <section className="content-panel">
+        <section className="content-panel" id="enrollments">
           <h2>Class enrollment</h2>
           <ul className="academic-list">
             {enrollments.map((e) => {
-              const c = classes.find((c) => c.id === e.class_id);
+              const c = labels.classes.find((c) => c.id === e.class_id);
               return (
                 <li key={e.id}>
-                  <strong>{personName(students, e.student_id)}</strong>
-                  <span>
-                    {c ? classLabel(c, options) : "Class unavailable"}
-                  </span>
+                  <strong>{personName(labels.students, e.student_id)}</strong>
+                  <span>{c ? classLabel(c, labels) : "Class unavailable"}</span>
                   <span>
                     {e.starts_on} – {e.ends_on}
                   </span>
                   <EnrollmentEditor
                     key={`${e.id}-${e.record_version}`}
                     row={e}
-                    options={options}
                   />
                 </li>
               );
             })}
           </ul>
           {!enrollments.length && (
-            <p className="muted">No students enrolled yet.</p>
+            <p className="muted">
+              {listPage(pages.enrollmentsPage) === 1
+                ? "No students enrolled yet."
+                : "No enrollments on this page. Return to an earlier page."}
+            </p>
           )}
-          <RelationshipForm options={options} enrollment />
+          {navigation("enrollments", "Class enrollment")}
+          <RelationshipForm enrollment />
         </section>
       </div>
     </>

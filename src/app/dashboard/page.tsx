@@ -8,7 +8,10 @@ import { signOut } from "@/app/login/actions";
 import { invitationPage } from "@/lib/invitation-pagination";
 import { PeoplePanel } from "@/components/people-panel";
 import { AcademicPanel } from "@/components/academic-panel";
+import { type AcademicPageParams } from "@/lib/academic-pagination";
 import { RegistersPanel } from "@/components/registers-panel";
+import { type RegisterPageParams } from "@/lib/register-pagination";
+import { type PlanningPageParams } from "@/lib/planning-pagination";
 import { TeachingPanel } from "@/components/teaching-panel";
 import { TimetablePanel } from "@/components/timetable-panel";
 
@@ -18,7 +21,11 @@ export const metadata = { title: "School workspace" };
 export default async function Dashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; invitationPage?: string }>;
+  searchParams: Promise<
+    { view?: string; invitationPage?: string } & AcademicPageParams &
+      RegisterPageParams &
+      PlanningPageParams
+  >;
 }) {
   const context = await getSchoolContext();
   if (context.status !== "ready") {
@@ -82,6 +89,8 @@ export default async function Dashboard({
           <TimetablePanel
             schoolId={context.school.id}
             timezone={context.school.timezone}
+            page={params.timetablePage}
+            assignment={params.assignment}
           />
         ) : (
           <section className="content-panel">
@@ -105,7 +114,10 @@ export default async function Dashboard({
           description="Connect teachers, subjects and classes for the academic year."
         />
         {admin ? (
-          <TeachingPanel schoolId={context.school.id} />
+          <TeachingPanel
+            schoolId={context.school.id}
+            page={params.teachingPage}
+          />
         ) : (
           <section className="content-panel">
             <h2>Administrator access required</h2>
@@ -130,7 +142,7 @@ export default async function Dashboard({
           description="Student, teacher and guardian records, relationships and class enrollment."
         />
         {admin ? (
-          <RegistersPanel schoolId={context.school.id} />
+          <RegistersPanel schoolId={context.school.id} pages={params} />
         ) : (
           <section className="content-panel">
             <h2>Administrator access required</h2>
@@ -153,7 +165,7 @@ export default async function Dashboard({
           description="Years, terms, grades, subjects and classes."
         />
         {admin ? (
-          <AcademicPanel schoolId={context.school.id} />
+          <AcademicPanel schoolId={context.school.id} pages={params} />
         ) : (
           <section className="content-panel">
             <h2>Administrator access required</h2>

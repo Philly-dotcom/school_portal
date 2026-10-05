@@ -173,8 +173,8 @@ export function BulkInviteForm() {
         <ListPlus size={21} />
       </div>
       <p className="muted small">
-        Paste up to 200 lines of <code>email,name,roles</code>, for example{" "}
-        <code>{'anna@example.org,"Anna Fictional",teacher|guardian'}</code>.
+        Paste up to 200 lines of <code>Email,Name,Roles</code>, for example{" "}
+        <code>{'lebuso@example.org,"Lebuso",teacher|guardian'}</code>.
         Roles: teacher, student, guardian, school_admin. The whole list is
         checked first; if any line is wrong, nothing is prepared. No email is
         sent.
@@ -191,7 +191,7 @@ export function BulkInviteForm() {
             required
             disabled={pending}
             placeholder={
-              "email,name,roles\nanna@example.org,Anna Fictional,teacher"
+              "Email,Name,Roles\nlebuso@example.org,Lebuso,teacher"
             }
           />
         </label>

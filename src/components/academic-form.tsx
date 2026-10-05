@@ -1,7 +1,8 @@
 "use client";
 import { useActionState } from "react";
 import { createAcademicRecord } from "@/app/dashboard/academic/actions";
-import { type AcademicKind, type AcademicRow } from "@/lib/academic-validation";
+import { type AcademicKind } from "@/lib/academic-validation";
+import { RecordSearchSelect } from "./record-search-select";
 
 const formCopy: Record<
   AcademicKind,
@@ -39,23 +40,13 @@ const formCopy: Record<
   },
 };
 
-export function AcademicForm({
-  kind,
-  years,
-  grades,
-}: {
-  kind: AcademicKind;
-  years: AcademicRow[];
-  grades: AcademicRow[];
-}) {
+export function AcademicForm({ kind }: { kind: AcademicKind }) {
   const [state, action, pending] = useActionState(createAcademicRecord, {
     error: "",
     saved: false,
   });
   const copy = formCopy[kind];
   const needsYear = kind === "classes" || kind === "academic_terms";
-  const blocked =
-    (needsYear && !years.length) || (kind === "classes" && !grades.length);
   return (
     <form action={action} className="access-form">
       <input type="hidden" name="kind" value={kind} />
@@ -66,81 +57,39 @@ export function AcademicForm({
           placeholder={copy.example}
           maxLength={80}
           required
-          disabled={pending || blocked}
+          disabled={pending}
         />
       </label>
       {kind === "grades" && (
-        <p className="small muted">
-          Use a label such as Grade 10 or Grade R. Grade10 and Grade 10 count as
-          the same grade.
-        </p>
+        <p className="small muted">Use a label such as Grade 10 or Grade R.</p>
       )}
       {needsYear && (
-        <label>
-          Academic year
-          <select
-            name="academic_year_id"
-            required
-            defaultValue=""
-            disabled={pending || blocked}
-          >
-            <option value="" disabled>
-              Select a year
-            </option>
-            {years.map((y) => (
-              <option key={y.id} value={y.id}>
-                {y.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <RecordSearchSelect
+          kind="academic_years"
+          name="academic_year_id"
+          label="Academic year"
+          disabled={pending}
+        />
       )}
       {kind === "classes" && (
-        <label>
-          Grade
-          <select
-            name="grade_id"
-            required
-            defaultValue=""
-            disabled={pending || blocked}
-          >
-            <option value="" disabled>
-              Select a grade
-            </option>
-            {grades.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <RecordSearchSelect
+          kind="grades"
+          name="grade_id"
+          label="Grade"
+          disabled={pending}
+        />
       )}
       {(kind === "academic_years" || kind === "academic_terms") && (
         <>
           <label>
             Start date
-            <input
-              type="date"
-              name="starts_on"
-              required
-              disabled={pending || blocked}
-            />
+            <input type="date" name="starts_on" required disabled={pending} />
           </label>
           <label>
             End date
-            <input
-              type="date"
-              name="ends_on"
-              required
-              disabled={pending || blocked}
-            />
+            <input type="date" name="ends_on" required disabled={pending} />
           </label>
         </>
-      )}
-      {blocked && (
-        <p className="muted">
-          Create an academic year{kind === "classes" ? " and grade" : ""} first.
-        </p>
       )}
       {state.error && (
         <p role="alert" className="error-message">
@@ -152,7 +101,7 @@ export function AcademicForm({
           {copy.success}
         </p>
       )}
-      <button className="button primary" disabled={pending || blocked}>
+      <button className="button primary" disabled={pending}>
         {pending ? "Saving…" : copy.button}
       </button>
     </form>
