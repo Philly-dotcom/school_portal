@@ -1,6 +1,6 @@
 # Documentation guide
 
-Start with the [main README](../README.md). This folder holds the decisions, setup instructions and records of what we have tested. Updated 4 October 2026.
+Start with the [main README](../README.md). This folder holds the decisions, setup instructions and records of what we have tested. Updated 8 October 2026: migrations through 020 are applied, homework works, and your browser checks are about halfway complete. [Documents](DOCUMENTS.md) are built locally with migration 021 pending application. [Announcements](ANNOUNCEMENTS.md) and documents each have their own browser checklist. RESUME.md has the current checkpoint. The temporary Phase 3 guide is an older planning aid and is not being updated at your request.
 
 ## Read these first
 

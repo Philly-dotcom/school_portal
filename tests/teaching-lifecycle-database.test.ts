@@ -1,3 +1,4 @@
+import { installStorageStub } from "./helpers/storage-stub";
 import { readdirSync, readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, afterEach, beforeAll, beforeEach, expect, it } from "vitest";
@@ -77,6 +78,7 @@ beforeAll(async () => {
     create schema auth; create table auth.users(id uuid primary key,email varchar(255),email_confirmed_at timestamptz);
     create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     grant usage on schema public,auth to authenticated,anon;`);
+  await installStorageStub(db);
   const files = readdirSync("supabase/migrations").sort();
   for (const f of files.filter((f) => f < "202610040014"))
     await db.exec(readFileSync(`supabase/migrations/${f}`, "utf8"));

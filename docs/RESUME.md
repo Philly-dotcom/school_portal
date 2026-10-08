@@ -1,60 +1,62 @@
 # Where we left off
 
-Updated 5 October 2026.
+Updated 8 October 2026.
 
 ## Current position
 
-Latest development: timetable filtering and lesson creation now search assignments in pages of 25. Search covers teacher name/reference, subject, class, grade and year, with assignment dates in each label. Timetable reads load only the assignments and related labels needed by the visible lesson page and active filter. The 500-choice guard and catalog preload are removed.
+We are in Phase 3. Role workspaces, personal timetables, attendance and view-only homework are built. You report the browser checks are about halfway through and everything checked so far works. This does not mark the remaining scenarios complete. You then approved continuing with announcements and confirmed their publishing and audience rules.
 
-You confirmed applying **015** on 5 October. Do not reapply it. **Migration 016 is prepared locally and has not been applied to hosted Supabase.** It adds an admin-only read-only timetable search using the caller's RLS context. Existing lesson creation/removal and conflict rules are unchanged. Until 016 is applied, searches report unavailable; existing lesson browsing and removal remain available.
+You confirmed that **020 is applied** and agreed the PDF uploader and audience rules. The private Documents library is now built locally. **Migration 021 is pending application**; it creates the private bucket, metadata and Storage policies. Start with [DOCUMENTS.md](DOCUMENTS.md) for setup, file explanations and browser checks.
 
-Browser checks remain on hold at your request. The planned Phase 2 search conversions are now implemented locally; this does not close hosted verification, correction-scope decisions or Phase 2 acceptance.
+Migrations through **020 are user-confirmed applied**. Do not rerun them. Homework working and the report that browser checks are going well do not close the remaining individual permission, transfer and concurrency checks.
 
-You confirmed applying **014**, then completing all pending fictional-data tests and authorizing further Phase 2 work. Teaching assignments now support ending/replacing while retaining history. This is user-reported hosted testing, not a new independently observed browser or security verification pass. Email remains off.
+The latest full `npm run check`, after documents, passed lint, TypeScript, **457 tests in 49 files**, and the production build on 8 October. Documents add 43 tests. Storage SQL tests use a minimal PGlite fixture; they do not prove real Storage HTTP behaviour, bucket limits or uploaded file handling. Those checks remain yours to complete after applying 021.
 
-We are in Phase 2, Academic Setup. The admin foundation is working locally, but Phase 1 account/security readiness and parts of Phase 2 still need hosted testing. We are using the dedicated School Portal Supabase project with fictional records only.
+The temporary Phase 3 guide is unchanged at your request. Current progress now belongs in these main project docs. You still own the pending browser checks. Email, invitations and recovery delivery remain disabled/unverified. No hosted records, deployment or cloud configuration were changed by this development work.
 
-You confirmed migrations 010–012 and the earlier enrollment migration 009 were applied, then confirmed migration 013 on 4 October. Do not rerun them. Migration 013 is the small follow-up fix for the register-login query; it changes an email result to the type the function promises, without changing school records or granting new access.
+## What homework does
 
-## What was last checked
+- School Admin and teachers with current access to an assignment can create drafts, publish directly, edit and withdraw homework. There is no extra approval step for homework.
+- The original assignment remains fixed after creation. Teachers lose editing access when their assignment ends; admins can still manage the item.
+- First publication fixes the audience date. Only learners enrolled in that class on that date can read it, plus guardians with current explicit access to those learners. Later joiners cannot read older work just because they now share the class.
+- Editing, withdrawal and republication keep the original audience date. This rule uses recorded enrollment history, so an authorized correction to that history can change who qualifies.
+- Drafts and withdrawn items stay hidden from learners. There are no submissions, grading, completion buttons, files or external notifications in this module.
+- Due dates must fit the academic year. First publication requires a current academic year and a due date today or later. Published work can still be corrected after its due date.
+- Staff edits use a version check and audit. Stale edits must be rejected, not silently overwritten.
 
-Before 013, the connected admin dashboard, People & access and Academic setup loaded. School registers showed an unavailable message. The query defect was reproduced locally, and the test now proves both the failure before 013 and the corrected result after it.
+## Testing in progress
 
-The latest full `npm run check` passed after timetable assignment search on 5 October: lint, TypeScript, **218 tests across 32 files** and production build. Hosted application of 014 and earlier fictional-data tests are user-confirmed. Browser checks are on hold at the user's request. Migration 015 application is now user-confirmed; 016 is pending. Older counts in dated reports describe earlier runs.
+When you started the role-access check, you had only the Admin login. School register records do not create login accounts. We walked through creating separate fictional teacher, student, guardian and combined teacher/guardian accounts without email delivery, accepting prepared school invitations, and using **Link sign-in** to connect the records. Guardian access also needs an explicit learner grant. You have not yet confirmed completing that setup or the role checks. Keep the existing Admin account separate.
 
-The environment/file review is complete; see [CLEANUP.md](CLEANUP.md) and [ENVIRONMENT.md](ENVIRONMENT.md). The local env file stayed unchanged, its template now lists only the six app settings, and CLI/Edge settings are documented separately. The old patch and record-specific repair are archived with their contents preserved. All 13 migration hashes match the pre-cleanup snapshot. The user requested and received a memory checkpoint.
+Resume with the account setup and role-access check below. Record each result as you finish; nothing in this list is marked passed just because homework works from the Admin account.
 
-After 013, School registers loaded with the existing records and remained available after refresh. All seven admin views loaded: Overview, Academic setup, School registers, Teaching assignments, Timetable, People & access and School settings. The timetable showed four existing lessons; People & access still showed one active admin, zero invitations and email delivery disabled. These were read-only checks. No records, roles or permissions were changed. See [VERIFICATION.md](VERIFICATION.md).
+Use fictional accounts and records only. Dates must cover the school-local day you test; the older 2027 fixtures will not automatically work as current records in 2026.
 
-## What to do next
+1. **Role access:** sign in as linked teacher, student and guardian accounts. A guardian must select an explicitly granted learner. Test a teacher/guardian account in both modes; classroom roster access must not become child access.
+2. **Timetable:** check the current school week, dated placements and assignment boundaries. Try an unrelated child ID and a suspended account. Confirm the admin planning screen and public static preview still behave correctly.
+3. **Attendance:** mark just two learners, save, reload and confirm the rest remain unmarked. Edit a mark and explicitly clear one. Test multiple roster pages. School Admin needs a reason for an older date; teachers can only edit today and read history covered by their current assignment.
+4. **Homework visibility:** save a draft as a teacher. Check that student/guardian accounts cannot see it, including by direct RPC or table requests. Publish it and verify access for the original recipients. Withdraw it and verify it disappears; republish and confirm its audience date is unchanged.
+5. **Homework transfers:** use an item published before a newcomer joined. The newcomer must not see it. An original recipient who later transfers out must retain access while the item is published. Test revoked guardian access too.
+6. **Lost teacher responsibility:** end the relevant test assignment and confirm its former teacher cannot edit the homework. School Admin should still be able to withdraw it. Review existing timetable constraints before ending an assignment; do not delete lessons merely to force the test through.
+7. **Stale saves:** open the same attendance register or homework item in two tabs. Save one, then try the stale other tab. Confirm a conflict, reload and inspect the stored result. Independent hosted sessions are still needed for real concurrency evidence.
+8. **School isolation:** test denied reads and writes from School B, including direct database/API calls. Local tests are not proof that the hosted configuration is correct.
 
-1. Apply migration 016 when ready; do not reapply earlier migrations. Review the remaining correction-scope decisions and acceptance criteria in ROADMAP.md before moving to Phase 3.
-2. Browser checks are on hold at the user's request. When resumed, include search → select → change search/page → confirm the selection remains, class selection → year/date bounds, and replacement teacher selection. Browser completion has not been reported for these new controls.
-3. Before live use, retain scenario-level evidence of denied reads/writes, stale saves and concurrent changes through separate sessions. The broad test confirmation does not identify which sessions or scenarios were used.
-4. Broader assignment corrections remain outside the end/replace editor; agree their scope separately. Do not reapply 014.
+Earlier Phase 1 account/security readiness and Phase 2 correction/search/lifecycle acceptance checks remain open. Keep invitation/recovery delivery, admin recovery/MFA policy, backups, deployment checks and school acceptance as separate live-use requirements.
 
-The original test dataset still needs your review. The year called 2027 runs through 2030, and a grade called Thapelo remained in the last observed list. Do not silently delete or rename these while testing.
+## What remains in Phase 3
 
-## Keep these decisions
+Apply 021, verify the private bucket and document flows, and finish the outstanding announcement, timetable, attendance, homework and role checks. All planned Phase 3 modules now have local implementations, but Phase 3 acceptance is still open. Use ANNOUNCEMENTS.md and DOCUMENTS.md alongside the checklist above. No work on marks, report cards, fees, SaaS administration, external notifications or AI has been brought forward.
 
-- One school first. Keep school ownership and permission boundaries throughout.
-- Student, teacher and guardian records are separate from login accounts.
-- A linked guardian needs an explicit child-access grant.
-- Homework will be view-only. Documents will be PDF-only; upload permissions still need agreement.
-- An authorized reviewer reviews results, and only School Admin publishes. The detailed review rules are a Phase 4 decision.
-- Email is disabled. Saved SMTP settings do not make delivery ready without a registered, verified sending domain.
-- No real learner data, public deployment, new cloud resources or work in other projects.
-
-The server belongs to your current testing session. Do not restart or stop it unnecessarily. Never print `.env.local`.
+The pre-existing test dataset included a year named 2027 extending through 2030 and a grade named Thapelo. Do not silently rename or delete those records. The server belongs to your testing session; do not stop or restart it unnecessarily. Never print `.env.local`.
 
 ## Useful references
 
-- [File-by-file guide](FILE_GUIDE.md)
-- [Tests and commands](../tests/README.md)
-- [Remaining work by phase](ROADMAP.md)
-- [Current architecture](ARCHITECTURE.md)
-- [Dated repair report](REPAIR_REPORT.md)
-- [Synthetic data already entered](SYNTHETIC_DATA.md)
-- [Verification evidence and limits](VERIFICATION.md)
+- [File guide](FILE_GUIDE.md)
+- [Test guide](../tests/README.md)
+- [Architecture](ARCHITECTURE.md)
+- [Agreed product context](PROJECT_CONTEXT.md)
+- [Roadmap and remaining gates](ROADMAP.md)
+- [Verification history](VERIFICATION.md)
+- [Original synthetic dataset](SYNTHETIC_DATA.md)
 
-The October 2 repair report describes changes made before you applied 010–012. Its old migration status is historical. The supplied patch and one-off Grade 10 repair are now in [archive](../archive/README.md). Keep them as history, not instructions to reapply work.
+Older dated reports and archived repair scripts are history, not instructions to reapply migrations or patches.

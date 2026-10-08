@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
+import { portalModeLabels, portalHref, type PortalMode } from "@/lib/portal-validation";
 
 const navigation = [
   { view: "overview", label: "Overview", icon: LayoutDashboard },
@@ -40,18 +41,29 @@ export function PortalShell({
   preview = true,
   schoolName = "Your school workspace",
   admin = false,
+  modes = [],
+  mode,
+  child,
 }: {
   children: React.ReactNode;
   view?: string;
   preview?: boolean;
   schoolName?: string;
   admin?: boolean;
+  modes?: PortalMode[];
+  mode?: PortalMode;
+  child?: string | null;
 }) {
   const base = preview ? "/preview" : "/dashboard";
   const items = preview
     ? navigation
     : [
         navigation[0],
+        ...(mode ? [{ view: "my-timetable", label: "My timetable", icon: BookOpen }] : []),
+        ...(admin || mode ? [{ view: "attendance", label: "Attendance", icon: Users }] : []),
+        ...(admin || mode ? [{ view: "homework", label: "Homework", icon: BookOpen }] : []),
+        ...(admin || mode ? [{ view: "announcements", label: "Announcements", icon: BookOpen }] : []),
+        ...(admin || mode ? [{ view: "documents", label: "Documents", icon: BookOpen }] : []),
         ...(admin
           ? [
               { view: "academic", label: "Academic setup", icon: BookOpen },
@@ -98,7 +110,8 @@ export function PortalShell({
           {items.map(({ view: key, label, icon: Icon }) => (
             <Link
               key={key}
-              href={`${base}?view=${key}`}
+              href={!preview && mode && (key === "overview" || key === "my-timetable" || key === "attendance" || key === "homework")
+                ? portalHref(key, mode, child) : `${base}?view=${key}`}
               className={`nav-item ${view === key ? "active" : ""}`}
               aria-current={view === key ? "page" : undefined}
             >
@@ -108,6 +121,13 @@ export function PortalShell({
             </Link>
           ))}
         </nav>
+        {!preview && modes.length > 0 && (
+          <nav aria-label="Role workspaces" className="main-nav">
+            {admin && <Link className="nav-item" href="/dashboard">School administration</Link>}
+            {modes.map((item) => <Link key={item} className="nav-item"
+              href={portalHref("overview", item)}>{portalModeLabels[item]} workspace</Link>)}
+          </nav>
+        )}
         {preview && (
           <div className="sidebar-guide">
             <Layers3 size={21} />

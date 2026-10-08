@@ -1,6 +1,6 @@
 # Tests: what they check and how to run them
 
-Updated 5 October 2026. The latest full local run passed **218 tests in 32 files**, plus lint, TypeScript and production build, after adding timetable assignment search. Six additional tests cover bounded search/date results, safe errors, filter/form wiring and SQL matching/isolation beyond 500 assignments. No hosted test success is implied. Browser checks are on hold.
+Updated 8 October 2026. The latest full local run passed **457 tests in 49 files**, plus lint, TypeScript and production build, after adding documents. Documents add 43 tests across three files. Migrations through 020 are user-confirmed applied; 021 is pending application. The user reports browser checks about halfway complete and everything checked so far working. Remaining role/security/concurrency and real Storage scenarios still need their results recorded. The full run used the normal execution environment after a focused rendering run hit the known sandbox temporary-module error.
 
 ## Start here
 
@@ -37,6 +37,30 @@ You do not need the portal server running for those commands. They do not apply 
 Hosted verification is a separate exercise through the running app and dedicated test project. We still need role-specific sessions and denied reads **and writes** across two fictional schools. A green local suite is useful evidence, not completion of those checks.
 
 ## Each test file
+
+Recent Phase 3 additions are listed here; the existing suites follow below. The homework block adds 58 tests across four files. These are local SQL, action and rendering checks, not browser interaction or hosted concurrency evidence.
+
+| File | What it checks |
+| --- | --- |
+| [portal-context.test.ts](portal-context.test.ts) | Linked-person resolution, child tampering, multi-role child boundaries and timetable loader failures. |
+| [portal-routing.test.ts](portal-routing.test.ts) | Role workspace selection, forged mode requests, admin boundaries and preview separation. |
+| [my-timetable-database.test.ts](my-timetable-database.test.ts) | School/role/child/date boundaries in the narrow timetable projection, revoked access and denied writes. |
+| [attendance-database.test.ts](attendance-database.test.ts) | Marks and unmarked rows, dated rosters, school/role denial, stale versions, atomic rollback, transfer guards and pagination. |
+| [attendance-actions.test.ts](attendance-actions.test.ts) | Trusted school and staff mode, input bounds, class search and safe failures. |
+| [attendance-form.test.ts](attendance-form.test.ts) | Initially empty change payload, read-only teacher history and required older-date reasons. |
+| [attendance-validation.test.ts](attendance-validation.test.ts) | Batch/date/status limits and school-local timezone behavior. |
+| [homework-database.test.ts](homework-database.test.ts) | Draft/publication/withdrawal, fixed original audience, transfers, lost assignment rights, two-school isolation, stale versions, rollback and pagination. |
+| [homework-actions.test.ts](homework-actions.test.ts) | Trusted school, forged input rejection, bounded assignment search, conflict handling and safe read errors. |
+| [homework-validation.test.ts](homework-validation.test.ts) | New versus existing versions, field limits, unsupported states and guardian page links. |
+| [homework-panel.test.ts](homework-panel.test.ts) | Escaped text, no learner editor/submission controls, child selection and fixed-assignment staff editor. |
+| [announcements-database.test.ts](announcements-database.test.ts) | School/class publishing, current enrollment after transfers, guardian grants, ended assignments, isolation, denied writes, stale edits, audit rollback and paging. |
+| [announcements-actions.test.ts](announcements-actions.test.ts) | Verified school/roles, explicit audience scope, rejected malformed input, search bounds, conflicts, safe failures and read results. |
+| [announcements-panel.test.ts](announcements-panel.test.ts) | Escaped messages, no learner editing, guardian selection and fixed audience/version controls. |
+| [documents-database.test.ts](documents-database.test.ts) | Private bucket configuration, metadata and Storage RLS, transfers, grants, school isolation, denied overwrite/deletion, failed finalization and audit rollback. |
+| [documents-actions.test.ts](documents-actions.test.ts) | PDF format/size checks, immutable upload paths, partial failures, content hashes and authenticated download headers/access. |
+| [documents-panel.test.ts](documents-panel.test.ts) | Escaped titles, reader restrictions, guardian selection and visibility controls. |
+
+Full-migration suites now call `tests/helpers/storage-stub.ts` before loading migrations. PGlite does not ship Supabase's Storage schema, so this test-only helper creates the minimal metadata tables needed to execute the real policies. It does not simulate the Storage HTTP service, bucket enforcement on actual file bytes, signed URLs or physical deletion. Those remain hosted checks in DOCUMENTS.md. Older migration files were not changed.
 
 All files below are in this folder. A test with an expected permission error is passing when the unauthorized operation is refused.
 

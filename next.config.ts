@@ -5,18 +5,35 @@ const config: NextConfig = {
   turbopack: { root: process.cwd() },
   outputFileTracingRoot: process.cwd(),
   poweredByHeader: false,
+  // 2 MiB PDFs plus multipart overhead; file validation enforces the lower limit.
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
   logging: { incomingRequests: { ignore: [/\/auth\/confirm/] } },
   async headers() {
-    return [{ source: "/:path*", headers: [
-      { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-      { key: "X-Content-Type-Options", value: "nosniff" },
-      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      { key: "X-Frame-Options", value: "DENY" },
-      { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-    ] }, { source: "/auth/:path*", headers: [
-      { key: "Referrer-Policy", value: "no-referrer" },
-      { key: "Cache-Control", value: "private, no-store" },
-    ] }];
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+      {
+        source: "/auth/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
+    ];
   },
 };
 export default config;

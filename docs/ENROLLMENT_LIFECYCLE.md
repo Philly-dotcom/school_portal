@@ -1,5 +1,11 @@
 # Enrollment transfers and withdrawals
 
+## Attendance and homework update — 8 October
+
+Migration 018, now user-confirmed applied, prevents a transfer or withdrawal from moving existing attendance outside its recorded enrollment. Later valid transfers retain the old marks. If a mark itself was entered incorrectly, an authorized staff member can explicitly clear it in the attendance register before an admin corrects the enrollment; its audit remains.
+
+Homework migration 019 uses enrollment history on the original publication date. Original recipients keep access after later transfers; newcomers do not gain older homework. Correcting enrollment history can change eligibility. The user confirmed applying 019 and reported homework working. The specific hosted transfer and access checks remain outstanding.
+
 Migration 009 introduced this Phase 2 feature on 1 October. The user has confirmed applying it, followed by 010–013. Do not rerun it. Existing placement dates and links are preserved; version and closure fields support history-preserving changes.
 
 ## Behavior

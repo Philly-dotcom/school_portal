@@ -1,12 +1,12 @@
 # Delivery roadmap
 
-Updated 5 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
+Updated 8 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
 
 ## Current position
 
-You have confirmed applying migrations through 015. The earlier fictional-data tests were reported complete before the recent search changes; browser checks of the new controls remain on hold. Phase 2 development is continuing on that user-reported outcome. Individual hosted security/concurrency evidence remains separate from local checks. See VERIFICATION.md; do not repeat applied migrations.
+You have confirmed applying migrations through 020 and reported homework working. We are in Phase 3, and you are running the remaining tests. Documents are now implemented locally with migration 021 pending application. Hosted security/concurrency and Storage checks still need their own results; do not repeat applied migrations.
 
-**Phase 2: Academic Setup**, with Phase 1 operational readiness still open. The user authorized development without email. No Phase 3 transition is approved by a local test result alone. Preserve the original six-phase product plan, one-school-first experience and school-aware ownership.
+**Phase 3: Daily Operations**, with Phase 1 live readiness and parts of Phase 2 acceptance still open. The move into Phase 3 was explicitly authorized by the user; it did not close those earlier checks. Preserve the original six-phase plan, one-school-first experience and school-aware ownership.
 
 ## Phase 1: foundation
 
@@ -26,11 +26,11 @@ Still open before live use:
 | --- | --- | --- |
 | Academic structure | Years, terms, grades, subjects, classes; versioned name corrections | Verify correction workflows and decide how required date/relationship mistakes should be handled; name editing does not change those fields. |
 | School registers | Students, teachers, guardians; name/reference corrections | Verify corrections and capacity behavior in the intended school dataset. |
-| Relationships and access | Guardian relationships, explicit child grants, versioned login links, dated role-scoped reads | Hosted verification of new grants/linking, suspension and cross-school denial. No teacher/student/guardian record screens yet. |
+| Relationships and access | Guardian relationships, explicit child grants, versioned login links, dated role-scoped reads | Hosted verification of grants/linking, suspension and cross-school denial. Role workspaces now exist in Phase 3. |
 | Enrollment | Dated placement, history-preserving transfers/withdrawals and overlap protection | Hosted lifecycle and simultaneous-save tests, including future transfers. |
 | Teaching assignments | Dated creation/listing and versioned end/replacement with retained history; 014 application and testing user-confirmed | Subject/class/start-date corrections remain outside this editor; timetable changes must be reviewed separately. |
 | Timetable foundations | Admin creation/listing/filtering/removal with clash checks | Hosted removal/conflict/concurrency checks. Role-facing daily use belongs to Phase 3. |
-| Capacity | All Phase 2 display lists have pagination; academic, teaching, guardian-link, enrollment, account-link and timetable choices are searchable | 015 application is user-confirmed. Timetable search requires new migration 016; its hosted application is pending. Browser checks are on hold at the user's request. |
+| Capacity | All Phase 2 display lists have pagination; academic, teaching, guardian-link, enrollment, account-link and timetable choices are searchable | 015 and 016 application is user-confirmed. Newer browser checks remain outstanding. |
 
 Existing hosted evidence: the user tested academic setup, school registers and teaching assignments. Later synthetic admin creation workflows, including timetable lessons, were exercised in the connected app. Those checks do not prove all hosted policies, edits or concurrent operations.
 
@@ -50,11 +50,15 @@ Academic CSV imports are **optional and undecided**. They appeared in an expande
 
 ### Next sequence
 
-With 014 and earlier pending testing confirmed by the user, Phase 2 list pagination and academic/teaching/register relationship/enrollment searches are implemented locally. Account-link search migration 015 is now user-confirmed applied. Timetable search is implemented locally with migration 016 pending application. The planned search conversions are complete locally; correction scope and acceptance checks remain. Browser checks are on hold; keep that gap separate from local automated checks. Attendance, homework, announcements and documents come after the agreed Phase 2 gaps are closed.
+The planned Phase 2 search conversions are implemented and migrations 015–016 are confirmed applied. Correction scope and acceptance checks remain recorded above while user-authorized Phase 3 development continues. The user is now working through the remaining browser checks.
 
 ## Phase 3: daily operations
 
-Attendance, usable timetable, homework viewing, announcements and private PDF documents. Basic learner and guardian dashboards. No homework submission feature.
+Built: role workspaces and child selection, current-week personal timetables (017), daily attendance and permitted history (018), and view-only homework with draft/publication/withdrawal (019). Migrations 017–019 are user-confirmed applied, and the user reports homework working. Remaining tests are in progress. Homework uses the original-publication enrollment audience, not current-class access. No learner submissions were added.
+
+Announcements are implemented and migration 020 is user-confirmed applied. The private Documents library follows the agreed school/class publishing and current-enrollment audience rules, with migration 021 pending application. Both modules are linked from the dashboard sidebar and role overview. Browser checks are about halfway complete and working so far, according to the user; no individual outstanding check is closed by that general report.
+
+Remaining: apply 021, verify real Storage uploads/downloads and access boundaries, then complete all outstanding Phase 3 browser/hosted acceptance. No Phase 4 work starts merely because the local modules are present. See RESUME.md, ANNOUNCEMENTS.md and DOCUMENTS.md for the checkpoint and checks.
 
 ## Phase 4: academic performance
 

@@ -1,5 +1,39 @@
 # Foundation verification
 
+## Private PDF documents — 8 October 2026
+
+You confirmed applying migration 020 and approved the standalone Documents library rules. Migration **021 is prepared locally and pending application**. No hosted bucket, file or database record was changed by this development work.
+
+The full `npm run check` passed lint, TypeScript, **457 tests in 49 files**, and production build, including the new authenticated download route. Documents add 43 tests: 22 SQL/Storage-policy tests and 21 action/rendering tests. They cover school and class access, current enrollment, guardian grants, denied guessed paths, overwrite/deletion denial even with unrelated permissive policies, file validation, partial upload failures, hash mismatches, stale saves and audit rollback.
+
+PGlite tests use a minimal Storage metadata fixture, now shared by the existing full-migration suites. These results do not verify the real Storage HTTP service, bucket MIME/size enforcement or signed URL behaviour. A focused rendering run hit the known sandbox temporary-module issue; the rerun and full check outside the sandbox passed. DOCUMENTS.md lists the required hosted checks and upload-recovery steps.
+
+No existing migrations, temporary Phase 3 guide, email settings or environment values were changed. No browser checks, deployment or live sends were performed. The user's earlier report of halfway-complete browser checks remains separate from these local results.
+
+## Announcements — 8 October 2026
+
+The full `npm run check` passed lint, TypeScript, **414 tests in 46 files**, and the production build. Announcements add 43 tests for publishing authority, current-class readers after transfers, explicit guardian grants, teacher/guardian mode separation, ended assignments, denied cross-school reads and writes, direct-write denial, stale versions, audit rollback, pagination and escaped messages. Server tests also check that a missing class selection cannot accidentally become a school-wide notice.
+
+The initial focused database/rendering run passed 28 tests. A type error in a new test helper was corrected before the successful full check. The first full run encountered missing Vitest temporary modules inside the sandbox; rerunning outside the sandbox passed. No test configuration or application permissions were relaxed to make the checks pass.
+
+Migration **020 is prepared locally and pending application**. Migrations through 019 remain user-confirmed applied. The user reports browser checks about halfway complete with everything checked so far working, but has not supplied a complete per-scenario result list. No hosted writes, browser checks, email sends or deployment were performed during this increment. ANNOUNCEMENTS.md has the new browser checklist; the temporary Phase 3 guide was left unchanged.
+
+## Homework running and remaining tests underway — 8 October 2026
+
+You confirmed that migration 019 ran and homework is functional. Migrations through 019 are now confirmed applied by you. You are still running the remaining tests; no detailed role, transfer, revoked-access or concurrency results have been reported yet.
+
+The first role check exposed a missing setup step: only the Admin login existed. We explained how to prepare separate fictional logins, accept school memberships, link the register records and grant guardian access without enabling email delivery. Account setup and role-test completion are still awaiting your confirmation.
+
+This update only changes documentation and saves the progress checkpoint. No application code, migrations, hosted settings or test records were changed, and no tests were rerun. The earlier 371-test local result remains the latest recorded full run. The entry below describes the state before your migration confirmation.
+
+## Phase 3 through homework — 8 October 2026
+
+The full local `npm run check` passed lint, TypeScript, **371 tests in 43 files**, and production build. The 58 focused homework tests also passed. They cover draft invisibility, direct publication, withdrawal/republication, original-date recipients after transfers, ended teaching responsibility, revoked access, two fictional schools, denied direct writes, stale versions, audit rollback, bounded search/paging and escaped text without learner submission controls.
+
+Earlier Phase 3 checks passed with 253 tests after role workspaces/timetable and 313 after attendance. Attendance's final whitespace-only correction-reason check was also rerun successfully in its 29-test SQL suite. A sandbox temporary-file problem affected an initial attendance test attempt; successful test runs used the normal execution environment. These are local results, not hosted concurrency or browser acceptance.
+
+The user confirmed 016, then 017 and 018 applied. Migration **019 is new and pending**. No hosted migration, data write, browser session, email or deployment was performed during the homework implementation. The user plans to do the outstanding checks after homework; RESUME.md lists them. Older entries below retain their historical status at the time they were written.
+
 ## Timetable assignment search — 5 October 2026
 
 The final full `npm run check` passed: lint, TypeScript, **218 tests in 32 files**, and production build.

@@ -1,5 +1,9 @@
 # Weekly timetable foundation
 
+## Current status — 8 October
+
+Migrations 016 and 017 are now user-confirmed applied. Do not repeat the old application instructions below. The original admin planning screen remains available. Linked teachers, students and guardians also have a read-only **My timetable** view for the current school week; guardian access requires an explicit child grant. Hosted role/date acceptance is outstanding and will be checked by the user after homework.
+
 Migration 008 introduced the timetable. Hosted creation and persistence were checked with fictional lessons earlier; do not reapply it. Open **Timetable** as School Admin to review the existing schedule. Conflict, removal and concurrent-save checks are separate from confirming that the page loads.
 
 ## Workflow

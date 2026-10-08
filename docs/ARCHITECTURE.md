@@ -1,6 +1,6 @@
 # How School Portal fits together
 
-Updated 4 October 2026. This describes what is built today. The agreed stack and one-school-first plan have not changed.
+Updated 8 October 2026. This describes the local implementation. Hosted acceptance remains separate. The stack and one-school-first plan have not changed.
 
 ## A request from start to finish
 
@@ -28,7 +28,7 @@ Supabase Auth proves which account is signed in. A membership connects that acco
 
 `SCHOOL_PORTAL_SCHOOL_ID` tells this installation which school to open. It does not give anyone permission. Editable user metadata, a role selector or a URL parameter cannot grant access. Normal app requests use the signed-in user's database context, not a service-role key.
 
-The working screens are currently admin-focused. Teachers, students and guardians have database read rules, but their dedicated record screens are still ahead.
+The dashboard now includes role workspaces, personal timetable, attendance and homework. A role URL selects a view; it never grants a role. Guardian screens resolve explicit child grants independently of any teacher roster access on the same account.
 
 - A linked teacher can read their own assignments and lessons, plus current classes and learners allowed by dated teaching/enrollment relationships.
 - A linked student can read their own permitted records and enrollment history; timetable access follows the relevant current placement.
@@ -49,12 +49,16 @@ See [LOGIN_LINKS.md](LOGIN_LINKS.md) for the exact read boundaries and [FILE_GUI
 | `student_guardians` | Family relationships and the separate child-access permission. |
 | `enrollments` | Dated placements, including retained transfer/withdrawal history. |
 | `teaching_assignments`, `timetable_lessons` | Teaching responsibilities and weekly lesson schedules. |
+| `attendance_sessions`, `attendance_entries` | One dated class register and explicit learner marks, with versions and historical enrollment references. |
+| `homework_items` | Assignment-owned drafts/published/withdrawn work, fixed first-publication audience date and versioned edits. |
+| `announcements` | School-wide or class notices with a fixed audience scope, current-enrollment reads and versioned staff edits. |
+| `documents` | School/class ownership, immutable PDF size/hash, upload progress and versioned visibility. Bytes live in the private Storage bucket. |
 | `school_invitations` | Pending access offers and delivery state; a pending invitation is not membership. |
 | `audit_events`, `record_history` | An append-only activity trail and restricted previous versions of corrected records. |
 
 School-owned relationships use school-matching foreign keys as well as RLS. Profiles are deliberately global: one login might eventually join more than one school. This does not mean school records should be global.
 
-SQL migrations are the database change history. Migrations 001–014 exist; the user has confirmed applying 009–014 to the dedicated project. Migration 014 adds versioned assignment end/replacement with history and timetable date protection. Do not edit or rerun an applied migration to fix a new issue. Add a follow-up, as we did with 013 and 014.
+SQL migrations are the database change history. Migrations 001–021 exist and application through 020 is user-confirmed. Migration 021 adds documents and private Storage policies and is pending application. The user reports homework working and browser checks about halfway complete; remaining scenarios are still open. Do not edit or rerun an applied migration to fix a new issue; add a follow-up migration.
 
 Academic setup reads 50 records per list, plus one lookahead to decide whether to offer the next page. Each list uses its own validated URL parameter, with name and ID ordering. Visible class/term labels use school-scoped ID lookups. Year and grade form choices are searched on demand instead of preloading a capped list. These reads use the existing user-context Supabase client and RLS; pagination changes no permissions. Offset pages reflect current data, so a concurrent rename or creation may move a row between pages.
 
@@ -78,7 +82,7 @@ Invitation preparation is built. The separate Supabase Edge Function for sending
 
 Delivery remains disabled and unverified. Saved SMTP settings are not enough while the sending domain is unregistered. Password recovery also needs a working delivery path before live use.
 
-Private PDF storage, document metadata, notifications, n8n and AI are future work. There is no working upload route, storage bucket workflow or notification queue to document yet. Results will need review and School Admin publication states in Phase 4. School selection, SaaS billing and platform administration remain later decisions.
+Private PDF uploads, document metadata and authenticated downloads are now implemented; hosted Storage verification is pending. Notifications, n8n and AI remain future work. Results will need review and School Admin publication states in Phase 4. School selection, SaaS billing and platform administration remain later decisions.
 
 ## What the tests establish
 
@@ -86,4 +90,18 @@ The local database suites execute SQL in PGlite with fictional schools and simul
 
 The migration 013 issue showed why this distinction matters: the earlier local Auth fixture used the wrong email column type. That fixture is now corrected in the relevant final-schema tests. See [tests/README.md](../tests/README.md) and [VERIFICATION.md](VERIFICATION.md) for results and limits.
 
-Timetable choice search uses `search_timetable_assignments` (migration 016), an admin-checked, security-invoker read with the caller's RLS. Teacher/reference, subject, class, grade and year matching happens before bounded pagination. `planning-data.ts` no longer preloads choice catalogs: it resolves only visible assignment/lesson references and the active filter. Neither search nor paging changes lesson conflict or lifecycle rules. Migration 015 is user-confirmed applied; 016 still needs hosted application.
+Timetable choice search uses `search_timetable_assignments` (migration 016), an admin-checked, security-invoker read with the caller's RLS. Teacher/reference, subject, class, grade and year matching happens before bounded pagination. `planning-data.ts` resolves only visible assignment/lesson references and the active filter. Migration 016 application is user-confirmed.
+
+## Daily operations
+
+Migration 017 adds a narrow personal-timetable projection. It supplies permitted lesson labels without widening direct access to teacher records. The database derives the caller and checks the selected role, child grant and current dated placement.
+
+Migration 018 keeps attendance saves atomic: lock the school like enrollment changes do, recheck access, compare the register version, validate each dated enrollment, save only submitted marks and audit. Omitted learners remain unchanged. Explicitly clearing a mark leaves its audit trail. Enrollment changes that would contradict recorded attendance are rejected. Teachers edit today and read only the permitted history; older admin changes require a reason.
+
+Migration 019 keeps homework ownership tied to the original assignment. Staff can draft, publish, edit and withdraw. Teachers need current assignment access; School Admin can manage orphaned work. First publication fixes the audience date. Learner reads require a historical enrollment covering that date, and guardian reads additionally require a current explicit child grant. Current class membership alone does not expose old homework. Enrollment history is the source for this rule, rather than a separate recipient snapshot table.
+
+These modules use the existing user-context Supabase client. Narrow `SECURITY DEFINER` RPCs pin their search path, authorize the exact records and revoke anonymous execution. Attendance, homework, announcement and document tables have RLS and deny direct client mutations. List RPCs also check the selected role, so an account's teacher privileges do not leak into its guardian view. Text is escaped by React. No homework submissions, external notifications or additional backend service were added.
+
+Migration 020 adds announcements. Admin manages school-wide and class notices; teachers manage notices only for classes they currently teach. Published class notices follow current dated enrollment, unlike homework's original-publication audience. Guardians need a current explicit learner grant. School/class scope is immutable after creation, and saves use the same school lock, version check and atomic audit approach. See ANNOUNCEMENTS.md for the workflow and remaining hosted checks.
+
+Migration 021 adds document metadata and the private `school-documents` bucket. It reuses those same current-class permission helpers. The server action reserves metadata, uploads an immutable generated path using the user's credentials, then finalizes a draft. Unfinished entries stay staff-only and can be reviewed or withdrawn. The authenticated download route applies selected-role checks, verifies stored size/hash, and returns an attachment with no-store headers. Storage RLS independently controls the bytes. Restrictive bucket guards prevent unrelated permissive policies from granting overwrite or deletion. Basic PDF checks are not malware scanning; retention and physical cleanup remain live-readiness work. See DOCUMENTS.md for details.
