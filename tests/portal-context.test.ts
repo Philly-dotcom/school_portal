@@ -37,6 +37,7 @@ beforeEach(() => {
       error: null,
     };
   replies.student_guardians = { data: [], error: null };
+  replies.enrollments = { data: [], error: null };
   mock.from.mockImplementation((table: string) => {
     const filters: unknown[][] = [];
     calls.push({ table, filters });
@@ -51,6 +52,10 @@ beforeEach(() => {
         return query;
       },
       order: vi.fn().mockReturnThis(),
+      lte: vi.fn().mockReturnThis(),
+      gte: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
       range: vi.fn().mockReturnThis(),
       maybeSingle: () => Promise.resolve(replies[table]),
       then: (resolve: (value: unknown) => unknown) =>
@@ -161,6 +166,7 @@ it("bounds timetable pages and distinguishes database failure from an empty week
     rows: [],
     page: 1,
     hasNext: false,
+    emptyMessage: expect.stringContaining("No current or upcoming enrolment"),
   });
   expect(mock.rpc).toHaveBeenCalledWith("list_my_timetable", {
     target_school: "trusted-school",

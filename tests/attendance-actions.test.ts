@@ -143,5 +143,5 @@ it("keeps unavailable history distinct from zero recorded marks", async () => {
   expect(await loadMyAttendance(actor)).toBeNull();
   expect(
     await loadAttendanceRegister("trusted-school", "teacher", id, "2026-10-08"),
-  ).toBeNull();
+  ).toMatchObject({ status: "error", register: null });
 });

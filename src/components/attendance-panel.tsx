@@ -60,7 +60,7 @@ export async function AttendancePanel({
         : z.uuid().safeParse(params.attendanceClass);
     if (!date.success || (classId && !classId.success))
       return <p role="alert">Choose a valid register date and class.</p>;
-    const register = classId?.success
+    const loaded = classId?.success
       ? await loadAttendanceRegister(
           context.school.id,
           mode,
@@ -69,6 +69,7 @@ export async function AttendancePanel({
           params.attendancePage,
         )
       : null;
+    const register = loaded?.register;
     return (
       <section className="content-panel">
         <h2>Daily class attendance</h2>
@@ -82,16 +83,11 @@ export async function AttendancePanel({
           mode={mode}
           date={date.data}
           today={today}
-          initialChoice={
-            register
-              ? { id: register.class_id, label: register.class_label }
-              : null
-          }
+          initialChoice={loaded?.choice ?? null}
         />
         {classId?.success && !register && (
           <p role="alert">
-            The register could not be loaded. Check your assignment, the date
-            and school access, then try again.
+            {loaded?.message}
           </p>
         )}
         {register && (

@@ -40,7 +40,7 @@ export async function MyTimetablePanel({
       ) : (
         <>
           {result.rows.length === 0 ? (
-            <p>No lessons were found on this page for the current week.</p>
+            <p>{result.emptyMessage ?? "No lessons were found on this page for the current week."}</p>
           ) : (
             <div className="table-wrap" style={{ marginTop: 20 }}>
               <table>

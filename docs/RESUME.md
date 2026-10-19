@@ -1,6 +1,44 @@
 # Where we left off
 
-Updated 8 October 2026.
+Updated 19 October 2026.
+
+## Browser testing resumed
+
+Latest Admin follow-up: the stale attendance save reproduced on 19 October. It stayed pending for several minutes; reload confirmed the first save survived (ST-002 Present, ST-003 Present, DEMO-ST-002 Unmarked). The missing conflict response remains a blocker. The labelled school-wide notice `50fdadba-2218-4221-ba82-d417707d0aa4` passed Admin draft/publish/withdraw/republish checks and is currently Published. Reader visibility across those changes is still untested. The browser is left signed in as Admin and the server remains running.
+
+Before signing off Phase 3, resolve the pending-save behaviour, selected-choice reset mismatch and guardian sidebar context loss. Then finish the remaining publication/transfer/grant-revocation checks, actual timetable lesson rendering, Storage boundaries, direct API and existing-second-school isolation checks, and the daily dashboard integration work. Do not treat the separate role-session passes as completion of those scenarios. Reuse the existing fixtures; no new school or student is authorized.
+
+Guardian checks are now recorded too: GU-003 required explicit selection of its only granted learner, ST-003; attendance and published homework matched the student session. An unrelated ST-002 attendance URL and the Physics draft download were denied. The timetable showed the expected no-lessons message. The Announcements sidebar drops the learner selection and asks the guardian to select again; the Documents sidebar also omits role/child parameters. Track this navigation issue alongside the stale-save and form-reset findings below. No grants were changed. Next, resume Admin checks for stale saves and the remaining publication/document workflows; the full Phase 3 gate remains open.
+
+The current-year fixture was added with your approval on 15 October. Reuse it; do not create another school or student. **Acceptance 12A**, Grade 12, belongs to the existing 2026 year (class ID `11de7dc9-4a5e-477c-acec-370bcf311e48`). Existing learners ST-003, ST-002 and DEMO-ST-002 have placements from 1 October to 26 November 2026. Mrs Leruo (TE-003) has a Geography assignment for the same dates. Their 2027 planning records remain intact. No new accounts or guardian grants were created.
+
+Admin browser checks passed on 15 October: partial attendance saves persisted after reload, untouched learners stayed unmarked, and an explicit clear removed a mark. For 14 October, the browser required a correction reason and the reasoned save persisted. ST-003 was left Present on 14 October and Late on 15 October; the other two learners were unmarked on 15 October. These are fictional test marks. The existing Physics draft PDF also downloaded successfully for Admin.
+
+Two findings still need investigation: the second attendance tab stayed on “Saving…” during the stale-save test, and an enrollment form's dropdown reset after saving while its “Selected” hint still showed the previous choice. Neither is recorded as a pass. The first tab's newer attendance values persisted; independent-session concurrency is still unverified.
+
+On 19 October, the user signed in separately as the existing teacher and student. Teacher checks passed for current-class search, saving today's attendance, read-only history, denied history before assignment start, and denying a requested Admin workspace. The teacher published the labelled test Geography homework (ID `0fe154b2-35eb-4d1b-b1fd-25eb9455d9ee`, due 23 October). ST-003's student session displayed it read-only and showed only that learner's attendance history, including today's Present mark. Both roles were denied the Physics draft's direct download route; the student was also denied a teacher-register URL. The teacher timetable correctly explained that no current-week lessons were scheduled. These checks do not prove direct API denials, transfers or full concurrency. Guardian verification is next; the user enters all credentials. See VERIFICATION.md for the individual results and screenshots.
+
+Three draft PDFs were visible on 15 October, so the older note saying 021 was wholly pending is no longer a reliable description of the hosted library. Metadata reads and one Admin download work. Exact migration application, bucket settings, denied Storage requests and other role downloads still need verification; do not rerun 021 blindly. Phase 3 remains open, including the daily dashboard integration question and the remaining hosted acceptance checklist below.
+
+The sections below retain the earlier checkpoints. Their pending-fixture statements describe the dates on which they were written; the fixture above now exists.
+
+## Attendance and timetable messages
+
+The remaining message and selection fixes are implemented. Attendance keeps the selected class after a rejected request. Admins get an explanation when a class belongs to a future year or the date falls outside its year; teachers get a reminder that their assignment must cover today and the requested date. Loading failures stay separate from eligibility messages. These explanations do not grant access or replace the database checks.
+
+The personal timetable now checks the signed-in person's permitted dated records when the first page has no lessons. It explains a future assignment/enrolment, no current or upcoming placement, or a current placement with no lessons this week. A failed date query is reported as a failure, not as missing data. Guardian checks use the selected learner, not a teacher's roster. Learner homework now says when no published homework is available and explains that drafts are hidden.
+
+No migration, dependency, environment setting or hosted-data change is needed for these UI fixes. The 2026 daily-operations fixture and the separate signed-in role checks remain pending. These changes do not complete Phase 3 acceptance.
+
+Verification finished on 13 October: `npm run check` passed lint, TypeScript, 471 tests in 51 files, and the production build. A signed-in Admin browser check against hosted data confirmed that 12A stays selected after today's register is rejected, with the correct 2027 start-date explanation. No attendance data was written. See [VERIFICATION.md](VERIFICATION.md) for the evidence and remaining role checks.
+
+## Hosted academic-data correction — 9 October
+
+The approved fictional-data repair is complete. The original `2027_mistake` year is now `2027`, from 18 January to 26 November 2027, with its original ID and relationships. ST-002's enrolment now ends on 26 November 2027. ST-003's accidental withdrawal was reversed on the existing enrolment, restoring 18 January–26 November 2027; its original withdrawal audit is still present. The empty year named `2026` now spans 18 January–26 November 2026. These are fictional test dates, not an official school calendar.
+
+Read-only SQL checks found no attendance sessions or entries and no published homework audience before the repair. A rollback rehearsal passed, then the same guarded transaction was committed. A separate query verified the persisted dates and four before/after audit entries. Classes (3), terms (2), teaching assignments (7), lessons (6), homework (1), announcements (1), and documents (2) remain. No migrations, RLS policies, accounts or guardian links were changed. The applied SQL is archived at `archive/2026-10/20261009_academic_dates_repair.sql`; do not rerun it.
+
+Future-year planning is intentional. Keep 2027 records for that scenario and use a separate current-year fixture for daily operations; 2026 still had no classes at the repair checkpoint. Current-day attendance remains unavailable for the future 2027 classes by design. The role-session checks remain outstanding. The correction does not complete Phase 3 acceptance or verify document Storage policies. The older development checkpoint below remains historical where it refers to pending hosted work.
 
 ## Current position
 
@@ -47,7 +85,7 @@ Earlier Phase 1 account/security readiness and Phase 2 correction/search/lifecyc
 
 Apply 021, verify the private bucket and document flows, and finish the outstanding announcement, timetable, attendance, homework and role checks. All planned Phase 3 modules now have local implementations, but Phase 3 acceptance is still open. Use ANNOUNCEMENTS.md and DOCUMENTS.md alongside the checklist above. No work on marks, report cards, fees, SaaS administration, external notifications or AI has been brought forward.
 
-The pre-existing test dataset included a year named 2027 extending through 2030 and a grade named Thapelo. Do not silently rename or delete those records. The server belongs to your testing session; do not stop or restart it unnecessarily. Never print `.env.local`.
+The mistaken 2030 year end was corrected with explicit approval on 9 October, as recorded above. Do not reapply that repair or silently change the remaining fictional records. The server belongs to your testing session; do not stop or restart it unnecessarily. Never print `.env.local`.
 
 ## Useful references
 

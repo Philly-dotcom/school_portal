@@ -1,8 +1,15 @@
 # Tests: what they check and how to run them
 
-Updated 8 October 2026. The latest full local run passed **457 tests in 49 files**, plus lint, TypeScript and production build, after adding documents. Documents add 43 tests across three files. Migrations through 020 are user-confirmed applied; 021 is pending application. The user reports browser checks about halfway complete and everything checked so far working. Remaining role/security/concurrency and real Storage scenarios still need their results recorded. The full run used the normal execution environment after a focused rendering run hit the known sandbox temporary-module error.
+Updated 13 October 2026. The full local test suite now passes **471 tests in 51 files**. The two new suites cover attendance rejection messages, retained selections and timetable date explanations. These local results do not close the remaining signed-in role, concurrency, school-isolation or real Storage checks. See [verification history](../docs/VERIFICATION.md) for the validation checkpoint. Migrations through 020 are user-confirmed applied; document tables were observed in hosted SQL during the 9 October repair, but complete migration 021/Storage acceptance still needs verification.
 
 ## Start here
+
+The attendance and timetable message fixes also have two focused suites:
+
+- [attendance-data.test.ts](attendance-data.test.ts) checks that a rejected date keeps its class selection, future-year and out-of-range explanations stay separate from loading errors, and diagnostic reads do not expose another school's class or borrow Admin access in teacher mode.
+- [my-timetable-data.test.ts](my-timetable-data.test.ts) checks the difference between a future placement, a current placement with no lessons, and a failed query. Guardian reads must use the selected learner; teacher reads must use the teacher's own assignments.
+
+These use mocked Supabase responses. They test application behaviour, not a live role session or deployed RLS policy.
 
 From `C:\Users\moses\Documents\School_portal`:
 
@@ -137,7 +144,7 @@ If a check fails, keep the test name and nearby error output. Remove credentials
 - [GitHub workflow](../.github/workflows/check.yml) runs checks and production browser tests in CI; its existence is not evidence of a successful remote run.
 - [Verification log](../docs/VERIFICATION.md) records completed runs and hosted checks separately.
 
-There is no dedicated Storage, attendance, marks or finance test suite yet because those modules have not been built. No coverage percentage is claimed here.
+Attendance and document Storage-policy tests now exist, as listed above. Marks and finance remain future work. No coverage percentage is claimed here.
 
 
 ## Account search tests

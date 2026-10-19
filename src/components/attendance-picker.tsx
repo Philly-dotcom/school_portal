@@ -28,6 +28,11 @@ export function AttendancePicker({
           searchAttendanceClasses(mode, query, page)
         }
       />
+      <p className="small muted">
+        {mode === "teacher"
+          ? "Only classes covered by a current teaching assignment are listed. If no classes match, check the search and ask School Admin to check your assignment dates. Future assignments do not allow attendance today."
+          : "Classes may belong to past, current or future years. The register date must fall within the class's academic year and cannot be in the future."}
+      </p>
       <label>
         Register date
         <input

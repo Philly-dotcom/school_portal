@@ -130,7 +130,9 @@ export async function HomeworkPanel({ params }: { params: HomeworkParams }) {
           publication date. There are no online submissions.
         </p>
       )}
-      {!result.rows.length && <p>No homework was found on this page.</p>}
+      {!result.rows.length && <p>{staff
+        ? "No homework was found on this page for your permitted assignments."
+        : "No published homework is available on this page for this learner. Drafts are not shown, and access depends on enrolment on the original publication date."}</p>}
       {result.rows.map((item) => (
         <article
           key={item.id}

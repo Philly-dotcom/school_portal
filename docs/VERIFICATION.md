@@ -1,5 +1,68 @@
 # Foundation verification
 
+## Admin follow-up checks — 19 October 2026
+
+The attendance stale-save problem reproduced using two freshly loaded Admin tabs on the existing Acceptance 12A register for 19 October. The first tab saved ST-002 as Present. The second, older tab attempted Absent and stayed on “Saving…” for several minutes instead of displaying the expected conflict message. Its captured browser error/warning log was empty. After reloading the second tab, ST-002 was still Present, ST-003 Present and DEMO-ST-002 Unmarked. The newer value was preserved, but the conflict feedback check failed. [Pending-save evidence](attendance-stale-pending-20261019.png). This is a sequential two-tab test sharing one login, not an independent-session race test.
+
+Source inspection found the expected version comparison and SQLSTATE 40001 in migration 018, and a corresponding user-facing error branch in the attendance server action. That does not establish where the hosted request stalled. Diagnose the request/response path before changing SQL or retry behaviour; no security policy or migration was changed to make the test pass.
+
+Admin created **TEST ONLY — Phase 3 school notice**, ID `50fdadba-2218-4221-ba82-d417707d0aa4`, for the whole fictional school. Draft creation, publication, withdrawal and republication succeeded; reloads confirmed Withdrawn and then Published on the same record. The audience remained fixed and Draft was no longer offered after publication. [Final republication evidence](announcement-republished-20261019.png). No external notification was sent. Separate reader visibility at each transition and announcement stale-save checks remain open.
+
+The browser remains signed in as Admin and the existing server was left running. No new students, schools, accounts or application code were created in this follow-up. Document publication/upload boundaries were not completed in this pass; the earlier allowed Admin download and denied role downloads remain the available evidence.
+
+## Guardian browser checks — 19 October 2026
+
+The user signed in as the existing Andiswa Besani account (GU-003). The initial workspace required explicit learner selection and offered only Mpoetsi (ST-003).
+
+- After selecting Mpoetsi, attendance showed that learner's three recorded dates, matching the student session, without editing controls. The published test Geography homework was readable without submission or staff controls.
+- Changing the attendance URL to the existing unrelated ST-002 ID returned an unavailable-workspace message and no attendance. [Denied unrelated learner evidence](guardian-unrelated-learner-denied-20261019.png).
+- The Physics draft's direct download route returned “Document unavailable,” even with the correctly selected permitted learner.
+- The timetable explained that no lessons were scheduled within the current placement. Actual lesson rendering remains untested because this fixture has no current-year lessons.
+- Announcements required learner selection before showing a feed. After selection, the feed was empty; this does not prove a positive published-notice read.
+
+Usability finding: clicking Announcements in the sidebar discarded the selected learner because its URL contained only `view=announcements`. The user had to select the learner again. The Documents sidebar link likewise omits the role/child parameters. This does not grant extra access, but the navigation should preserve the selected workspace and learner. No application code or database records were changed in this guardian session.
+
+Still open: revoked grants, combined teacher/guardian accounts, cross-school and direct API checks, publication withdrawal/republication, transfers, Storage upload limits, stale saves and the dashboard integration work. These basic role-session passes do not complete Phase 3.
+
+## Student browser checks — 19 October 2026
+
+The user signed in with the existing ST-003 account. Its workspace resolved to Mpoetsi. Attendance displayed only that learner's recorded marks: Present on 19 October, Late on 15 October and Present on 14 October. The published test Geography homework was visible without editing or submission controls. [Learner homework evidence](student-homework-20261019.png).
+
+The Documents feed showed no drafts or upload controls. Requesting the existing Physics draft download directly returned “Document unavailable.” Requesting the teacher attendance register through a changed URL returned an unavailable-view message, with no roster. These checks cover the portal and download route; forged writes and direct Supabase API requests remain separate checks.
+
+## Teacher browser checks — 19 October 2026
+
+The user signed in with the existing teacher account. The workspace resolved to Mrs Leruo (TE-003), and requesting `mode=school_admin` returned an unavailable-workspace message without Admin controls.
+
+- The personal timetable correctly reported no lessons scheduled within the current assignment. No current-year lessons have been added to this fixture, so actual lesson rendering remains untested.
+- Attendance search returned only Acceptance 12A (2026). The teacher saved ST-003 as Present for 19 October; reload confirmed persistence while the other two learners remained Unmarked.
+- The 15 October register showed ST-003 as Late, with no editing controls and an explicit read-only explanation. A request for 30 September, before the assignment began, was denied; the selected class ID remained in the request. [Read-only history evidence](teacher-attendance-history-20261019.png).
+- Homework assignment search returned only the current Geography assignment. The teacher published **TEST ONLY — Geography reading — 19 October**, due 23 October, ID `0fe154b2-35eb-4d1b-b1fd-25eb9455d9ee`. The item appeared as Published in the list. Reuse this item for learner visibility and publication lifecycle checks. [Published homework evidence](teacher-homework-published-20261019.png).
+- The document list was empty for this teacher. Direct access to the existing Physics draft download returned “Document unavailable.” This is portal-route evidence, not a direct Storage API test.
+
+Student and guardian checks, stale saves, transfer/assignment-ending scenarios, actual timetable lessons, document upload boundaries, direct API denials and hosted cross-school isolation remain open. No teacher session was impersonated and no permission policy was changed.
+
+## Hosted Admin checks — 15 October; resumed 19 October 2026
+
+With the user's approval, the existing 2026 year received one fictional class, Acceptance 12A (`11de7dc9-4a5e-477c-acec-370bcf311e48`), placements for existing ST-003, ST-002 and DEMO-ST-002, and a Geography assignment for existing TE-003. All run from 1 October through 26 November 2026. The existing 2027 placements and assignments were preserved. No school, person, login or guardian grant was created.
+
+- **Passed through Admin UI and reload:** on 15 October, save two attendance marks while the third learner stays unmarked; update a mark; explicitly clear a mark. Final values: ST-003 Late, the other two Unmarked.
+- **Passed through Admin UI and reload:** on 14 October, submission without a correction reason was blocked by browser validation. A reasoned save persisted ST-003 as Present. This does not independently prove a forged request is rejected or that its audit row is correct. [Historical register evidence](attendance-admin-history-20261015.png).
+- **Passed:** Admin downloaded the existing Physics draft PDF (`0b6e73d4-c044-4469-af69-668108e172d9`) through the portal download route. This proves one allowed download, not the full Storage permission matrix or bucket limits.
+- **Unresolved:** a stale attendance save in a second tab stayed on “Saving…” without displaying a conflict. A reload of the first tab retained its newer values. Do not count this as a successful stale-save or concurrent-session check.
+- **Usability finding:** after enrollment saves, native selects reset while the selected-choice hint retained the old choice. A second submission needed explicit class reselection. No duplicate enrollment was created by that blocked submission.
+- **Passed on 19 October:** the existing Admin session loaded the overview, and Sign out returned to the login page. Separate teacher/student/guardian verification is next.
+
+No application code, migrations, RLS, email configuration or credentials were changed during these browser checks. No new automated suite result is claimed. The 13 October local suite remains the last recorded full check. Phase 3 is not complete.
+
+## Attendance selection and empty-state messages — 13 October 2026
+
+The full `npm run check` passed lint, TypeScript, **471 tests in 51 files**, and the production build. Fourteen new tests cover safe attendance diagnostics and timetable placement messages. No migration or permission changes were needed.
+
+The production build was started temporarily on localhost. In the signed-in School Admin browser, choosing 12A (2027) and opening the register for 13 October 2026 kept **12A · 2027** selected and displayed the academic-year start date, 18 January 2027. The date restriction remained in force; no register was created or changed. [Browser evidence](attendance-future-year-20261013.png).
+
+Student, guardian and teacher messages have local automated coverage, but their separate authenticated browser checks remain open. No current-year operational fixture was added. These results do not close Phase 3 acceptance, hosted school-isolation/concurrency checks or Storage verification. The academic-data repair from 9 October was not rerun.
+
 ## Private PDF documents — 8 October 2026
 
 You confirmed applying migration 020 and approved the standalone Documents library rules. Migration **021 is prepared locally and pending application**. No hosted bucket, file or database record was changed by this development work.
