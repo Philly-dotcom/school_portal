@@ -144,7 +144,7 @@ export async function AttendancePanel({
     child?.success ? child.data : undefined,
   );
   if (actor.status !== "ready")
-    return <RoleOverview actor={actor} availableModes={modes} />;
+    return <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} />;
   const selectedChild =
     actor.mode === "guardian" ? actor.selectedChild?.id : undefined;
   const needsChild = actor.mode === "guardian" && !selectedChild;

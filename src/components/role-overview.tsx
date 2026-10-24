@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { ChildSelector } from "@/components/child-selector";
+import { StudentProfile } from "@/components/student-profile";
+import { TeacherProfile } from "@/components/staff-profile";
 import { portalModeLabels as modeLabels, portalHref } from "@/lib/portal-validation";
 import type {
   PortalActor,
@@ -11,9 +13,11 @@ import type {
 export function RoleOverview({
   actor,
   availableModes,
+  schoolName,
 }: {
   actor: PortalActor;
   availableModes: PortalMode[];
+  schoolName: string;
 }) {
   if (actor.status === "unavailable") {
     return (
@@ -105,31 +109,31 @@ export function RoleOverview({
             <span className="phase-tag">{modeLabels[actor.mode]}</span>
           </div>
 
-          <p className="small muted" style={{ marginTop: 16 }}>
-            Reference: {actor.person.reference}
-          </p>
-
           {actor.mode === "teacher" && (
-            <div className="quiet-note" style={{ marginTop: 24 }}>
-              <p>
-                Your teacher account is linked and ready. Your personal
-                timetable is available below.
-              </p>
-            </div>
+            <TeacherProfile />
           )}
 
           {actor.mode === "student" && (
-            <div className="quiet-note" style={{ marginTop: 24 }}>
-              <p>
-                Your learner account is linked and ready. Open My timetable
-                below to see this week’s lessons.
-              </p>
-            </div>
+            <StudentProfile />
           )}
 
           {actor.mode === "guardian" && (
             <div style={{ marginTop: 24 }}>
-              <h3>Learner access</h3>
+              <h3>My profile</h3>
+              <dl className="grid gap-3 sm:grid-cols-2" style={{ marginTop: 12 }}>
+                <div><dt className="muted">Full name</dt><dd>{actor.person.fullName}</dd></div>
+                <div><dt className="muted">School</dt><dd>{schoolName}</dd></div>
+                <div>
+                  <dt className="muted">Linked students</dt>
+                  <dd>
+                    {actor.children.length ? (
+                      <ul>{actor.children.map((child) => <li key={child.id}>{child.fullName}</li>)}</ul>
+                    ) : "No students are linked with portal access. Contact your School Admin."}
+                  </dd>
+                </div>
+              </dl>
+
+              <h3 style={{ marginTop: 24 }}>Learner access</h3>
 
               <p className="muted" style={{ marginTop: 8 }}>
                 Choose the learner whose school information you want to view.

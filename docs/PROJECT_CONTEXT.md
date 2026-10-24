@@ -6,11 +6,11 @@ School Portal is completely isolated from the user's other projects. No architec
 
 ## Authorization and current stage
 
-The user authorized Phase 1, then Phase 2 without email, and resumed assistant-led Phase 3 development on 7 October. On 8 October, the user confirmed migration 019 was applied and homework was working. Migrations through 019 are now user-confirmed applied. Remaining tests are in progress, not complete. The role-access check needs separate linked test accounts; their setup has been explained but not confirmed complete. Current project Markdown may be updated; leave the temporary Phase 3 guide unchanged unless asked. Public deployment and additional cloud resources remain outside this authorization.
+The user authorized Phase 1, Phase 2 without email, and assistant-led Phase 3 development. As of 20 October, migrations through 021 are user-confirmed applied. Role accounts are established and basic separate-session checks have passed. The user completed 13 hosted document checks; School B isolation and the other cases in [the current checklist](DOCUMENTS.md#remaining-phase-3-checklist) remain open.
 
-Later on 8 October, the user reported browser checks about halfway complete and everything tested so far working, then authorized more Phase 3 development. They confirmed announcement rules, and the local announcement module was added with migration 020 pending application. No detailed result list was supplied, so the remaining acceptance checks stay open.
+All four roles have read-only overview profiles. The user wants the daily dashboard completed and redesigned after pending testing. Phase 3 is not yet accepted and Phase 4 has not started. Email delivery remains off. Public deployment and additional cloud resources are not authorized by this status update.
 
-The user subsequently confirmed applying 020 and approved the Documents library rules below. Documents are implemented locally with migration 021 pending application. Current applied status is through 020. Browser and hosted Storage acceptance are still outstanding.
+At the user's request, superseded guides are now archived, including the temporary Phase 3 implementation guide. Use RESUME.md, VERIFICATION.md and the current checklist for progress; archived instructions are historical reference.
 
 ## Product strategy
 

@@ -32,4 +32,4 @@ Still pending: hosted denied reads/writes with two synthetic schools, non-admin 
 
 After user verification, finish the Phase 2 validation gaps and prioritize enrollment lifecycle (transfer/withdrawal with history) before Phase 3 attendance. Email remains deferred.
 
-Evidence: [Fictional timetable](synthetic-timetable.jpg).
+Evidence: [Fictional timetable](../../../docs/synthetic-timetable.jpg).

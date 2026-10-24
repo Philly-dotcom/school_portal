@@ -134,11 +134,11 @@ Start from a reproducible Phase 2 baseline. New daily workflows depend on correc
 
 ### Open these existing files
 
-- [docs/RESUME.md](docs/RESUME.md): latest development checkpoint; read only.
-- [docs/PHASE_2_EXPLAINED.md](docs/PHASE_2_EXPLAINED.md): explanations and historical scope; read the later-update note first.
-- [package.json](package.json): existing scripts and packages.
-- [.env.example](.env.example): allowed app configuration names. Do not overwrite an existing `.env.local`.
-- [Migration 016](supabase/migrations/202610050016_timetable_assignment_search.sql): read-only assignment search.
+- [docs/RESUME.md](../../../docs/RESUME.md): latest development checkpoint; read only.
+- [docs/PHASE_2_EXPLAINED.md](../../../docs/PHASE_2_EXPLAINED.md): explanations and historical scope; read the later-update note first.
+- [package.json](../../../package.json): existing scripts and packages.
+- [.env.example](../../../.env.example): allowed app configuration names. Do not overwrite an existing `.env.local`.
+- [Migration 016](../../../supabase/migrations/202610050016_timetable_assignment_search.sql): read-only assignment search.
 
 ### Actions
 

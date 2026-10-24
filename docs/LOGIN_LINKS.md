@@ -23,7 +23,7 @@ New tables that hold learner data must follow the same pattern: no policy `using
 
 Policy performance note: helpers run per row. This is fine for a single school; if registers grow into the tens of thousands, review query plans (`explain analyze`) before adding more modules.
 
-The dashboard UI is still administrator-focused. Dedicated teacher, guardian and student screens belong to the later role-facing work in Phase 3. Finish the current Phase 2 checks first. Those future screens must query through the authenticated client so the same policies apply.
+Teacher, student and guardian workspaces are now implemented, including read-only overview profiles. They use authenticated queries and server-resolved linked identities. Guardian learner selection stays explicit. Basic role-session checks have passed; remaining acceptance is tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist).
 
 ## Pre-deployment repair rules (2026-10-02)
 

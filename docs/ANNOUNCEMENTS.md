@@ -1,6 +1,6 @@
 # Announcements
 
-Added on 8 October 2026 as part of Phase 3. You subsequently confirmed applying migration `202610080020_announcements.sql` in Supabase. Do not rerun it. The browser checks below remain to be recorded individually.
+Added on 8 October 2026 as part of Phase 3. You subsequently confirmed applying migration `202610080020_announcements.sql` in Supabase. Do not rerun it. Admin draft/publish/withdraw/republish passed on 19 October. Reader transitions and other cases still need individual results. Use [DOCUMENTS.md P3-22–P3-26](DOCUMENTS.md#5-announcements--remaining-reader-and-lifecycle-checks) as the working checklist; the list below describes module coverage rather than a second progress tracker.
 
 ## Who can publish and read
 

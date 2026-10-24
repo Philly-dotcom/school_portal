@@ -36,8 +36,8 @@ After activation, test create/list/filter/remove, stale repeated removal, and cr
 
 ## Search migration 016 — 5 October 2026
 
-Migration 015 application is user-confirmed. Apply only `202610050016_timetable_assignment_search.sql` after it to enable timetable search; 016 has not yet been confirmed applied. The new function is read-only, checks School Admin access, uses the caller's RLS context and joins every related record within the same school. It returns 25 results plus one lookahead, with bounded text/page input and literal case-insensitive matching. Historical assignments remain searchable for their stored periods; date/clash checks are unchanged.
+Migrations 015 and 016 are user-confirmed applied. Do not rerun `202610050016_timetable_assignment_search.sql`. The new function is read-only, checks School Admin access, uses the caller's RLS context and joins every related record within the same school. It returns 25 results plus one lookahead, with bounded text/page input and literal case-insensitive matching. Historical assignments remain searchable for their stored periods; date/clash checks are unchanged.
 
 The page loads only referenced assignment labels, including the active filter even when it has no lessons. **Apply filter** starts at page one; page links retain it. Hidden ID fields preserve choices if submitted while search is busy. **All assignments** and **Clear filter** remove the filter deliberately. Removal still requires confirmation. A missing search function shows a safe error rather than an incomplete dropdown.
 
-Browser checks are on hold. On resuming them, check search → select → browse another page, date bounds, filter persistence with empty results, clear filter, and save/conflict/removal behavior using fictional records only.
+Remaining browser checks are tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). Using the existing fictional fixture, check search → select → browse another page, date bounds, filter persistence with empty results, clear filter, and save/conflict/removal behavior using fictional records only.

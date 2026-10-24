@@ -1,5 +1,7 @@
 # School Portal: Phase 2 explained
 
+> Learning reference retained from Phase 2. For current migration status, tests and next steps, use [RESUME.md](RESUME.md) and [the Phase 3 checklist](DOCUMENTS.md#remaining-phase-3-checklist). Dated pending-work notes below are historical.
+
 Status reviewed on **5 October 2026**.
 
 > Later update on 5 October: account-link search is implemented and migration 015 application is user-confirmed. Timetable search is also implemented locally; new migration 016 still needs hosted application. Browser checks remain on hold. The detailed explanation below records the earlier checkpoint, so its unfinished search items describe that earlier state. See [the current resume notes](RESUME.md) for the latest handover.
@@ -198,7 +200,7 @@ The current UI is mainly for School Admin. Database access rules also account fo
 
 ## 5. Database changes made during this work
 
-Migrations are the ordered history of schema and permission changes. They remain intact in [supabase/migrations](../supabase/migrations/).
+Migrations are the ordered history of schema and permission changes. They remain intact in [supabase/migrations](../supabase/migrations).
 
 | Migration | Purpose |
 | --- | --- |
@@ -236,12 +238,12 @@ The project keeps UI, server actions, data reads and database rules in separate 
 | [Teaching actions](../src/app/dashboard/teaching/actions.ts) | Creates, ends and replaces teaching assignments. |
 | [Timetable actions](../src/app/dashboard/timetable/actions.ts) | Handles lesson creation and removal. |
 | [Search actions](../src/app/dashboard/search/actions.ts) | Returns permitted school-scoped choices after server-side authorization. |
-| [Components](../src/components/) | Forms, panels, editors and reusable search/pagination controls. |
+| [Components](../src/components) | Forms, panels, editors and reusable search/pagination controls. |
 | [Register data](../src/lib/register-data.ts) and [planning data](../src/lib/planning-data.ts) | Fetch paged records and resolve related labels, including off-page references. |
 | [Shared pagination](../src/lib/list-pagination.ts) and [search validation](../src/lib/record-search.ts) | Keep page limits, input validation and search behavior consistent. |
-| [Migrations](../supabase/migrations/) | Defines persistent tables, constraints, permissions and controlled database operations. |
-| [Tests](../tests/) and [browser tests](../e2e/) | Checks behavior at different layers; explained below. |
-| [Archive](../archive/) | Keeps obsolete one-off scripts as history, outside the active workflow. |
+| [Migrations](../supabase/migrations) | Defines persistent tables, constraints, permissions and controlled database operations. |
+| [Tests](../tests) and [browser tests](../e2e) | Checks behavior at different layers; explained below. |
+| [Archive](../archive) | Keeps obsolete one-off scripts as history, outside the active workflow. |
 
 For a broader file-by-file reference, see [FILE_GUIDE.md](FILE_GUIDE.md). This document focuses on why the Phase 2 pieces exist and what they deliver.
 

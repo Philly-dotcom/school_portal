@@ -1,6 +1,6 @@
 # Activate account management
 
-Member management is already active in the dedicated test project. The user applied migration 002 earlier and has now confirmed 009–013. Setup steps below are for a fresh project; do not repeat migrations or administrator provisioning in the current one. The invitation sender has not been confirmed deployed or tested, and no email delivery is claimed.
+Member management is already active in the dedicated test project. The user has confirmed migrations through 021 applied; this guide describes the earlier account-management foundation. Setup steps below are for a fresh project; do not repeat migrations or administrator provisioning in the current one. The invitation sender has not been confirmed deployed or tested, and no email delivery is claimed.
 
 Public sign-ups were verified disabled on 30 September. Keep them disabled. The user saved Resend SMTP settings but has no registered sending domain. Invitation and recovery email flags remain off until delivery is ready and tested.
 

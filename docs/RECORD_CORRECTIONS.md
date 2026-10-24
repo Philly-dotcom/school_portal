@@ -23,4 +23,4 @@ The database RPC validates active admin access, an allowlisted record type, scho
 
 Audit events record actor, record ID, field names and version numbers; they do not copy names or references into logs. This is traceability, not a complete version-history/undo feature.
 
-Local checks passed lint, TypeScript, 79 tests across 15 files and production build. Database tests exercise all eight record types and preserve full enrollment, teaching assignment and guardian-link rows across edits. Hosted RPC/RLS behavior and signed-in browser testing of the editors remain pending.
+At the time this correction feature was introduced, local checks passed lint, TypeScript, 79 tests across 15 files and production build. For the current 482-test baseline and remaining hosted checks, see [VERIFICATION.md](VERIFICATION.md). Database tests exercise all eight record types and preserve full enrollment, teaching assignment and guardian-link rows across edits. Hosted RPC/RLS behavior and signed-in browser testing of the editors remain pending.

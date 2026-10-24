@@ -1,6 +1,6 @@
 # File guide
 
-Updated 8 October 2026. This is a map of the current checkout, not a proposed new folder structure. Start with the part you are working on; you do not have to read every file in order.
+Updated 20 October 2026. This is a map of the current checkout, not a proposed new folder structure. Start with the part you are working on; you do not have to read every file in order.
 
 A `.tsx` file can contain screen markup and TypeScript. A `.ts` file contains TypeScript without that markup. `page.tsx` makes a route; our `actions.ts` files handle form submissions on the server. A migration is a saved SQL change to the database. An RPC is a database function the app calls. RLS means row-level security: the database checks which rows the signed-in account may read or change.
 
@@ -151,7 +151,7 @@ Every test file is explained individually in [tests/README.md](../tests/README.m
 
 ## Documentation files
 
-[ENVIRONMENT.md](ENVIRONMENT.md) explains which settings belong to the web app, CLI and invitation function. [CLEANUP.md](CLEANUP.md) records what was kept, removed or archived. [archive/README.md](../archive/README.md) explains the archived material.
+[ENVIRONMENT.md](ENVIRONMENT.md) explains which settings belong to the web app, CLI and invitation function. [CLEANUP.md](../archive/2026-10/docs/CLEANUP.md) records what was kept, removed or archived. [archive/README.md](../archive/README.md) explains the archived material.
 
 Every document and the saved timetable image are explained in [docs/README.md](README.md). This file is the source/tooling map; that index is the reading map. The root README is the entry point, and the two folder READMEs explain their respective contents.
 
@@ -196,6 +196,10 @@ The existing dashboard route and portal shell connect these modules. They still 
 | `src/lib/portal-data.ts` | Resolves the signed-in account's linked school record. Guardian choices come only from explicit grants, even for teacher/guardian accounts. |
 | `src/components/child-selector.tsx` | Lets a guardian choose an authorized learner while keeping the current module and clearing old pagination. |
 | `src/components/role-overview.tsx` | Shows the linked person's workspace, access errors and links to available daily modules. |
+| `src/lib/student-profile-data.ts` | Reads the signed-in student's own enrolments and their year/class/grade labels under existing RLS. Uses the school date and keeps failed reads separate from an empty history. |
+| `src/components/student-profile.tsx` | Shows the student's read-only profile and current, upcoming and past enrolment cards on Overview. |
+| `src/lib/staff-profile-data.ts` | Resolves the teacher's own subjects and the admin's own profile, membership ID and authenticated email. Uses existing school access and RLS. |
+| `src/components/staff-profile.tsx` | Displays teacher and admin profiles on their overviews. Guardian details use the already verified actor in `role-overview.tsx`. |
 | `src/lib/my-timetable-data.ts` | Calls the narrow personal timetable RPC and validates its response. |
 | `src/components/my-timetable-panel.tsx` | Shows current-week lessons without scheduling controls. |
 | `src/lib/school-date.ts` | Supplies a school-local default date for the attendance picker. SQL independently authorizes dates. |
@@ -222,7 +226,7 @@ The existing dashboard route and portal shell connect these modules. They still 
 | `src/app/dashboard/announcements/search-actions.ts` | Searches classes the staff role can currently manage. |
 | `src/components/announcement-form.tsx` | Audience, message and publication editor. |
 | `src/components/announcement-panel.tsx` | Staff management and reader feeds with guardian learner selection. |
-| `supabase/migrations/202610080021_documents.sql` | Private PDF bucket, metadata, Storage RLS, upload reservations and versioned visibility. Pending application. |
+| `supabase/migrations/202610080021_documents.sql` | Private PDF bucket, metadata, Storage RLS, upload reservations and versioned visibility. User-confirmed applied. |
 | `src/lib/document-validation.ts` | Shared document types, 2 MiB limit, audience validation, generated paths and links. |
 | `src/lib/document-file.ts` | Server-only PDF header/end-marker, size and content-hash checks. |
 | `src/lib/document-data.ts` | Role-aware metadata reads with bounded pagination. |
@@ -230,13 +234,13 @@ The existing dashboard route and portal shell connect these modules. They still 
 | `src/app/dashboard/documents/[id]/download/route.ts` | Downloads an authorized PDF as a private, non-cached attachment. |
 | `src/components/document-form.tsx` | Staff upload and fixed-file visibility controls. |
 | `src/components/document-panel.tsx` | Staff and reader document feeds with guardian selection. |
-| `tests/helpers/storage-stub.ts` | Minimal test-only Storage metadata schema for full-migration PGlite suites. Actual HTTP storage behaviour still needs hosted tests. |
+| `tests/helpers/storage-stub.ts` | Minimal test-only Storage metadata schema for full-migration PGlite suites. Hosted document results are recorded separately in DOCUMENTS.md; School B isolation remains open. |
 
 See [ANNOUNCEMENTS.md](ANNOUNCEMENTS.md) for the workflow, permission rules and tests. The dashboard, sidebar and role overview link to this module.
 
 [DOCUMENTS.md](DOCUMENTS.md) covers the new PDF library and its test files. `next.config.ts` now permits a 3 MiB server-action body so a 2 MiB PDF fits with multipart overhead; file and bucket validation keep the lower file limit. No extra packages or environment variables were added.
 
-The [test guide](../tests/README.md) explains each corresponding test file. `TEMP_PHASE_3_IMPLEMENTATION_GUIDE.md` and the archived working-checkpoint document are earlier planning aids, not current migration status. The temporary guide is deliberately unchanged following the latest user instruction; use RESUME.md for the current checkpoint.
+The [test guide](../tests/README.md) explains each corresponding test file. The [temporary Phase 3 guide](../archive/2026-10/docs/TEMP_PHASE_3_IMPLEMENTATION_GUIDE.md) and archived working-checkpoint document are historical planning aids. Use RESUME.md for current progress and DOCUMENTS.md for the working checklist.
 - [Search actions](../src/app/dashboard/search/actions.ts) now accept `teaching_assignments` and return assignment date bounds alongside labels. Unsupported filters are rejected by `record-search.ts`.
 - [Timetable](../src/components/timetable.tsx) uses searchable choices for its GET filter and lesson form. Hidden fields preserve selected IDs during search; date inputs follow the selected assignment.
 - [Planning data](../src/lib/planning-data.ts) reads only the assignment labels required by visible lessons and the active filter. It no longer loads capped reference catalogs.

@@ -1,6 +1,6 @@
 # Tests: what they check and how to run them
 
-Updated 13 October 2026. The full local test suite now passes **471 tests in 51 files**. The two new suites cover attendance rejection messages, retained selections and timetable date explanations. These local results do not close the remaining signed-in role, concurrency, school-isolation or real Storage checks. See [verification history](../docs/VERIFICATION.md) for the validation checkpoint. Migrations through 020 are user-confirmed applied; document tables were observed in hosted SQL during the 9 October repair, but complete migration 021/Storage acceptance still needs verification.
+Updated 20 October 2026. The latest full local check passed lint, TypeScript, **482 tests in 53 files**, and production build. Migrations through 021 are user-confirmed applied. The user has completed 13 hosted document checks; School B isolation remains deferred. Local tests do not replace remaining hosted acceptance. See [verification status](../docs/VERIFICATION.md) and the [current checklist](../docs/DOCUMENTS.md#remaining-phase-3-checklist).
 
 ## Start here
 
@@ -158,3 +158,9 @@ These are local checks. No hosted migration was applied and browser checks remai
 `record-search.test.ts` checks the assignment RPC parameters, admin context, bounded results, date bounds, invalid filters and safe errors. `register-database.test.ts` runs migration 016 and searches more than 500 fictional assignments, covering teacher references, subject/class/grade/year matching, literal search text and denied school/role/anonymous access. These tests run before the suite deliberately suspends its admin.
 
 [timetable-search-forms.test.ts](timetable-search-forms.test.ts) checks that filter and creation searches remain available without preloaded choices, preserve the active filter ID with empty lesson results and reset pagination when applying a filter. Interactive selection/date changes remain deferred browser checks. Existing timetable SQL save/clash/removal tests remain in the suite.
+
+## Student profile coverage — 20 October 2026
+
+`student-profile.test.ts` checks that the overview reads the server-resolved student's records in their school, stops for unlinked accounts or mismatched schools, and distinguishes failed reads from no enrolments. It also checks school-local date boundaries, future and past placements, transfer labels and batched history reads. These are mocked data and rendering tests; the signed-in student browser check against Supabase is still required.
+
+`staff-profile.test.ts` covers teacher subject scoping and deduplication, missing roles or account links, failed subject reads, and the admin's own name, membership reference and authenticated email. It also checks that Guardian Overview displays the granted learners without selecting one automatically or showing the guardian reference. `portal-routing.test.ts` still tests which overview a role can open; its profile panels are mocked because their data and rendering are tested separately.

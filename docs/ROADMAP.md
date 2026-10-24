@@ -1,10 +1,10 @@
 # Delivery roadmap
 
-Updated 8 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
+Updated 20 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
 
 ## Current position
 
-You have confirmed applying migrations through 020 and reported homework working. We are in Phase 3, and you are running the remaining tests. Documents are now implemented locally with migration 021 pending application. Hosted security/concurrency and Storage checks still need their own results; do not repeat applied migrations.
+You have confirmed applying migrations through 021 and completing 13 hosted document checks. The document School B isolation check remains deferred because that school is not registered. We are in Phase 3; the remaining module tests, known defects and daily dashboard completion/redesign are tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). Do not repeat applied migrations or completed document checks.
 
 **Phase 3: Daily Operations**, with Phase 1 live readiness and parts of Phase 2 acceptance still open. The move into Phase 3 was explicitly authorized by the user; it did not close those earlier checks. Preserve the original six-phase plan, one-school-first experience and school-aware ownership.
 
@@ -56,9 +56,9 @@ The planned Phase 2 search conversions are implemented and migrations 015–016 
 
 Built: role workspaces and child selection, current-week personal timetables (017), daily attendance and permitted history (018), and view-only homework with draft/publication/withdrawal (019). Migrations 017–019 are user-confirmed applied, and the user reports homework working. Remaining tests are in progress. Homework uses the original-publication enrollment audience, not current-class access. No learner submissions were added.
 
-Announcements are implemented and migration 020 is user-confirmed applied. The private Documents library follows the agreed school/class publishing and current-enrollment audience rules, with migration 021 pending application. Both modules are linked from the dashboard sidebar and role overview. Browser checks are about halfway complete and working so far, according to the user; no individual outstanding check is closed by that general report.
+Announcements and Documents are implemented, with migrations 020 and 021 user-confirmed applied. Both modules are linked from the dashboard sidebar and role overview. The user's completed document checks are recorded in DOCUMENTS.md; remaining announcement and other module checks stay separate. Read-only profiles now exist for all four roles.
 
-Remaining: apply 021, verify real Storage uploads/downloads and access boundaries, then complete all outstanding Phase 3 browser/hosted acceptance. No Phase 4 work starts merely because the local modules are present. See RESUME.md, ANNOUNCEMENTS.md and DOCUMENTS.md for the checkpoint and checks.
+Remaining: complete the combined Phase 3 checklist, resolve reproduced defects, verify hosted cross-school isolation once the test setup is agreed, then complete and redesign the daily dashboard as agreed with the user. No Phase 4 work starts merely because the local modules are present. See RESUME.md for the checkpoint and DOCUMENTS.md for the working checklist.
 
 ## Phase 4: academic performance
 

@@ -45,7 +45,7 @@ Assignments and their history show 50 records per page, ordered by start date an
 
 Creation now uses searchable teacher, subject and class selectors, with 25 choices per search page. Enter a name and press **Search choices**, or leave it blank to browse. Class choices include grade and year, and choosing a class supplies its academic year and date bounds. The replacement editor uses the same teacher search and excludes the current teacher. Selected choices remain selected when browsing other result pages.
 
-These controls no longer load a capped 500-record choice list. School ownership, overlap rules, dates and stale versions are still checked when saving. Register and timetable selectors have not yet been converted and retain their existing guards.
+These controls no longer load a capped 500-record choice list. School ownership, overlap rules, dates and stale versions are still checked when saving. Register and timetable selectors also use searchable choices after migrations 015 and 016. Those migrations are user-confirmed applied.
 
 ## Verification boundary
 

@@ -36,7 +36,7 @@ Guardian linking and initial enrollment now use searchable student, guardian and
 
 Transfer destinations use the same class search, limited to the enrollment's academic year and excluding its current class. Withdrawals need no destination. Saving still validates school ownership, year, dates, version and overlap rules; changing a search request cannot bypass those checks. Existing guardian access controls and closed enrollment history remain unchanged.
 
-Sign-in linking now searches matching active memberships in pages of 25 by name or verified email. You confirmed applying migration 015; do not reapply it. SQL excludes accounts linked to any other person of the same type before pagination, including off-page records. Only current links on the visible page are loaded initially; inactive links remain visible for deliberate removal. Save-time ownership, role, confirmation and version checks remain in force. Browser checks are on hold.
+Sign-in linking now searches matching active memberships in pages of 25 by name or verified email. You confirmed applying migration 015; do not reapply it. SQL excludes accounts linked to any other person of the same type before pagination, including off-page records. Only current links on the visible page are loaded initially; inactive links remain visible for deliberate removal. Save-time ownership, role, confirmation and version checks remain in force. Remaining browser checks are tracked in [the current checklist](DOCUMENTS.md#remaining-phase-3-checklist).
 
 Only names and internal references are collected at this stage; contact details and other personal fields need an agreed purpose before addition.
 
@@ -44,4 +44,4 @@ To check pagination in the connected app, use fictional records: navigate one li
 
 ## Next
 
-Verify the existing correction, linking and lifecycle workflows, then address list capacity and the remaining Phase 2 work. Academic imports are optional, not an agreed requirement. Email remains disabled pending a registered sending domain and tested delivery.
+Search and pagination are implemented. Verify remaining correction, linking and lifecycle cases against the current roadmap; the enrolment selection/hint reset defect remains on the Phase 3 checklist. Academic imports are optional, not an agreed requirement. Email remains disabled pending a registered sending domain and tested delivery.

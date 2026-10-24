@@ -1,100 +1,62 @@
 # Where we left off
 
-Updated 19 October 2026.
-
-## Browser testing resumed
-
-Latest Admin follow-up: the stale attendance save reproduced on 19 October. It stayed pending for several minutes; reload confirmed the first save survived (ST-002 Present, ST-003 Present, DEMO-ST-002 Unmarked). The missing conflict response remains a blocker. The labelled school-wide notice `50fdadba-2218-4221-ba82-d417707d0aa4` passed Admin draft/publish/withdraw/republish checks and is currently Published. Reader visibility across those changes is still untested. The browser is left signed in as Admin and the server remains running.
-
-Before signing off Phase 3, resolve the pending-save behaviour, selected-choice reset mismatch and guardian sidebar context loss. Then finish the remaining publication/transfer/grant-revocation checks, actual timetable lesson rendering, Storage boundaries, direct API and existing-second-school isolation checks, and the daily dashboard integration work. Do not treat the separate role-session passes as completion of those scenarios. Reuse the existing fixtures; no new school or student is authorized.
-
-Guardian checks are now recorded too: GU-003 required explicit selection of its only granted learner, ST-003; attendance and published homework matched the student session. An unrelated ST-002 attendance URL and the Physics draft download were denied. The timetable showed the expected no-lessons message. The Announcements sidebar drops the learner selection and asks the guardian to select again; the Documents sidebar also omits role/child parameters. Track this navigation issue alongside the stale-save and form-reset findings below. No grants were changed. Next, resume Admin checks for stale saves and the remaining publication/document workflows; the full Phase 3 gate remains open.
-
-The current-year fixture was added with your approval on 15 October. Reuse it; do not create another school or student. **Acceptance 12A**, Grade 12, belongs to the existing 2026 year (class ID `11de7dc9-4a5e-477c-acec-370bcf311e48`). Existing learners ST-003, ST-002 and DEMO-ST-002 have placements from 1 October to 26 November 2026. Mrs Leruo (TE-003) has a Geography assignment for the same dates. Their 2027 planning records remain intact. No new accounts or guardian grants were created.
-
-Admin browser checks passed on 15 October: partial attendance saves persisted after reload, untouched learners stayed unmarked, and an explicit clear removed a mark. For 14 October, the browser required a correction reason and the reasoned save persisted. ST-003 was left Present on 14 October and Late on 15 October; the other two learners were unmarked on 15 October. These are fictional test marks. The existing Physics draft PDF also downloaded successfully for Admin.
-
-Two findings still need investigation: the second attendance tab stayed on “Saving…” during the stale-save test, and an enrollment form's dropdown reset after saving while its “Selected” hint still showed the previous choice. Neither is recorded as a pass. The first tab's newer attendance values persisted; independent-session concurrency is still unverified.
-
-On 19 October, the user signed in separately as the existing teacher and student. Teacher checks passed for current-class search, saving today's attendance, read-only history, denied history before assignment start, and denying a requested Admin workspace. The teacher published the labelled test Geography homework (ID `0fe154b2-35eb-4d1b-b1fd-25eb9455d9ee`, due 23 October). ST-003's student session displayed it read-only and showed only that learner's attendance history, including today's Present mark. Both roles were denied the Physics draft's direct download route; the student was also denied a teacher-register URL. The teacher timetable correctly explained that no current-week lessons were scheduled. These checks do not prove direct API denials, transfers or full concurrency. Guardian verification is next; the user enters all credentials. See VERIFICATION.md for the individual results and screenshots.
-
-Three draft PDFs were visible on 15 October, so the older note saying 021 was wholly pending is no longer a reliable description of the hosted library. Metadata reads and one Admin download work. Exact migration application, bucket settings, denied Storage requests and other role downloads still need verification; do not rerun 021 blindly. Phase 3 remains open, including the daily dashboard integration question and the remaining hosted acceptance checklist below.
-
-The sections below retain the earlier checkpoints. Their pending-fixture statements describe the dates on which they were written; the fixture above now exists.
-
-## Attendance and timetable messages
-
-The remaining message and selection fixes are implemented. Attendance keeps the selected class after a rejected request. Admins get an explanation when a class belongs to a future year or the date falls outside its year; teachers get a reminder that their assignment must cover today and the requested date. Loading failures stay separate from eligibility messages. These explanations do not grant access or replace the database checks.
-
-The personal timetable now checks the signed-in person's permitted dated records when the first page has no lessons. It explains a future assignment/enrolment, no current or upcoming placement, or a current placement with no lessons this week. A failed date query is reported as a failure, not as missing data. Guardian checks use the selected learner, not a teacher's roster. Learner homework now says when no published homework is available and explains that drafts are hidden.
-
-No migration, dependency, environment setting or hosted-data change is needed for these UI fixes. The 2026 daily-operations fixture and the separate signed-in role checks remain pending. These changes do not complete Phase 3 acceptance.
-
-Verification finished on 13 October: `npm run check` passed lint, TypeScript, 471 tests in 51 files, and the production build. A signed-in Admin browser check against hosted data confirmed that 12A stays selected after today's register is rejected, with the correct 2027 start-date explanation. No attendance data was written. See [VERIFICATION.md](VERIFICATION.md) for the evidence and remaining role checks.
-
-## Hosted academic-data correction — 9 October
-
-The approved fictional-data repair is complete. The original `2027_mistake` year is now `2027`, from 18 January to 26 November 2027, with its original ID and relationships. ST-002's enrolment now ends on 26 November 2027. ST-003's accidental withdrawal was reversed on the existing enrolment, restoring 18 January–26 November 2027; its original withdrawal audit is still present. The empty year named `2026` now spans 18 January–26 November 2026. These are fictional test dates, not an official school calendar.
-
-Read-only SQL checks found no attendance sessions or entries and no published homework audience before the repair. A rollback rehearsal passed, then the same guarded transaction was committed. A separate query verified the persisted dates and four before/after audit entries. Classes (3), terms (2), teaching assignments (7), lessons (6), homework (1), announcements (1), and documents (2) remain. No migrations, RLS policies, accounts or guardian links were changed. The applied SQL is archived at `archive/2026-10/20261009_academic_dates_repair.sql`; do not rerun it.
-
-Future-year planning is intentional. Keep 2027 records for that scenario and use a separate current-year fixture for daily operations; 2026 still had no classes at the repair checkpoint. Current-day attendance remains unavailable for the future 2027 classes by design. The role-session checks remain outstanding. The correction does not complete Phase 3 acceptance or verify document Storage policies. The older development checkpoint below remains historical where it refers to pending hosted work.
+Updated 20 October 2026.
 
 ## Current position
 
-We are in Phase 3. Role workspaces, personal timetables, attendance and view-only homework are built. You report the browser checks are about halfway through and everything checked so far works. This does not mark the remaining scenarios complete. You then approved continuing with announcements and confirmed their publishing and audience rules.
+We are in **Phase 3: Daily Operations**. Migrations through **021 are user-confirmed applied**. Do not rerun them. We still use fictional records in the dedicated School Portal project.
 
-You confirmed that **020 is applied** and agreed the PDF uploader and audience rules. The private Documents library is now built locally. **Migration 021 is pending application**; it creates the private bucket, metadata and Storage policies. Start with [DOCUMENTS.md](DOCUMENTS.md) for setup, file explanations and browser checks.
+Role workspaces, personal timetables, attendance, view-only homework, announcements and private PDF documents are implemented. Read-only profiles now appear on each role's overview:
 
-Migrations through **020 are user-confirmed applied**. Do not rerun them. Homework working and the report that browser checks are going well do not close the remaining individual permission, transfer and concurrency checks.
+- Student: linked name, reference, school and enrolments, with year, grade, class, dates and Current/Upcoming/Past labels.
+- Teacher: linked name, reference, school and subjects grouped by academic year and date status.
+- Guardian: name, school and explicitly granted learners. A learner must still be selected before opening daily records.
+- Admin: saved name, authenticated email, school and school membership ID as the admin reference. There is no separate admin reference field.
 
-The latest full `npm run check`, after documents, passed lint, TypeScript, **457 tests in 49 files**, and the production build on 8 October. Documents add 43 tests. Storage SQL tests use a minimal PGlite fixture; they do not prove real Storage HTTP behaviour, bucket limits or uploaded file handling. Those checks remain yours to complete after applying 021.
+The daily dashboard is not finished. The user wants it completed and redesigned after the pending tests, within the existing architecture and permissions. Phase 4 has not started.
 
-The temporary Phase 3 guide is unchanged at your request. Current progress now belongs in these main project docs. You still own the pending browser checks. Email, invitations and recovery delivery remain disabled/unverified. No hosted records, deployment or cloud configuration were changed by this development work.
+## Testing now
 
-## What homework does
+Use [DOCUMENTS.md — remaining Phase 3 checklist](DOCUMENTS.md#remaining-phase-3-checklist). Cases P3-01–P3-35 have steps and expected results. Record the case ID, role, fictional record/date, actual result and pass/fail/blocked status. Do not repeat a completed case merely because an archived note says it was pending.
 
-- School Admin and teachers with current access to an assignment can create drafts, publish directly, edit and withdraw homework. There is no extra approval step for homework.
-- The original assignment remains fixed after creation. Teachers lose editing access when their assignment ends; admins can still manage the item.
-- First publication fixes the audience date. Only learners enrolled in that class on that date can read it, plus guardians with current explicit access to those learners. Later joiners cannot read older work just because they now share the class.
-- Editing, withdrawal and republication keep the original audience date. This rule uses recorded enrollment history, so an authorized correction to that history can change who qualifies.
-- Drafts and withdrawn items stay hidden from learners. There are no submissions, grading, completion buttons, files or external notifications in this module.
-- Due dates must fit the academic year. First publication requires a current academic year and a due date today or later. Published work can still be corrected after its due date.
-- Staff edits use a version check and audit. Stale edits must be rejected, not silently overwritten.
+The user completed **13 document hosted checks**, including bucket configuration, file validation, role restrictions, transfers/revocations, interrupted uploads and stale visibility saves. Those boxes stay checked. School B isolation is deferred because School B is not registered. Anonymous/public document access has a separate unchecked item because its result was bundled into the deferred item and has not been recorded separately.
 
-## Testing in progress
+The latest full local validation passed **lint, TypeScript, 482 tests in 53 files and production build** on 20 October; the user also confirmed a passing run. These results do not prove the remaining hosted cases. The document upload error message is restored to its original wording and should stay as it is.
 
-When you started the role-access check, you had only the Admin login. School register records do not create login accounts. We walked through creating separate fictional teacher, student, guardian and combined teacher/guardian accounts without email delivery, accepting prepared school invitations, and using **Link sign-in** to connect the records. Guardian access also needs an explicit learner grant. You have not yet confirmed completing that setup or the role checks. Keep the existing Admin account separate.
+## Known issues still open
 
-Resume with the account setup and role-access check below. Record each result as you finish; nothing in this list is marked passed just because homework works from the Admin account.
+- Attendance: a second stale Admin tab stayed on “Saving…” for minutes. Reload preserved the first save, but the expected conflict feedback was missing. Do not change SQLSTATE mapping or retry logic without tracing the stalled request.
+- Enrolment form: the select reset while the “Selected” hint retained an older choice. Displayed and submitted choices must agree.
+- Guardian navigation: Announcements and Documents sidebar links dropped the selected learner/context. Re-selecting the learner is a workaround, not a pass.
 
-Use fictional accounts and records only. Dates must cover the school-local day you test; the older 2027 fixtures will not automatically work as current records in 2026.
+Profile browser checks, actual current-year lesson rendering, remaining non-document lifecycle/security tests and independent-session concurrency still need their own results. Document passes do not close similar cases in homework or announcements.
 
-1. **Role access:** sign in as linked teacher, student and guardian accounts. A guardian must select an explicitly granted learner. Test a teacher/guardian account in both modes; classroom roster access must not become child access.
-2. **Timetable:** check the current school week, dated placements and assignment boundaries. Try an unrelated child ID and a suspended account. Confirm the admin planning screen and public static preview still behave correctly.
-3. **Attendance:** mark just two learners, save, reload and confirm the rest remain unmarked. Edit a mark and explicitly clear one. Test multiple roster pages. School Admin needs a reason for an older date; teachers can only edit today and read history covered by their current assignment.
-4. **Homework visibility:** save a draft as a teacher. Check that student/guardian accounts cannot see it, including by direct RPC or table requests. Publish it and verify access for the original recipients. Withdraw it and verify it disappears; republish and confirm its audience date is unchanged.
-5. **Homework transfers:** use an item published before a newcomer joined. The newcomer must not see it. An original recipient who later transfers out must retain access while the item is published. Test revoked guardian access too.
-6. **Lost teacher responsibility:** end the relevant test assignment and confirm its former teacher cannot edit the homework. School Admin should still be able to withdraw it. Review existing timetable constraints before ending an assignment; do not delete lessons merely to force the test through.
-7. **Stale saves:** open the same attendance register or homework item in two tabs. Save one, then try the stale other tab. Confirm a conflict, reload and inspect the stored result. Independent hosted sessions are still needed for real concurrency evidence.
-8. **School isolation:** test denied reads and writes from School B, including direct database/API calls. Local tests are not proof that the hosted configuration is correct.
+## Existing fictional records
 
-Earlier Phase 1 account/security readiness and Phase 2 correction/search/lifecycle acceptance checks remain open. Keep invitation/recovery delivery, admin recovery/MFA policy, backups, deployment checks and school acceptance as separate live-use requirements.
+Reuse the existing accounts and people; do not create duplicate schools, learners, accounts or guardian grants. The user logs into role accounts themselves and does not share credentials.
 
-## What remains in Phase 3
+The authorized 2026 fixture is **Acceptance 12A**, Grade 12, class `11de7dc9-4a5e-477c-acec-370bcf311e48`. It was created using existing ST-003, ST-002 and DEMO-ST-002 learners and Mrs Leruo (TE-003), with placements/assignment from 1 October to 26 November 2026. Inspect the current state before testing: the user's document lifecycle checks may have changed placements, grants or assignments. Do not assume the older fixture snapshot is still exact.
 
-Apply 021, verify the private bucket and document flows, and finish the outstanding announcement, timetable, attendance, homework and role checks. All planned Phase 3 modules now have local implementations, but Phase 3 acceptance is still open. Use ANNOUNCEMENTS.md and DOCUMENTS.md alongside the checklist above. No work on marks, report cards, fees, SaaS administration, external notifications or AI has been brought forward.
+Keep the 2027 planning records intact. The approved 9 October repair corrected the original year's dates to 18 January–26 November 2027, retained its ID/history, corrected ST-002's end date and reversed ST-003's accidental withdrawal. The existing 2026 year spans 18 January–26 November 2026. The applied repair is archived; never rerun it as setup.
 
-The mistaken 2030 year end was corrected with explicit approval on 9 October, as recorded above. Do not reapply that repair or silently change the remaining fictional records. The server belongs to your testing session; do not stop or restart it unnecessarily. Never print `.env.local`.
+Basic separate-session teacher, student and guardian checks passed on 19 October for permitted attendance/homework reads and several route denials. Admin notice draft/publish/withdraw/republish passed. These results are preserved in the [verification history](../archive/2026-10/docs/VERIFICATION_THROUGH_20261020.md).
 
-## Useful references
+## Resume safely
 
-- [File guide](FILE_GUIDE.md)
-- [Test guide](../tests/README.md)
+1. Read the current checklist and the user's latest results.
+2. Inspect the working tree before editing; preserve the user's UI changes and `.env.local`.
+3. Reuse current fictional records and normal authenticated permissions. Do not weaken date rules or RLS.
+4. Resolve recorded defects and retest their cases. Agree a separate School B test fixture before provisioning anything.
+5. Complete the daily dashboard after testing, then agree Phase 3 acceptance together.
+
+Email/invitation/recovery delivery remains disabled or unverified. Live recovery, backup/restore, monitoring, deployment and real-school approval remain separate gates. Do not deploy, start Phase 4 or treat this checkpoint as live readiness. The user's dev server belongs to their testing session; leave it running unless asked otherwise.
+
+## References
+
+- [Current checklist](DOCUMENTS.md#remaining-phase-3-checklist)
+- [Current verification summary](VERIFICATION.md)
+- [Roadmap](ROADMAP.md)
 - [Architecture](ARCHITECTURE.md)
-- [Agreed product context](PROJECT_CONTEXT.md)
-- [Roadmap and remaining gates](ROADMAP.md)
-- [Verification history](VERIFICATION.md)
-- [Original synthetic dataset](SYNTHETIC_DATA.md)
-
-Older dated reports and archived repair scripts are history, not instructions to reapply migrations or patches.
+- [File guide](FILE_GUIDE.md)
+- [Archive index](../archive/README.md)
+- [Full resume notes before this refresh](../archive/2026-10/docs/RESUME_BEFORE_20261020_REFRESH.md)

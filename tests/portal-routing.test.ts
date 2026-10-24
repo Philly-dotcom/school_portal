@@ -5,6 +5,10 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth-context", () => ({ getSchoolContext: mock.context }));
 vi.mock("@/lib/portal-data", () => ({ loadPortalActor: mock.actor }));
 vi.mock("@/app/login/actions", () => ({ signOut: vi.fn() }));
+vi.mock("@/components/staff-profile", () => ({
+  AdminProfile: () => "Admin profile",
+  TeacherProfile: () => "Teacher profile",
+}));
 vi.mock("@/components/settings-form", () => ({
   SettingsForm: () => "Settings",
 }));

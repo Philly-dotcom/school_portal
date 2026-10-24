@@ -67,7 +67,7 @@ export async function DocumentPanel({ params }: { params: DocumentParams }) {
       child?.success ? child.data : undefined,
     );
     if (actor.status !== "ready")
-      return <RoleOverview actor={actor} availableModes={modes} />;
+      return <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} />;
     if (actor.mode === "guardian") {
       childId = actor.selectedChild?.id;
       selector = (

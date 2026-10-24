@@ -20,7 +20,11 @@ export type AnnouncementParams = {
   announcementPage?: string | string[];
   announcementEdit?: string | string[];
 };
-export async function AnnouncementPanel({ params }: { params: AnnouncementParams }) {
+export async function AnnouncementPanel({
+  params,
+}: {
+  params: AnnouncementParams;
+}) {
   const context = await getSchoolContext();
   if (context.status !== "ready")
     return <p role="alert">Announcement access could not be verified.</p>;
@@ -30,7 +34,8 @@ export async function AnnouncementPanel({ params }: { params: AnnouncementParams
     (context.roles.includes("school_admin") ? "school_admin" : modes[0]);
   const unavailable = (
     <p role="alert">
-      This announcement view is unavailable. Check your role and selected learner.
+      This announcement view is unavailable. Check your role and selected
+      learner.
     </p>
   );
   if (
@@ -67,7 +72,13 @@ export async function AnnouncementPanel({ params }: { params: AnnouncementParams
       child?.success ? child.data : undefined,
     );
     if (actor.status !== "ready")
-      return <RoleOverview actor={actor} availableModes={modes} />;
+      return (
+        <RoleOverview
+          actor={actor}
+          availableModes={modes}
+          schoolName={context.school.name}
+        />
+      );
     if (actor.mode === "guardian") {
       childId = actor.selectedChild?.id;
       selector = (
@@ -126,7 +137,8 @@ export async function AnnouncementPanel({ params }: { params: AnnouncementParams
         </Link>
       ) : (
         <p className="muted">
-          Published school notices and notices for your current class. Class access changes when your enrollment changes.
+          Published school notices and notices for your current class. Class
+          access changes when your enrollment changes.
         </p>
       )}
       {!result.rows.length && <p>No announcement was found on this page.</p>}
@@ -137,9 +149,7 @@ export async function AnnouncementPanel({ params }: { params: AnnouncementParams
           style={{ marginTop: 20 }}
         >
           <h3>{item.title}</h3>
-          <p className="muted">
-            {item.audience_label}
-          </p>
+          <p className="muted">{item.audience_label}</p>
           {staff && <p>Status: {item.status}</p>}
           <p className="whitespace-pre-wrap">{item.body}</p>
           {item.can_edit && staff && (
@@ -156,7 +166,10 @@ export async function AnnouncementPanel({ params }: { params: AnnouncementParams
       >
         {result.page > 1 && (
           <Link
-            href={announcementHref(mode, { child: childId, page: result.page - 1 })}
+            href={announcementHref(mode, {
+              child: childId,
+              page: result.page - 1,
+            })}
           >
             Previous
           </Link>
@@ -164,7 +177,10 @@ export async function AnnouncementPanel({ params }: { params: AnnouncementParams
         <span>Page {result.page}</span>
         {result.hasNext && result.page < maxListPage && (
           <Link
-            href={announcementHref(mode, { child: childId, page: result.page + 1 })}
+            href={announcementHref(mode, {
+              child: childId,
+              page: result.page + 1,
+            })}
           >
             Next
           </Link>

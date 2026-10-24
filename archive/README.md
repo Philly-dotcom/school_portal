@@ -1,6 +1,6 @@
 # Archived project material
 
-These files are kept for reference, not for routine setup. Moved here on 4 October 2026 without changing their contents. No migration belongs in this archive.
+These files are kept for reference, not routine setup. The first archive pass was on 4 October; superseded documentation was added on 20 October 2026. No migration belongs in this archive. Current status lives in [RESUME.md](../docs/RESUME.md) and the [Phase 3 checklist](../docs/DOCUMENTS.md#remaining-phase-3-checklist).
 
 | File | Why it is here | Remaining use |
 | --- | --- | --- |
@@ -10,3 +10,20 @@ These files are kept for reference, not for routine setup. Moved here on 4 Octob
 The grade-duplicate check remains in `supabase/checks` because it is a reusable read-only diagnostic. The production browser-test helper remains in `scripts` because Playwright and CI use it. Every migration remains in `supabase/migrations` at its original path.
 
 To examine old material, open it here. Only copy an operator script back into active use after reviewing its assumptions against the current database; its age or successful regression test does not authorize a hosted run.
+
+## Documentation archived on 20 October 2026
+
+| File | Why it is retained |
+| --- | --- |
+| [Old resume log](2026-10/docs/RESUME_BEFORE_20261020_REFRESH.md) | Full mixed progress/history notes before the current handover was shortened. |
+| [Verification history](2026-10/docs/VERIFICATION_THROUGH_20261020.md) | Earlier detailed test results, limits and screenshot links. Historical pending statements are not current status. |
+| [Temporary Phase 3 implementation guide](2026-10/docs/TEMP_PHASE_3_IMPLEMENTATION_GUIDE.md) | Original step-by-step planning guide, superseded by implementation and the current checklist. |
+| [October 4 cleanup](2026-10/docs/CLEANUP.md) | Records the earlier environment/file cleanup and its validation. |
+| [Repair plan](2026-10/docs/REPAIR_PLAN.md) | Earlier repair scope, not current work instructions. |
+| [Repair report](2026-10/docs/REPAIR_REPORT.md) | What those repairs changed and how they were tested. |
+| [Grade 10 repair notes](2026-10/docs/GRADE10_REPAIR.md) | Record-specific repair history; do not rerun its SQL as setup. |
+| [Fictional-data snapshot](2026-10/docs/SYNTHETIC_DATA.md) | Earlier entered records and test evidence, not a live database inventory. |
+
+These documents were retained rather than deleted. Relative links were adjusted for their archive locations. All 21 migration paths and hashes were preserved. Active architecture, security, feature guides, Phase 2 explanation and test instructions remain in docs/ and tests/.
+
+Other retained history: [applied academic-date repair](2026-10/20261009_academic_dates_repair.sql), [teaching assignment history](2026-10/Teaching_Assignment_History.md) and [earlier Phase 3 checkpoints](2026-10/SCHOOL_PORTAL_PHASE_3_WORKING_CHECKPOINTS.md). None is an instruction to reapply a hosted change.

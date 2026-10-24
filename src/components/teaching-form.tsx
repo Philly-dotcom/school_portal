@@ -36,7 +36,7 @@ export function TeachingForm() {
         value={selected?.academicYearId ?? ""}
       />
       <label>
-        Assignment start date
+        Teacher start date
         <input
           type="date"
           name="starts_on"
@@ -47,7 +47,7 @@ export function TeachingForm() {
         />
       </label>
       <label>
-        Assignment end date
+        Teacher end date
         <input
           type="date"
           name="ends_on"

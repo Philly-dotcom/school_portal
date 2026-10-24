@@ -17,6 +17,7 @@ import { TimetablePanel } from "@/components/timetable-panel";
 import { availablePortalModes, portalModeSchema, selectedChildSchema } from "@/lib/portal-validation";
 import { loadPortalActor } from "@/lib/portal-data";
 import { RoleOverview } from "@/components/role-overview";
+import { AdminProfile } from "@/components/staff-profile";
 import { MyTimetablePanel } from "@/components/my-timetable-panel";
 import { AttendancePanel, type AttendanceParams } from "@/components/attendance-panel";
 import { HomeworkPanel, type HomeworkParams } from "@/components/homework-panel";
@@ -107,7 +108,7 @@ export default async function Dashboard({
           description="Access follows your school role and linked school records." />
         {params.view === "my-timetable" && actor.status === "ready"
           ? <MyTimetablePanel actor={actor} page={params.myTimetablePage} />
-          : <RoleOverview actor={actor} availableModes={modes} />}
+          : <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} />}
       </PortalShell>
     );
   }
@@ -280,6 +281,7 @@ export default async function Dashboard({
         </section>
       ) : (
         <>
+          {admin && <AdminProfile />}
           <section className="content-panel">
             <h2>Your secure foundation is connected.</h2>
             <p className="muted" style={{ marginTop: 12 }}>

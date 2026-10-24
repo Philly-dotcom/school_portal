@@ -4,15 +4,13 @@ School Portal is a portal for one school, built so we can add more schools later
 
 This project lives at `C:\Users\moses\Documents\School_portal`. Its database, accounts and decisions belong to this project only.
 
-## Where we are — 8 October 2026
+## Where we are — 20 October 2026
 
-We are developing **Phase 3: Daily Operations**. Role workspaces, personal timetables, attendance, view-only homework, announcements and private PDF documents are implemented locally. Your browser checks are about halfway through and working so far; the remaining checks and live account readiness are still open.
+We are in **Phase 3: Daily Operations**. Role workspaces, personal timetables, attendance, view-only homework, announcements and private PDF documents are implemented. All four roles now have read-only overview profiles. The daily dashboard still needs completion and redesign after testing.
 
-You confirmed that **migration 020 is applied**, following 019 and working homework. Migrations through 020 are now applied in the dedicated Supabase project; do not rerun them. You are working through the remaining tests. Role access, transfers, revoked access and simultaneous saves still need their individual results recorded. See the [verification log](docs/VERIFICATION.md).
+Migrations through **021 are user-confirmed applied**. Do not rerun them. The user completed 13 hosted document checks; School B isolation is deferred because School B is not registered. The remaining tests and known defects are in the [combined Phase 3 checklist](docs/DOCUMENTS.md#remaining-phase-3-checklist).
 
-Phase 2 lists use 50-record pages and searchable choices. Phase 3 follows the same bounded approach. Attendance and homework use user-scoped server actions and database functions; no new packages, environment settings or elevated app credentials were added. See [the current checkpoint](docs/RESUME.md) for the latest test result.
-
-**Migration 021 adds the private Documents library and is pending application.** Admin uploads school-wide or class PDFs; teachers upload to classes they currently teach. Files start as drafts, with a 2 MiB limit and authenticated downloads. See [documents](docs/DOCUMENTS.md) for setup and checks, and [announcements](docs/ANNOUNCEMENTS.md) for the noticeboard workflow.
+The latest local checks passed **lint, TypeScript, 482 tests in 53 files and production build**. Hosted checks remain separate. Start with [the current checkpoint](docs/RESUME.md) or [verification status](docs/VERIFICATION.md).
 
 | Area | What is available | What still needs attention |
 | --- | --- | --- |
@@ -26,7 +24,7 @@ Phase 2 lists use 50-record pages and searchable choices. Phase 3 follows the sa
 | Attendance | Daily registers, teacher history, admin corrections with a reason, learner/guardian history | Hosted stale saves, transfers and permission checks; 018 applied by you |
 | Homework | Draft, publish, edit and withdraw; original-publication audience; no learner submissions; 019 applied and homework working, as confirmed by you | Finish publication, role access, transfer and revoked-access checks |
 | Announcements | School-wide and class notices, drafts, publication and withdrawal; 020 applied | Finish announcement browser/security checks |
-| Documents | Private PDF drafts, publication, withdrawal and authenticated downloads; current-class readers | Apply 021, check the bucket and verify real uploads/downloads and permissions |
+| Documents | Private PDF drafts, publication, withdrawal and authenticated downloads; current-class readers | Hosted School B isolation and separately recorded anonymous/public checks remain |
 
 Teacher, student and guardian workspaces now use linked school records. Adding a student record does not create a login, and recording a family relationship does not automatically give a guardian access.
 
@@ -89,4 +87,4 @@ Browser page or form
 
 We are not building SaaS billing, self-service school registration, custom domains or a platform-owner dashboard yet. The database already carries school ownership so those decisions can be made later.
 
-Email stays off until we have a registered sending domain and have tested delivery. PDF Storage integration is built locally but needs migration 021 and hosted verification. Notification channels and automations remain later work. See [the agreed product decisions](docs/PROJECT_CONTEXT.md) before adding scope.
+Email stays off until we have a registered sending domain and have tested delivery. PDF Storage is configured and the user has completed the recorded document tests; hosted cross-school isolation remains open. Notification channels and automations remain later work. See [the agreed product decisions](docs/PROJECT_CONTEXT.md) before adding scope.

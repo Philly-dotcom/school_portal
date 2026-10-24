@@ -1,6 +1,6 @@
 # How School Portal fits together
 
-Updated 8 October 2026. This describes the local implementation. Hosted acceptance remains separate. The stack and one-school-first plan have not changed.
+Updated 20 October 2026. This describes the local implementation. Hosted acceptance remains separate. The stack and one-school-first plan have not changed.
 
 ## A request from start to finish
 
@@ -58,7 +58,7 @@ See [LOGIN_LINKS.md](LOGIN_LINKS.md) for the exact read boundaries and [FILE_GUI
 
 School-owned relationships use school-matching foreign keys as well as RLS. Profiles are deliberately global: one login might eventually join more than one school. This does not mean school records should be global.
 
-SQL migrations are the database change history. Migrations 001–021 exist and application through 020 is user-confirmed. Migration 021 adds documents and private Storage policies and is pending application. The user reports homework working and browser checks about halfway complete; remaining scenarios are still open. Do not edit or rerun an applied migration to fix a new issue; add a follow-up migration.
+SQL migrations are the database change history. All 21 migration files remain at their original paths, and application through 021 is user-confirmed. The user has completed 13 hosted document checks; cross-school isolation and remaining module acceptance stay open. Do not edit or rerun an applied migration to fix a new issue; add a follow-up migration.
 
 Academic setup reads 50 records per list, plus one lookahead to decide whether to offer the next page. Each list uses its own validated URL parameter, with name and ID ordering. Visible class/term labels use school-scoped ID lookups. Year and grade form choices are searched on demand instead of preloading a capped list. These reads use the existing user-context Supabase client and RLS; pagination changes no permissions. Offset pages reflect current data, so a concurrent rename or creation may move a row between pages.
 
@@ -82,7 +82,7 @@ Invitation preparation is built. The separate Supabase Edge Function for sending
 
 Delivery remains disabled and unverified. Saved SMTP settings are not enough while the sending domain is unregistered. Password recovery also needs a working delivery path before live use.
 
-Private PDF uploads, document metadata and authenticated downloads are now implemented; hosted Storage verification is pending. Notifications, n8n and AI remain future work. Results will need review and School Admin publication states in Phase 4. School selection, SaaS billing and platform administration remain later decisions.
+Private PDF uploads, document metadata and authenticated downloads are implemented. The recorded document hosted checks passed according to the user; hosted cross-school Storage isolation remains open. Notifications, n8n and AI remain future work. Results will need review and School Admin publication states in Phase 4. School selection, SaaS billing and platform administration remain later decisions.
 
 ## What the tests establish
 
@@ -105,3 +105,7 @@ These modules use the existing user-context Supabase client. Narrow `SECURITY DE
 Migration 020 adds announcements. Admin manages school-wide and class notices; teachers manage notices only for classes they currently teach. Published class notices follow current dated enrollment, unlike homework's original-publication audience. Guardians need a current explicit learner grant. School/class scope is immutable after creation, and saves use the same school lock, version check and atomic audit approach. See ANNOUNCEMENTS.md for the workflow and remaining hosted checks.
 
 Migration 021 adds document metadata and the private `school-documents` bucket. It reuses those same current-class permission helpers. The server action reserves metadata, uploads an immutable generated path using the user's credentials, then finalizes a draft. Unfinished entries stay staff-only and can be reviewed or withdrawn. The authenticated download route applies selected-role checks, verifies stored size/hash, and returns an attachment with no-store headers. Storage RLS independently controls the bytes. Restrictive bucket guards prevent unrelated permissive policies from granting overwrite or deletion. Basic PDF checks are not malware scanning; retention and physical cleanup remain live-readiness work. See DOCUMENTS.md for details.
+
+## Overview profiles
+
+Student and teacher profile loaders resolve the signed-in linked person on the server, then read only that person's school-scoped enrolments or subject assignments through existing RLS. Date labels use the school timezone. Guardian profile details reuse the explicitly granted child list; classroom roster access does not become guardian access. Admin details come from their own saved profile, active membership ID and authenticated email. These displays do not change authorization or add schema. The broader daily dashboard remains unfinished.
