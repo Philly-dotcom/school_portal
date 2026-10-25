@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReadySchoolContext } from "@/lib/auth-context";
 import { ChildSelector } from "@/components/child-selector";
 import { loadMyTimetable } from "@/lib/my-timetable-data";
 import { portalHref, type PortalActor } from "@/lib/portal-validation";
@@ -8,13 +9,15 @@ import { maxListPage } from "@/lib/list-pagination";
 export async function MyTimetablePanel({
   actor,
   page,
+  context,
 }: {
   actor: Extract<PortalActor, { status: "ready" }>;
   page?: string | string[];
+  context?: ReadySchoolContext;
 }) {
   const childId = actor.mode === "guardian" ? actor.selectedChild?.id : null;
   const needsChild = actor.mode === "guardian" && !childId;
-  const result = needsChild ? null : await loadMyTimetable(actor, page);
+  const result = needsChild ? null : await loadMyTimetable(actor, page, context);
   return (
     <section className="content-panel">
       <h2>This week’s lessons</h2>

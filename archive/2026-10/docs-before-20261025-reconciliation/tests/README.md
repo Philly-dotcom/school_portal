@@ -1,0 +1,184 @@
+> Historical snapshot taken before the 25 October 2026 documentation reconciliation. Pending work and test totals below describe an earlier revision. Use the current project documentation for status.
+
+# Tests: what they check and how to run them
+
+**Pending validation:** the 25 October shared profile/workspace-selection changes have not been tested or built, at the user's request. The 509-test pass below belongs to the preceding revision.
+
+Updated 24 October 2026. The latest full local check passed lint, TypeScript, **509 tests in 56 files**, and production build. Migrations through 021 are user-confirmed applied. The user has completed 13 hosted document checks; School B isolation remains deferred. Local tests do not replace remaining hosted acceptance. See [verification status](../../../../docs/VERIFICATION.md) and the [current checklist](../../../../docs/DOCUMENTS.md#remaining-phase-3-checklist).
+
+## Start here
+
+The attendance and timetable message fixes also have two focused suites:
+
+- [attendance-data.test.ts](../../../../tests/attendance-data.test.ts) checks that a rejected date keeps its class selection, future-year and out-of-range explanations stay separate from loading errors, and diagnostic reads do not expose another school's class or borrow Admin access in teacher mode.
+- [my-timetable-data.test.ts](../../../../tests/my-timetable-data.test.ts) checks the difference between a future placement, a current placement with no lessons, and a failed query. Guardian reads must use the selected learner; teacher reads must use the teacher's own assignments.
+
+These use mocked Supabase responses. They test application behaviour, not a live role session or deployed RLS policy.
+
+From `C:\Users\moses\Documents\School_portal`:
+
+```powershell
+npm run check
+```
+
+This runs four things in order. **Lint** checks code conventions and common mistakes. **TypeScript** checks that values and function calls fit the declared types. **Vitest** runs the unit and local database tests below. **Build** checks that Next.js can produce the application. A failure stops the sequence, so a failed lint run has not also tested the database.
+
+For a quicker test-only run:
+
+```powershell
+npm test
+```
+
+For the recent migration fix alone:
+
+```powershell
+npx vitest run tests/final-upgrade-database.test.ts tests/membership-links-database.test.ts
+```
+
+You do not need the portal server running for those commands. They do not apply SQL to hosted Supabase or send email. `npm run check` also reads local configuration during the build; do not share environment values with test output.
+
+## Three different kinds of evidence
+
+| Kind | What it tells us | What it does not tell us |
+| --- | --- | --- |
+| Unit and action tests | Validation, authorization decisions and error handling behave as expected. Mocked calls let us simulate failures. | That the real network, Auth service or database returned those responses. |
+| Database tests | Real migration SQL, constraints, grants and RLS work in PGlite, a local PostgreSQL engine. Fictional schools and simulated Auth users are created there. | That hosted Supabase configuration, tokens, concurrent sessions or email work. |
+| Browser tests | The disconnected app's preview, layout and guarded routes work in an actual browser. | That your signed-in hosted school workflows work. |
+
+Hosted verification is a separate exercise through the running app and dedicated test project. We still need role-specific sessions and denied reads **and writes** across two fictional schools. A green local suite is useful evidence, not completion of those checks.
+
+## Each test file
+
+Recent Phase 3 additions are listed here; the existing suites follow below. The homework block adds 58 tests across four files. These are local SQL, action and rendering checks, not browser interaction or hosted concurrency evidence.
+
+| File | What it checks |
+| --- | --- |
+| [portal-context.test.ts](../../../../tests/portal-context.test.ts) | Linked-person resolution, child tampering, multi-role child boundaries and timetable loader failures. |
+| [portal-routing.test.ts](../../../../tests/portal-routing.test.ts) | Role workspace selection, forged mode requests, admin boundaries and preview separation. |
+| [my-timetable-database.test.ts](../../../../tests/my-timetable-database.test.ts) | School/role/child/date boundaries in the narrow timetable projection, revoked access and denied writes. |
+| [attendance-database.test.ts](../../../../tests/attendance-database.test.ts) | Marks and unmarked rows, dated rosters, school/role denial, stale versions, atomic rollback, transfer guards and pagination. |
+| [attendance-actions.test.ts](../../../../tests/attendance-actions.test.ts) | Trusted school and staff mode, input bounds, class search and safe failures. |
+| [attendance-form.test.ts](../../../../tests/attendance-form.test.ts) | Initially empty change payload, read-only teacher history and required older-date reasons. |
+| [attendance-validation.test.ts](../../../../tests/attendance-validation.test.ts) | Batch/date/status limits and school-local timezone behavior. |
+| [homework-database.test.ts](../../../../tests/homework-database.test.ts) | Draft/publication/withdrawal, fixed original audience, transfers, lost assignment rights, two-school isolation, stale versions, rollback and pagination. |
+| [homework-actions.test.ts](../../../../tests/homework-actions.test.ts) | Trusted school, forged input rejection, bounded assignment search, conflict handling and safe read errors. |
+| [homework-validation.test.ts](../../../../tests/homework-validation.test.ts) | New versus existing versions, field limits, unsupported states and guardian page links. |
+| [homework-panel.test.ts](../../../../tests/homework-panel.test.ts) | Escaped text, no learner editor/submission controls, child selection and fixed-assignment staff editor. |
+| [announcements-database.test.ts](../../../../tests/announcements-database.test.ts) | School/class publishing, current enrollment after transfers, guardian grants, ended assignments, isolation, denied writes, stale edits, audit rollback and paging. |
+| [announcements-actions.test.ts](../../../../tests/announcements-actions.test.ts) | Verified school/roles, explicit audience scope, rejected malformed input, search bounds, conflicts, safe failures and read results. |
+| [announcements-panel.test.ts](../../../../tests/announcements-panel.test.ts) | Escaped messages, no learner editing, guardian selection and fixed audience/version controls. |
+| [documents-database.test.ts](../../../../tests/documents-database.test.ts) | Private bucket configuration, metadata and Storage RLS, transfers, grants, school isolation, denied overwrite/deletion, failed finalization and audit rollback. |
+| [documents-actions.test.ts](../../../../tests/documents-actions.test.ts) | PDF format/size checks, immutable upload paths, partial failures, content hashes and authenticated download headers/access. |
+| [documents-panel.test.ts](../../../../tests/documents-panel.test.ts) | Escaped titles, reader restrictions, guardian selection and visibility controls. |
+
+Full-migration suites now call `tests/helpers/storage-stub.ts` before loading migrations. PGlite does not ship Supabase's Storage schema, so this test-only helper creates the minimal metadata tables needed to execute the real policies. It does not simulate the Storage HTTP service, bucket enforcement on actual file bytes, signed URLs or physical deletion. Those remain hosted checks in DOCUMENTS.md. Older migration files were not changed.
+
+All files below are in this folder. A test with an expected permission error is passing when the unauthorized operation is refused.
+
+| File | What it checks |
+| --- | --- |
+| [permissions.test.ts](../../../../tests/permissions.test.ts) | Checks role parsing and the active admin-context helper used by server actions. Identity, membership and school isolation are checked by the database/action suites. |
+| [database.test.ts](../../../../tests/database.test.ts) | Runs the foundation SQL against two fictional schools. Checks RLS, school settings permissions, ownership references and audit behavior. |
+| [academic-actions.test.ts](../../../../tests/academic-actions.test.ts) | Checks admin authorization, validated academic input and safe error handling with mocked database calls. |
+| [academic-pagination.test.ts](../../../../tests/academic-pagination.test.ts) | Checks academic records beyond 500, school-scoped queries, page navigation, off-page labels, availability of search-enabled forms, malformed URLs and query failures. Uses synthetic mocked results, not hosted data. |
+| [register-pagination.test.ts](../../../../tests/register-pagination.test.ts) | Checks people and histories beyond 500, independent form choices, current inactive links loaded by ID, related labels, capacity boundaries, page links and safe query/RPC failures. Synthetic mocked reads; no hosted records are inserted. |
+| [register-search-forms.test.ts](../../../../tests/register-search-forms.test.ts) | Checks that guardian/enrollment forms use the right searches, transfers pass the original year and excluded class, and closed history stays read-only. Initial markup and props only; interactive browser checks are separate. |
+| [planning-pagination.test.ts](../../../../tests/planning-pagination.test.ts) | Checks teaching/timetable records beyond 500, server filtering before paging, retained filter links, partial-schedule wording, off-limit labels, history/removal controls, selection limits, school filters and safe failures. Renders the real timetable UI with mocked reads/actions; hosted behavior is not implied. |
+| [record-search.test.ts](../../../../tests/record-search.test.ts) | Checks admin-only searches, verified school ownership, bounded pages beyond 500, invalid requests, class/date details, excluded replacement teachers and safe failures. Also checks literal wildcard escaping in local PostgreSQL and the selector's initial required-field markup. Interactive selection/search behavior remains a browser check. |
+| [academic-database.test.ts](../../../../tests/academic-database.test.ts) | Runs academic-structure SQL: school isolation, academic relationships, date constraints, duplicate protection and grade normalization. |
+| [register-actions.test.ts](../../../../tests/register-actions.test.ts) | Checks person/relationship/enrollment creation handlers reject non-admin calls, forged ownership and malformed inputs. |
+| [register-database.test.ts](../../../../tests/register-database.test.ts) | The larger academic workflow suite: registers, teaching assignments, corrections, timetable clashes/removal and enrollment lifecycle, with SQL permission and ownership checks. |
+| [teaching-actions.test.ts](../../../../tests/teaching-actions.test.ts) | Checks assignment creation and end/replacement authorization, verified school ownership, validation/confirmation and safe conflict messages. |
+| [teaching-lifecycle-database.test.ts](../../../../tests/teaching-lifecycle-database.test.ts) | Upgrades existing assignments through 014, then checks ending/replacement, roster access dates, preserved history, overlap/timetable rejection, school/role boundaries, stale changes and rollback on audit failure. |
+| [timetable-actions.test.ts](../../../../tests/timetable-actions.test.ts) | Checks lesson creation/removal, time conversion, invalid ranges, confirmation and scheduling-error messages. |
+| [correction-actions.test.ts](../../../../tests/correction-actions.test.ts) | Checks name/reference correction authorization, grade normalization, version forwarding and stale/duplicate error handling. |
+| [enrollment-actions.test.ts](../../../../tests/enrollment-actions.test.ts) | Checks transfer/withdrawal authorization, dates, destination rules, confirmation and stale-form handling. |
+| [grade-name.test.ts](../../../../tests/grade-name.test.ts) | Checks standard grade spacing/casing normalization while leaving custom grades and unrelated names alone. |
+| [grade-repair.test.ts](../../../../tests/grade-repair.test.ts) | Rehearses the archived one-off Grade 10 repair in a local database: rollback, refusal when dependencies make cleanup unsafe and preservation of valid references. |
+| [account-validation.test.ts](../../../../tests/account-validation.test.ts) | Checks permitted roles, matching passwords, safe site origins and accepted invitation/recovery link types. |
+| [access-actions.test.ts](../../../../tests/access-actions.test.ts) | Checks admin member/invitation actions, school ownership, version checks and delivery gating. Calls are mocked; no emails are sent. |
+| [account-actions.test.ts](../../../../tests/account-actions.test.ts) | Checks recovery, confirmation, password changes, session-revocation failures/retries and invitation acceptance with mocked Auth/database calls. |
+| [account-database.test.ts](../../../../tests/account-database.test.ts) | Runs member/invitation SQL: last-admin protection, school boundaries, suspension, expiry, verified-recipient acceptance and controlled delivery claims. |
+| [bulk-invitation.test.ts](../../../../tests/bulk-invitation.test.ts) | Checks CSV parsing and rejection of invalid or oversized bulk invitation input before database calls. |
+| [invitation-handler.test.ts](../../../../tests/invitation-handler.test.ts) | Tests the isolated email handler with a mocked provider: authorization, claim/delivery failures and outcome handling without sending messages. |
+| [invitation-pagination.test.ts](../../../../tests/invitation-pagination.test.ts) | Checks invitations remain reachable past the old first-100 limit, safe page input and distinguishing accounts with identical names. |
+| [new-actions.test.ts](../../../../tests/new-actions.test.ts) | Despite the broad filename, covers a specific group: bulk invitations, delivery reset, register-login linking and guardian grants. The shared admin helper is tested in permissions.test.ts. |
+| [membership-links-database.test.ts](../../../../tests/membership-links-database.test.ts) | Runs SQL for linked/unlinked roles, explicit guardian access, school isolation, suspension, stale edits and date-sensitive teacher/student/guardian reads. Also checks verified versus unverified account emails. |
+| [hardening-database.test.ts](../../../../tests/hardening-database.test.ts) | Checks security properties across the final schema, audit immutability, correction history, bulk/retry limits and privacy cleanup constraints. |
+| [final-upgrade-database.test.ts](../../../../tests/final-upgrade-database.test.ts) | Seeds records at migration 009, applies the later migrations and checks preservation. Reproduces the email-type failure at 012, verifies 013 fixes it and tests multi-role school-scoped privacy cleanup. |
+| [csp.test.ts](../../../../tests/csp.test.ts) | Checks the generated Content Security Policy and nonce format, including differences between development and production. |
+
+The database files deliberately overlap in places. Some cover a feature when it was introduced; others check the complete migration chain or an upgrade with existing records. That is why a final-schema regression can be caught separately from an earlier feature test.
+
+## Browser tests
+
+[e2e/foundation.spec.ts](../../../../e2e/foundation.spec.ts) covers preview navigation, disconnected login/protected routes, gated recovery, malformed confirmation links and layouts at 1440, 390 and 320 pixels. A production-only test also checks that allowed scripts receive fresh nonces and an untrusted inline script is blocked.
+
+```powershell
+npm run test:e2e
+```
+
+[playwright.config.ts](../../../../playwright.config.ts) starts an isolated app on **port 3001**, with Supabase configuration cleared and email flags off. It uses one browser worker and Microsoft Edge on Windows. Leave port 3001 free; it will not reuse an existing server. Your normal app uses port 3000.
+
+The default browser run skips the production-only CSP test. To include it:
+
+```powershell
+$env:SCHOOL_PORTAL_E2E_PRODUCTION = 'true'
+try {
+    npm run test:e2e
+} finally {
+    Remove-Item Env:SCHOOL_PORTAL_E2E_PRODUCTION
+}
+```
+
+The [production helper](../../../../scripts/production-e2e-server.mjs) builds and starts the test app. Prefer running build/browser checks separately from interactive testing so you are not competing for laptop memory or changing build output while reviewing a page. Windows browser-test shutdown has previously needed attention; see the dated repair report if all tests finish but the command does not exit. Do not kill unrelated Node processes.
+
+## Reading a failure
+
+The file and test title usually identify the behavior that failed. `expected` describes the intended outcome; `received` is what happened. Database errors may have codes such as `42501` (permission denied), `40001` (a stale/conflicting operation here) or `42804` (a type mismatch). Those can be intentional in a test that expects rejection.
+
+For example, the migration 013 regression first expects the old function to fail with `42804`, then checks that the corrected function succeeds while still refusing the wrong school or role. The earlier fixture defined Auth email as `text`; the real column is `varchar(255)`. Correcting that fixture made the test reflect the defect we found.
+
+If a check fails, keep the test name and nearby error output. Remove credentials or account details before sharing logs. Do not weaken an assertion simply to get a green result.
+
+## Supporting files
+
+- [vitest.config.mts](../../../../vitest.config.mts) selects `tests/**/*.test.ts` and runs one worker.
+- [package.json](../../../../package.json) defines the npm commands.
+- [GitHub workflow](../../../../.github/workflows/check.yml) runs checks and production browser tests in CI; its existence is not evidence of a successful remote run.
+- [Verification log](../../../../docs/VERIFICATION.md) records completed runs and hosted checks separately.
+
+Attendance and document Storage-policy tests now exist, as listed above. Marks and finance remain future work. No coverage percentage is claimed here.
+
+
+## Account search tests
+
+[member-search.test.ts](../../../../tests/member-search.test.ts) checks server-derived school context, role checks, invalid/forged input, bounded results, private failures and the hidden current-link payload. `membership-links-database.test.ts` also runs migration 015 and verifies denied anonymous/non-admin/foreign-school searches, malformed requests, ownership filtering before pagination across 532 synthetic accounts, literal search text, verified-email-only search, suspended accounts and missing roles. Existing write-isolation tests continue to cover link mutations.
+
+These are local checks. No hosted migration was applied and browser checks remain on hold.
+
+## Timetable search tests
+
+`record-search.test.ts` checks the assignment RPC parameters, admin context, bounded results, date bounds, invalid filters and safe errors. `register-database.test.ts` runs migration 016 and searches more than 500 fictional assignments, covering teacher references, subject/class/grade/year matching, literal search text and denied school/role/anonymous access. These tests run before the suite deliberately suspends its admin.
+
+[timetable-search-forms.test.ts](../../../../tests/timetable-search-forms.test.ts) checks that filter and creation searches remain available without preloaded choices, preserve the active filter ID with empty lesson results and reset pagination when applying a filter. Interactive selection/date changes remain deferred browser checks. Existing timetable SQL save/clash/removal tests remain in the suite.
+
+## Student profile coverage — 20 October 2026
+
+`student-profile.test.ts` checks that the overview reads the server-resolved student's records in their school, stops for unlinked accounts or mismatched schools, and distinguishes failed reads from no enrolments. It also checks school-local date boundaries, future and past placements, transfer labels and batched history reads. These are mocked data and rendering tests; the signed-in student browser check against Supabase is still required.
+
+`staff-profile.test.ts` covers teacher subject scoping and deduplication, missing roles or account links, failed subject reads, and the admin's own name, membership reference and authenticated email. It also checks that Guardian Overview displays the granted learners without selecting one automatically or showing the guardian reference. `portal-routing.test.ts` still tests which overview a role can open; its profile panels are mocked because their data and rendering are tested separately.
+
+
+## Request reuse and navigation - 24 October 2026
+
+`profile-request-count.test.ts` exercises the real school-context, actor and profile loaders with a mocked backend. It records six operations for the teacher/student overview, compared with the measured seventeen before reuse. The unchanged proxy is outside this count. It also checks that a later render sees a suspended membership and that reused context does not accept an unassigned role or malformed learner ID. This is not a hosted latency benchmark.
+
+`workspace-navigation.test.ts` renders the shared shell and checks every daily link and the home URL, role-switch URLs, deliberate learner clearing, the active-workspace label and generic loading content. It complements the signed-in browser check; static markup alone cannot prove a real role transition or RLS.
+
+The user has now marked P3-01 through P3-30 and DOC-ANON complete. School B setup and all hosted cross-school tests remain outstanding and belong to the user. New error-boundary recovery and narrow-screen regression checks are listed in DOCUMENTS.md.
+
+
+## Daily dashboard coverage - 24 October 2026
+
+`dashboard-overview.test.ts` tests the new overview adapters and rendered cards with mocked readers. It checks explicit Guardian selection, role/school scoping, published-only previews, correct PDF links, unavailable-versus-empty states, school-local lesson dates, upcoming homework ordering and pagination warnings. Admin counts use exact school-scoped head queries and never turn query failures into zero. These tests do not replace signed-in Admin/Student/Teacher/Guardian acceptance or hosted cross-school testing.

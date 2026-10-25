@@ -1,5 +1,7 @@
 # Dedicated Supabase setup
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 The user reported completing setup on 2026-09-30. Local configuration and Supabase connectivity were checked, and the user confirmed School Admin dashboard/settings access. A subsequent check confirmed public sign-ups are disabled; keep them disabled. The steps below remain the setup reference. Full hosted verification is still required; see VERIFICATION.md. Do not use any other project's resources.
 
 ## 1. Create the project

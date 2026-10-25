@@ -6,9 +6,9 @@ School Portal is completely isolated from the user's other projects. No architec
 
 ## Authorization and current stage
 
-The user authorized Phase 1, Phase 2 without email, and assistant-led Phase 3 development. As of 20 October, migrations through 021 are user-confirmed applied. Role accounts are established and basic separate-session checks have passed. The user completed 13 hosted document checks; School B isolation and the other cases in [the current checklist](DOCUMENTS.md#remaining-phase-3-checklist) remain open.
+The user authorized Phase 1, Phase 2 without email, and assistant-led Phase 3 development. As of 25 October, migrations through 021 are user-confirmed applied. Role accounts are established and basic separate-session checks have passed. The user completed 13 hosted document checks; School B isolation and the remaining UI acceptance cases in [the current checklist](DOCUMENTS.md#remaining-phase-3-checklist) remain open.
 
-All four roles have read-only overview profiles. The user wants the daily dashboard completed and redesigned after pending testing. Phase 3 is not yet accepted and Phase 4 has not started. Email delivery remains off. Public deployment and additional cloud resources are not authorized by this status update.
+All four roles have read-only top-right profile dropdowns. The daily dashboard and shared workspace chooser are implemented; latest local checks passed ESLint, TypeScript, 510 tests in 56 files and production build. Browser acceptance of the latest revision remains open. Phase 3 is not yet accepted and Phase 4 has not started. Email delivery remains off. Public deployment and additional cloud resources are not authorized by this status update.
 
 At the user's request, superseded guides are now archived, including the temporary Phase 3 implementation guide. Use RESUME.md, VERIFICATION.md and the current checklist for progress; archived instructions are historical reference.
 
@@ -19,6 +19,10 @@ Build a good portal for one school, then consider additional schools after the f
 Roles: School Admin, Teacher, Student, Parent/Guardian. Platform Super Admin is future scope. Login identities are separate from memberships and learner records. Memberships may hold multiple roles.
 
 ## Confirmed decisions
+
+- Profiles live at the top right for every role, with identity, active role and Sign Out. Only multi-role accounts get Switch Workspace.
+- At the normal post-login entry, multi-role accounts choose an authorised workspace; single-role accounts open directly. Switching retains the session, starts at the selected overview and requires a new explicit Guardian learner selection.
+
 
 - School Admin publishes results after review by an authorized person.
 - Homework is posted for learners to view. There are no learner submissions.

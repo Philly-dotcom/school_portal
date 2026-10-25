@@ -1,6 +1,6 @@
 # Tests: what they check and how to run them
 
-Updated 20 October 2026. The latest full local check passed lint, TypeScript, **482 tests in 53 files**, and production build. Migrations through 021 are user-confirmed applied. The user has completed 13 hosted document checks; School B isolation remains deferred. Local tests do not replace remaining hosted acceptance. See [verification status](../docs/VERIFICATION.md) and the [current checklist](../docs/DOCUMENTS.md#remaining-phase-3-checklist).
+Updated 25 October 2026. The latest full local check passed lint, TypeScript, **510 tests in 56 files**, and production build. Migrations through 021 are user-confirmed applied. The user has completed 13 hosted document checks; School B isolation remains deferred. Local tests do not replace remaining hosted acceptance. See [verification status](../docs/VERIFICATION.md) and the [current checklist](../docs/DOCUMENTS.md#remaining-phase-3-checklist).
 
 ## Start here
 
@@ -151,7 +151,7 @@ Attendance and document Storage-policy tests now exist, as listed above. Marks a
 
 [member-search.test.ts](member-search.test.ts) checks server-derived school context, role checks, invalid/forged input, bounded results, private failures and the hidden current-link payload. `membership-links-database.test.ts` also runs migration 015 and verifies denied anonymous/non-admin/foreign-school searches, malformed requests, ownership filtering before pagination across 532 synthetic accounts, literal search text, verified-email-only search, suspended accounts and missing roles. Existing write-isolation tests continue to cover link mutations.
 
-These are local checks. No hosted migration was applied and browser checks remain on hold.
+These are local checks. No hosted migration was applied and current browser results and remaining regressions are tracked in DOCUMENTS.md.
 
 ## Timetable search tests
 
@@ -161,6 +161,27 @@ These are local checks. No hosted migration was applied and browser checks remai
 
 ## Student profile coverage — 20 October 2026
 
-`student-profile.test.ts` checks that the overview reads the server-resolved student's records in their school, stops for unlinked accounts or mismatched schools, and distinguishes failed reads from no enrolments. It also checks school-local date boundaries, future and past placements, transfer labels and batched history reads. These are mocked data and rendering tests; the signed-in student browser check against Supabase is still required.
+`student-profile.test.ts` checks that the overview reads the server-resolved student's records in their school, stops for unlinked accounts or mismatched schools, and distinguishes failed reads from no enrolments. It also checks school-local date boundaries, future and past placements, transfer labels and batched history reads. These are mocked data and rendering tests; earlier Student session checks are recorded; the latest dropdown/history placement still needs browser acceptance.
 
-`staff-profile.test.ts` covers teacher subject scoping and deduplication, missing roles or account links, failed subject reads, and the admin's own name, membership reference and authenticated email. It also checks that Guardian Overview displays the granted learners without selecting one automatically or showing the guardian reference. `portal-routing.test.ts` still tests which overview a role can open; its profile panels are mocked because their data and rendering are tested separately.
+`staff-profile.test.ts` covers teacher subject scoping and deduplication, missing roles or account links, failed subject reads, and the admin's own name, membership reference and authenticated email. It also checks that Guardian Overview offers the granted learners for explicit selection without selecting one automatically or showing the guardian reference. `portal-routing.test.ts` still tests which overview a role can open; its profile panels are mocked because their data and rendering are tested separately.
+
+
+## Request reuse and navigation - 24 October 2026
+
+`profile-request-count.test.ts` exercises the real school-context, actor and profile loaders with a mocked backend. It records six operations for the teacher/student overview, compared with the measured seventeen before reuse. The unchanged proxy is outside this count. It also checks that a later render sees a suspended membership and that reused context does not accept an unassigned role or malformed learner ID. This is not a hosted latency benchmark.
+
+`workspace-navigation.test.ts` renders the shared shell and checks every daily link and the home URL, the shared chooser role links, deliberate learner clearing, the active-workspace label and generic loading content. It complements the signed-in browser check; static markup alone cannot prove a real role transition or RLS.
+
+The user has now marked P3-01 through P3-30 and DOC-ANON complete. School B setup and all hosted cross-school tests remain outstanding and belong to the user. New error-boundary recovery and narrow-screen regression checks are listed in DOCUMENTS.md.
+
+
+## Daily dashboard coverage - 24 October 2026
+
+`dashboard-overview.test.ts` tests the new overview adapters and rendered cards with mocked readers. It checks explicit Guardian selection, role/school scoping, published-only previews, correct PDF links, unavailable-versus-empty states, school-local lesson dates, upcoming homework ordering and pagination warnings. Admin counts use exact school-scoped head queries and never turn query failures into zero. These tests do not replace signed-in Admin/Student/Teacher/Guardian acceptance or hosted cross-school testing.
+
+
+## Latest shared-menu validation - 25 October 2026
+
+The user subsequently requested the full check. ESLint, TypeScript, all 510 tests in 56 files and production build passed after the shared-menu change and UTF-8 repair. The run did not include Playwright, hosted API/Storage checks or a new browser session.
+
+Routing coverage now includes multi-role selection (including Admin), single-role entry and forged mode rejection. Workspace-navigation assertions check authorised chooser destinations and removal of the sidebar switcher. Staff-profile assertions cover shared Admin identity reads and retained Guardian learner selection. Treat previous count measurements as scoped loader tests, not the cost of the entire current page. See DOCUMENTS.md for current UI and performance acceptance.

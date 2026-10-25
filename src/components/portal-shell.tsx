@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NavigationPending } from "@/components/navigation-pending";
 import {
   ArrowUpRight,
   BookOpen,
@@ -13,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { signOut } from "@/app/login/actions";
-import { portalModeLabels, portalHref, type PortalMode } from "@/lib/portal-validation";
+import { portalModeLabels, portalHref, isPortalView, type PortalMode } from "@/lib/portal-validation";
 
 const navigation = [
   { view: "overview", label: "Overview", icon: LayoutDashboard },
@@ -41,9 +42,10 @@ export function PortalShell({
   preview = true,
   schoolName = "Your school workspace",
   admin = false,
-  modes = [],
   mode,
   child,
+  learnerName,
+  profileMenu,
 }: {
   children: React.ReactNode;
   view?: string;
@@ -53,17 +55,21 @@ export function PortalShell({
   modes?: PortalMode[];
   mode?: PortalMode;
   child?: string | null;
+  learnerName?: string;
+  profileMenu?: React.ReactNode;
 }) {
   const base = preview ? "/preview" : "/dashboard";
+  const adminHome = "/dashboard?view=overview&mode=school_admin";
   const items = preview
     ? navigation
     : [
         navigation[0],
-        ...(mode ? [{ view: "my-timetable", label: "My timetable", icon: BookOpen }] : []),
+        ...(!admin && mode ? [{ view: "my-timetable", label: "My timetable", icon: BookOpen }] : []),
         ...(admin || mode ? [{ view: "attendance", label: "Attendance", icon: Users }] : []),
         ...(admin || mode ? [{ view: "homework", label: "Homework", icon: BookOpen }] : []),
         ...(admin || mode ? [{ view: "announcements", label: "Announcements", icon: BookOpen }] : []),
         ...(admin || mode ? [{ view: "documents", label: "Documents", icon: BookOpen }] : []),
+        ...(admin ? [{ view: "timetable", label: "Timetable", icon: LayoutDashboard }] : []),
         ...(admin
           ? [
               { view: "academic", label: "Academic setup", icon: BookOpen },
@@ -77,12 +83,13 @@ export function PortalShell({
                 label: "Teaching assignments",
                 icon: BookOpen,
               },
-              { view: "timetable", label: "Timetable", icon: LayoutDashboard },
               { view: "people", label: "People & access", icon: Users },
               navigation[3],
             ]
           : []),
       ];
+  const managementViews = new Set(["academic", "registers", "teaching", "people", "settings"]);
+  const groups = !preview && admin ? [{ label: "WORKSPACE", items: items.filter(item => !managementViews.has(item.view)) }, { label: "School management", items: items.filter(item => managementViews.has(item.view)) }] : [{ label: "WORKSPACE", items }];
   return (
     <div className="app-shell">
       <a href="#main" className="skip-link">
@@ -90,11 +97,12 @@ export function PortalShell({
       </a>
       <aside className="sidebar">
         <Link
-          href={base}
+          href={!preview && mode ? portalHref("overview", mode, child) : !preview && admin ? adminHome : base}
           className="brand-link"
           aria-label="School Portal home"
         >
           <Brand />
+          {!preview && <NavigationPending />}
         </Link>
         <div className="school-label">
           <span className="school-monogram">SP</span>
@@ -105,29 +113,25 @@ export function PortalShell({
             </small>
           </span>
         </div>
-        <span className="nav-caption">WORKSPACE</span>
-        <nav aria-label="Main navigation" className="main-nav">
-          {items.map(({ view: key, label, icon: Icon }) => (
+        {groups.map((group) => <div className="sidebar-nav-group" key={group.label}>
+        <span className="nav-caption sidebar-section-title">{group.label}</span>
+        <nav aria-label={group.label === "WORKSPACE" ? "Main navigation" : "School management"} className="main-nav">
+          {group.items.map(({ view: key, label, icon: Icon }) => (
             <Link
               key={key}
-              href={!preview && mode && (key === "overview" || key === "my-timetable" || key === "attendance" || key === "homework")
-                ? portalHref(key, mode, child) : `${base}?view=${key}`}
+              href={!preview && mode && isPortalView(key)
+                ? portalHref(key, mode, child) : `${base}?view=${key}${!preview && admin ? "&mode=school_admin" : ""}`}
               className={`nav-item ${view === key ? "active" : ""}`}
               aria-current={view === key ? "page" : undefined}
             >
               <Icon size={19} />
               {label}
+              {!preview && <NavigationPending />}
               {view === key && <span className="nav-dot" />}
             </Link>
           ))}
         </nav>
-        {!preview && modes.length > 0 && (
-          <nav aria-label="Role workspaces" className="main-nav">
-            {admin && <Link className="nav-item" href="/dashboard">School administration</Link>}
-            {modes.map((item) => <Link key={item} className="nav-item"
-              href={portalHref("overview", item)}>{portalModeLabels[item]} workspace</Link>)}
-          </nav>
-        )}
+        </div>)}
         {preview && (
           <div className="sidebar-guide">
             <Layers3 size={21} />
@@ -154,16 +158,22 @@ export function PortalShell({
         </div>
       </aside>
       <div className="main-column">
-        <header className="topbar">
+        <header className={`topbar ${preview ? "" : "workspace-topbar"}`}>
           <div className="breadcrumb">
             Workspace <ChevronRight size={14} />
             <span>
-              {view === "setup"
+              {view === "workspaces" ? "Choose workspace" : view === "setup"
                 ? "Setup guide"
                 : (items.find((item) => item.view === view)?.label ??
                   "Overview")}
             </span>
           </div>
+          {!preview && (
+            <div className="workspace-identity" aria-label="Active workspace">
+              <strong>{mode ? portalModeLabels[mode] : admin ? "School administration" : "School workspace"}</strong>
+              {mode === "guardian" && <span> · {learnerName ? `Learner: ${learnerName}` : "Choose a learner"}</span>}
+            </div>
+          )}
           <div className="topbar-actions">
             {preview ? (
               <>
@@ -175,7 +185,7 @@ export function PortalShell({
                   School sign-in <ArrowUpRight size={15} />
                 </Link>
               </>
-            ) : (
+            ) : profileMenu ? profileMenu : (
               <form action={signOut}>
                 <button className="button secondary compact">Sign out</button>
               </form>

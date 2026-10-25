@@ -44,6 +44,22 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 
+it("puts the current placement in dashboard tiles while retaining full profile history", async () => {
+  const html = renderToStaticMarkup(await StudentProfile({ dashboard: true }));
+  expect(html).toContain('aria-label="Current enrolment summary"');
+  expect(html).toContain("Current grade"); expect(html).toContain("Acceptance 12A");
+  expect(html).toContain("2026"); expect(html).toContain("TEST-003");
+  expect(html).not.toContain('<details class="student-profile-history" open');
+  expect(mocks.range).toHaveBeenCalledTimes(1);
+});
+it("does not promote a future placement into the current dashboard tiles", async () => {
+  mocks.range.mockResolvedValue({ data: [{ ...enrollment, starts_on: "2027-01-18", ends_on: "2027-11-26", academic_years: { name: "2027" } }], error: null });
+  const html = renderToStaticMarkup(await StudentProfile({ dashboard: true }));
+  const summary = html.split('<details')[0];
+  expect(summary).toContain("Not currently enrolled"); expect(summary).not.toContain("2027");
+  expect(html).toContain("Upcoming"); expect(html).toContain("2027");
+});
+
 it("reads only the server-resolved student's enrolments in their school", async () => {
   const result = await loadStudentProfile();
   expect(mocks.actor).toHaveBeenCalledWith("student");

@@ -1,6 +1,6 @@
 # File guide
 
-Updated 20 October 2026. This is a map of the current checkout, not a proposed new folder structure. Start with the part you are working on; you do not have to read every file in order.
+Updated 25 October 2026. This is a map of the current checkout, not a proposed new folder structure. Start with the part you are working on; you do not have to read every file in order.
 
 A `.tsx` file can contain screen markup and TypeScript. A `.ts` file contains TypeScript without that markup. `page.tsx` makes a route; our `actions.ts` files handle form submissions on the server. A migration is a saved SQL change to the database. An RPC is a database function the app calls. RLS means row-level security: the database checks which rows the signed-in account may read or change.
 
@@ -44,7 +44,7 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 | [src/app/preview/page.tsx](../src/app/preview/page.tsx) | Chooses the static preview view. It does not read school records. |
 | [src/app/login/page.tsx](../src/app/login/page.tsx) | Displays sign-in and handles the unconfigured-app state. |
 | [src/app/login/actions.ts](../src/app/login/actions.ts) | Handles password sign-in and sign-out on the server. |
-| [src/app/dashboard/page.tsx](../src/app/dashboard/page.tsx) | Verifies school access and selects the overview or an admin panel using the view query parameter. |
+| [src/app/dashboard/page.tsx](../src/app/dashboard/page.tsx) | Verifies school membership, resolves the authorised active role, shows the multi-role chooser and selects the requested panel. Reuses actor/profile reads within the render. |
 | [src/app/dashboard/actions.ts](../src/app/dashboard/actions.ts) | Validates and saves the school name and timezone for an authorized admin. |
 | [src/app/dashboard/academic/actions.ts](../src/app/dashboard/academic/actions.ts) | Handles creation of academic years, terms, grades, subjects and classes. |
 | [src/app/dashboard/registers/actions.ts](../src/app/dashboard/registers/actions.ts) | Handles student, teacher and guardian creation, family links and initial class enrollment. |
@@ -180,7 +180,7 @@ This inventory covers the maintained project files, not every dependency or gene
 - [Migration 015](../supabase/migrations/202610050015_register_member_search.sql) adds read-only, admin-only eligibility search. It excludes accounts linked elsewhere before paging. Hosted application of 015 is user-confirmed.
 - [member-search.test.ts](../tests/member-search.test.ts) checks server authorization/input handling, bounded output, private errors and preservation of the current login in the form payload. The membership database suite checks actual SQL eligibility and isolation beyond 500 records.
 
-`login-link.tsx` now uses the shared search selector. `register-data.ts` loads only current links for visible people; it no longer preloads complete person/member catalogs. Browser checks are on hold.
+`login-link.tsx` now uses the shared search selector. `register-data.ts` loads only current links for visible people; it no longer preloads complete person/member catalogs. Use DOCUMENTS.md for current browser results and remaining regressions.
 
 ## Timetable search added on 5 October
 
@@ -245,3 +245,27 @@ The [test guide](../tests/README.md) explains each corresponding test file. The 
 - [Timetable](../src/components/timetable.tsx) uses searchable choices for its GET filter and lesson form. Hidden fields preserve selected IDs during search; date inputs follow the selected assignment.
 - [Planning data](../src/lib/planning-data.ts) reads only the assignment labels required by visible lessons and the active filter. It no longer loads capped reference catalogs.
 - [Timetable search form tests](../tests/timetable-search-forms.test.ts) check search wiring, preserved filter IDs, empty results and page reset. Actual SQL search/isolation tests are in `register-database.test.ts`; action tests are in `record-search.test.ts`.
+
+
+## Current dashboard, profiles and navigation
+
+| File | Current responsibility |
+| --- | --- |
+| `src/app/dashboard/page.tsx` | Verifies school membership and the selected role, shows the multi-role chooser and routes to the requested panel. Shares selected actor and Student/Admin profile reads within the render. Legacy Admin management URLs still have an implicit-mode fallback tracked in REVIEW-02. |
+| `src/components/portal-shell.tsx` | Shared sidebar/header. Admin links are grouped under School management. Daily links retain role/learner context; the sidebar has no role switcher. |
+| `src/components/profile-menu.tsx` | Shared top-right identity dropdown, active role, authorised workspace choices and existing Sign Out action. Chooser/unlinked fallback reads only the caller's saved profile name. |
+| `src/components/workspace-selector.tsx` | Same role destinations for the welcome chooser and dropdown. Switches to the chosen overview without learner/edit parameters; links never grant permission. |
+| `src/components/staff-profile.tsx` | Teacher identity/subjects and Admin identity fields/greeting. The shared menu owns the dropdown and Sign Out. |
+| `src/components/student-profile.tsx` | Existing enrolment history and school-local date labels in the dropdown; summary-only mode keeps current grade/class/year tiles on the overview. |
+| `src/components/role-overview.tsx` | Welcome/empty/error states, Student summary and explicit Guardian learner selection, followed by authorised daily cards. |
+| `src/components/daily-overview.tsx` | Role-specific actions, Admin counts, today's lessons and bounded published homework/notice/PDF previews with loading fallbacks. |
+| `src/lib/dashboard-data.ts` | Read-only adapters around existing scoped readers; exact Admin counts use school filters and the user's RLS context. |
+| `src/components/child-selector.tsx` | Explicit granted-learner GET selection and submit feedback. |
+| `src/components/navigation-pending.tsx` | Pending feedback inside Next links. |
+| `src/app/dashboard/loading.tsx` | Generic loading state without protected identities. |
+| `src/app/dashboard/error.tsx` | Unexpected-error retry preserving the current URL; warns against repeating uncertain saves. |
+| `src/app/globals.css` | Existing palette, cards, sidebar groups, dropdown, focus and responsive styles. |
+
+These components reuse module readers, actions, school-date helpers and grants. No new service, dependency, authentication system, schema or RLS change was needed. Detailed Teacher/Student history currently loads on module pages even when the dropdown is closed; REVIEW-01 tracks this cost. Context reuse is per render, not a persistent authorization cache.
+
+Relevant tests: dashboard-overview.test.ts covers guarded cards and links; portal-routing.test.ts covers role entry and denial; workspace-navigation.test.ts covers sidebar URLs and authorised chooser destinations; staff-profile.test.ts and student-profile.test.ts cover scoped identity/history and shared reads; profile-request-count.test.ts measures the earlier loader path and fresh access checks. The latest full run passed all 510 tests in 56 files and production build. It is not a new browser or hosted-isolation result.

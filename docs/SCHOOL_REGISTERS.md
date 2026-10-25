@@ -1,6 +1,8 @@
 # School registers: Phase 2 increment
 
-As of 4 October, the register includes creation/listing, name/reference corrections, enrollment transfers/withdrawals, account linking and explicit guardian grants. The user has confirmed 009–013 applied. See [Enrollment transfers and withdrawals](ENROLLMENT_LIFECYCLE.md) and [Login links](LOGIN_LINKS.md).
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
+As of 25 October, the register includes creation/listing, name/reference corrections, enrollment transfers/withdrawals, account linking and explicit guardian grants. The user has confirmed migrations through 021 applied. See [Enrollment transfers and withdrawals](ENROLLMENT_LIFECYCLE.md) and [Login links](LOGIN_LINKS.md).
 
 Migration 007 introduced name/reference corrections. Migration 009 preserves placement history during transfers and withdrawals. Neither is a general delete or undo facility.
 
@@ -24,7 +26,7 @@ The project already contains fictional register data. No email is sent by regist
 
 ## Scope and boundaries
 
-The register holds school records independently of Auth users and memberships. Creating a teacher record does not grant the teacher role. Guardian relationships are administrative records, not a legal custody determination and not permission to access a learner portal. Account linking and role-specific views will need explicit verification later.
+The register holds school records independently of Auth users and memberships. Creating a teacher record does not grant the teacher role. Guardian relationships are administrative records, not a legal custody determination and not permission to access a learner portal. Account linking and role-specific views are implemented; recorded passes and remaining regressions are tracked in DOCUMENTS.md.
 
 Names and references can be corrected through versioned forms. Transfers/withdrawals use the separate lifecycle controls and keep the previous placement. There is no general deletion, archiving, promotion or undo flow. Existing history must not be overwritten to change a learner's current class.
 
@@ -44,4 +46,4 @@ To check pagination in the connected app, use fictional records: navigate one li
 
 ## Next
 
-Search and pagination are implemented. Verify remaining correction, linking and lifecycle cases against the current roadmap; the enrolment selection/hint reset defect remains on the Phase 3 checklist. Academic imports are optional, not an agreed requirement. Email remains disabled pending a registered sending domain and tested delivery.
+Search and pagination are implemented. Verify remaining correction, linking and lifecycle cases against the current roadmap; the earlier enrolment selection/hint reset regression is user-reported passed; reopen it only if reproduced. Academic imports are optional, not an agreed requirement. Email remains disabled pending a registered sending domain and tested delivery.

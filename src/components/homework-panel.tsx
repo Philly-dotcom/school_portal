@@ -1,6 +1,7 @@
 import Link from "next/link";
+import type { PortalActor } from "@/lib/portal-validation";
 import { z } from "zod";
-import { getSchoolContext } from "@/lib/auth-context";
+import { getSchoolContext, type ReadySchoolContext } from "@/lib/auth-context";
 import { loadPortalActor } from "@/lib/portal-data";
 import { loadHomework } from "@/lib/homework-data";
 import {
@@ -20,8 +21,8 @@ export type HomeworkParams = {
   homeworkPage?: string | string[];
   homeworkEdit?: string | string[];
 };
-export async function HomeworkPanel({ params }: { params: HomeworkParams }) {
-  const context = await getSchoolContext();
+export async function HomeworkPanel({ params, verifiedContext, verifiedActor }: { params: HomeworkParams; verifiedContext?: ReadySchoolContext; verifiedActor?: PortalActor }) {
+  const context = verifiedContext ?? await getSchoolContext();
   if (context.status !== "ready")
     return <p role="alert">Homework access could not be verified.</p>;
   const modes = availablePortalModes(context.roles);
@@ -62,9 +63,10 @@ export async function HomeworkPanel({ params }: { params: HomeworkParams }) {
         ? undefined
         : selectedChildSchema.safeParse(params.child);
     if (!parsedMode.success || (child && !child.success)) return unavailable;
-    const actor = await loadPortalActor(
+    const actor = verifiedActor ?? await loadPortalActor(
       parsedMode.data,
       child?.success ? child.data : undefined,
+      context,
     );
     if (actor.status !== "ready")
       return <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} />;

@@ -27,3 +27,10 @@ To examine old material, open it here. Only copy an operator script back into ac
 These documents were retained rather than deleted. Relative links were adjusted for their archive locations. All 21 migration paths and hashes were preserved. Active architecture, security, feature guides, Phase 2 explanation and test instructions remain in docs/ and tests/.
 
 Other retained history: [applied academic-date repair](2026-10/20261009_academic_dates_repair.sql), [teaching assignment history](2026-10/Teaching_Assignment_History.md) and [earlier Phase 3 checkpoints](2026-10/SCHOOL_PORTAL_PHASE_3_WORKING_CHECKPOINTS.md). None is an instruction to reapply a hosted change.
+
+
+## Documentation snapshots retained on 25 October 2026
+
+[Pre-reconciliation documents](2026-10/docs-before-20261025-reconciliation/docs/README.md) preserve the earlier status pages, feature guides and Phase 2 explanation. They contain historical test totals and pending statements, not current instructions. [Previous root README](2026-10/docs-before-20261025-reconciliation/README.md) and [test guide](2026-10/docs-before-20261025-reconciliation/tests/README.md) are retained too.
+
+The current documents now record the 510-test/build pass, shared all-role profile menus, workspace chooser, recorded module passes and remaining acceptance/review items. No migration, application file, configuration or school record was moved or changed by this documentation reconciliation.

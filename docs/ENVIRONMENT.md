@@ -1,5 +1,7 @@
 # Environment settings
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 Reviewed 4 October 2026. The current `.env.local` has the six web-app settings below, no duplicate variable names, and both email flags set to false. Its values were left unchanged. The example now lists the same six names, with placeholders instead of connection details.
 
 ## Two files, two jobs

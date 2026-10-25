@@ -1,9 +1,13 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
 import { getSchoolContext } from "@/lib/auth-context";
 import { PageHeading, PortalShell } from "@/components/portal-shell";
 import { SettingsForm } from "@/components/settings-form";
-import { roleLabels } from "@/lib/permissions";
+import { roleLabels, type Role } from "@/lib/permissions";
+import { ProfileMenu } from "@/components/profile-menu";
+import { WorkspaceSelector } from "@/components/workspace-selector";
+import { loadStudentProfile } from "@/lib/student-profile-data";
 import { signOut } from "@/app/login/actions";
 import { invitationPage } from "@/lib/invitation-pagination";
 import { PeoplePanel } from "@/components/people-panel";
@@ -14,15 +18,33 @@ import { type RegisterPageParams } from "@/lib/register-pagination";
 import { type PlanningPageParams } from "@/lib/planning-pagination";
 import { TeachingPanel } from "@/components/teaching-panel";
 import { TimetablePanel } from "@/components/timetable-panel";
-import { availablePortalModes, portalModeSchema, selectedChildSchema } from "@/lib/portal-validation";
+import {
+  availablePortalModes,
+  portalModeSchema,
+  selectedChildSchema,
+} from "@/lib/portal-validation";
 import { loadPortalActor } from "@/lib/portal-data";
 import { RoleOverview } from "@/components/role-overview";
+import { DailyOverview } from "@/components/daily-overview";
+import { loadAdminProfile } from "@/lib/staff-profile-data";
 import { AdminProfile } from "@/components/staff-profile";
 import { MyTimetablePanel } from "@/components/my-timetable-panel";
-import { AttendancePanel, type AttendanceParams } from "@/components/attendance-panel";
-import { HomeworkPanel, type HomeworkParams } from "@/components/homework-panel";
-import { AnnouncementPanel, type AnnouncementParams } from "@/components/announcement-panel";
-import { DocumentPanel, type DocumentParams } from "@/components/document-panel";
+import {
+  AttendancePanel,
+  type AttendanceParams,
+} from "@/components/attendance-panel";
+import {
+  HomeworkPanel,
+  type HomeworkParams,
+} from "@/components/homework-panel";
+import {
+  AnnouncementPanel,
+  type AnnouncementParams,
+} from "@/components/announcement-panel";
+import {
+  DocumentPanel,
+  type DocumentParams,
+} from "@/components/document-panel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "School workspace" };
@@ -31,8 +53,18 @@ export default async function Dashboard({
   searchParams,
 }: {
   searchParams: Promise<
-    { view?: string; invitationPage?: string; mode?: string | string[]; child?: string | string[]; myTimetablePage?: string | string[] } & AcademicPageParams &
-      RegisterPageParams & AttendanceParams & HomeworkParams & AnnouncementParams & DocumentParams &
+    {
+      view?: string;
+      invitationPage?: string;
+      mode?: string | string[];
+      child?: string | string[];
+      myTimetablePage?: string | string[];
+    } & AcademicPageParams &
+      RegisterPageParams &
+      AttendanceParams &
+      HomeworkParams &
+      AnnouncementParams &
+      DocumentParams &
       PlanningPageParams
   >;
 }) {
@@ -78,37 +110,257 @@ export default async function Dashboard({
       </main>
     );
   }
-  const admin = context.roles.includes("school_admin");
-  const params = await searchParams;
+  const requested = await searchParams;
   const modes = availablePortalModes(context.roles);
-  if (params.view === "attendance" || params.view === "homework" || params.view === "announcements" || params.view === "documents") {
-    const parsedMode = portalModeSchema.safeParse(params.mode ?? (!admin ? modes[0] : undefined));
-    const mode = parsedMode.success && modes.includes(parsedMode.data) ? parsedMode.data : undefined;
-    const child = selectedChildSchema.safeParse(params.child);
-    return <PortalShell preview={false} admin={admin} modes={modes} mode={mode}
-      child={child.success ? child.data : undefined} schoolName={context.school.name} view={params.view}>
-      <PageHeading eyebrow="DAILY OPERATIONS" title={params.view === "documents" ? "Documents" : params.view === "announcements" ? "Announcements" : params.view === "homework" ? "Homework" : "Attendance"}
-        description={params.view === "documents" ? "Private PDFs for your school and current class." : params.view === "announcements" ? "School notices and updates for your current class." : params.view === "homework" ? "Class homework and due dates. Learners read their published work here." : "Daily registers and permitted learner attendance history."} />
-      {params.view === "documents" ? <DocumentPanel params={params} /> : params.view === "announcements" ? <AnnouncementPanel params={params} /> : params.view === "homework" ? <HomeworkPanel params={params} /> : <AttendancePanel params={params} />}
-    </PortalShell>;
-  }
-  const roleView = !params.view || params.view === "overview" || params.view === "my-timetable";
-  if (roleView && (!admin || params.mode !== undefined || params.child !== undefined || params.view === "my-timetable")) {
-    const parsed = portalModeSchema.safeParse(params.mode ?? modes[0]);
-    const child = params.child === undefined ? undefined : selectedChildSchema.safeParse(params.child);
-    const mode = parsed.success && modes.includes(parsed.data) ? parsed.data : undefined;
-    const actor = mode && (!child || child.success)
-      ? await loadPortalActor(mode, child?.success ? child.data : undefined)
-      : { status: "forbidden" as const };
+  const managementViews = [
+    "academic",
+    "registers",
+    "teaching",
+    "people",
+    "settings",
+    "timetable",
+  ];
+  // Old management links already identify an Admin destination. Bare entry and
+  // daily views require a deliberate choice when more than one role is available.
+  const implicitAdmin =
+    requested.mode === undefined &&
+    managementViews.includes(requested.view ?? "") &&
+    context.roles.includes("school_admin");
+  const candidate =
+    requested.mode ??
+    (implicitAdmin
+      ? "school_admin"
+      : context.roles.length === 1
+        ? context.roles[0]
+        : undefined);
+  const activeRole =
+    typeof candidate === "string" && context.roles.includes(candidate as Role)
+      ? (candidate as Role)
+      : undefined;
+  if (!activeRole) {
     return (
-      <PortalShell preview={false} admin={admin} modes={modes} mode={mode}
-        child={actor.status === "ready" && actor.mode === "guardian" ? actor.selectedChild?.id : undefined}
-        schoolName={context.school.name} view={params.view === "my-timetable" ? "my-timetable" : "overview"}>
-        <PageHeading eyebrow="YOUR SCHOOL WORKSPACE" title={params.view === "my-timetable" ? "My timetable" : "Your workspace"}
-          description="Access follows your school role and linked school records." />
-        {params.view === "my-timetable" && actor.status === "ready"
-          ? <MyTimetablePanel actor={actor} page={params.myTimetablePage} />
-          : <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} />}
+      <PortalShell
+        preview={false}
+        schoolName={context.school.name}
+        view="workspaces"
+        profileMenu={
+          <Suspense fallback={<p role="status">Loading profile...</p>}>
+            <ProfileMenu context={context} />
+          </Suspense>
+        }
+      >
+        {requested.mode !== undefined && (
+          <p role="alert">
+            That workspace is not available to your account. Choose an
+            authorised workspace below.
+          </p>
+        )}
+        <WorkspaceSelector roles={context.roles} />
+      </PortalShell>
+    );
+  }
+  const admin = activeRole === "school_admin";
+  const params = { ...requested, mode: activeRole };
+  const childSelection = selectedChildSchema.safeParse(params.child);
+  const selectedActor = !admin
+    ? params.child !== undefined &&
+      (!childSelection.success || activeRole !== "guardian")
+      ? { status: "forbidden" as const }
+      : await loadPortalActor(
+          activeRole as Exclude<Role, "school_admin">,
+          childSelection.success ? childSelection.data : undefined,
+          context,
+        )
+    : undefined;
+  const adminProfileRead = admin ? loadAdminProfile(context) : undefined;
+  const studentProfileRead =
+    selectedActor?.status === "ready" && selectedActor.mode === "student"
+      ? loadStudentProfile({ context, actor: selectedActor })
+      : undefined;
+  const profileMenu = (
+    <Suspense fallback={<p role="status">Loading profile...</p>}>
+      <ProfileMenu
+        context={context}
+        activeRole={activeRole}
+        actor={selectedActor}
+        adminProfileRead={adminProfileRead}
+        studentProfileRead={studentProfileRead}
+      />
+    </Suspense>
+  );
+  if (!admin && managementViews.includes(params.view ?? "")) {
+    return (
+      <PortalShell
+        profileMenu={profileMenu}
+        preview={false}
+        mode={activeRole as Exclude<Role, "school_admin">}
+        schoolName={context.school.name}
+      >
+        <section className="content-panel">
+          <h1>Administrator workspace required</h1>
+          <p>
+            Use your profile to switch workspaces if your account has School
+            Admin access.
+          </p>
+        </section>
+      </PortalShell>
+    );
+  }
+  if (
+    params.view === "attendance" ||
+    params.view === "homework" ||
+    params.view === "announcements" ||
+    params.view === "documents"
+  ) {
+    const parsedMode = portalModeSchema.safeParse(
+      params.mode ?? (!admin ? modes[0] : undefined),
+    );
+    const mode =
+      parsedMode.success && modes.includes(parsedMode.data)
+        ? parsedMode.data
+        : undefined;
+    const child = selectedChildSchema.safeParse(params.child);
+    const actor = selectedActor;
+    return (
+      <PortalShell
+        profileMenu={profileMenu}
+        preview={false}
+        admin={admin}
+        modes={modes}
+        mode={mode}
+        child={
+          actor?.status === "ready" && actor.mode === "guardian"
+            ? actor.selectedChild?.id
+            : undefined
+        }
+        learnerName={
+          actor?.status === "ready" && actor.mode === "guardian"
+            ? actor.selectedChild?.fullName
+            : undefined
+        }
+        schoolName={context.school.name}
+        view={params.view}
+      >
+        <PageHeading
+          eyebrow="DAILY OPERATIONS"
+          title={
+            params.view === "documents"
+              ? "Documents"
+              : params.view === "announcements"
+                ? "Announcements"
+                : params.view === "homework"
+                  ? "Homework"
+                  : "Attendance"
+          }
+          description={
+            params.view === "documents"
+              ? "Private PDFs for your school and current class."
+              : params.view === "announcements"
+                ? "School notices and updates for your current class."
+                : params.view === "homework"
+                  ? "Class homework and due dates. Learners read their published work here."
+                  : "Daily registers and permitted learner attendance history."
+          }
+        />
+        <Suspense
+          key={`${params.view}:${mode}:${child.success ? child.data : ""}:${JSON.stringify(params)}`}
+          fallback={<p role="status">Loading this workspace…</p>}
+        >
+          {params.view === "documents" ? (
+            <DocumentPanel
+              params={params}
+              verifiedContext={context}
+              verifiedActor={actor}
+            />
+          ) : params.view === "announcements" ? (
+            <AnnouncementPanel
+              params={params}
+              verifiedContext={context}
+              verifiedActor={actor}
+            />
+          ) : params.view === "homework" ? (
+            <HomeworkPanel
+              params={params}
+              verifiedContext={context}
+              verifiedActor={actor}
+            />
+          ) : (
+            <AttendancePanel
+              params={params}
+              verifiedContext={context}
+              verifiedActor={actor}
+            />
+          )}
+        </Suspense>
+      </PortalShell>
+    );
+  }
+  const roleView =
+    !params.view ||
+    params.view === "overview" ||
+    params.view === "my-timetable";
+  if (roleView && (!admin || params.view === "my-timetable")) {
+    const parsed = portalModeSchema.safeParse(params.mode ?? modes[0]);
+    const child =
+      params.child === undefined
+        ? undefined
+        : selectedChildSchema.safeParse(params.child);
+    const mode =
+      parsed.success && modes.includes(parsed.data) ? parsed.data : undefined;
+    const actor = selectedActor ?? { status: "forbidden" as const };
+    return (
+      <PortalShell
+        profileMenu={profileMenu}
+        preview={false}
+        admin={admin}
+        modes={modes}
+        mode={mode}
+        child={
+          actor.status === "ready" && actor.mode === "guardian"
+            ? actor.selectedChild?.id
+            : undefined
+        }
+        learnerName={
+          actor.status === "ready" && actor.mode === "guardian"
+            ? actor.selectedChild?.fullName
+            : undefined
+        }
+        schoolName={context.school.name}
+        view={params.view === "my-timetable" ? "my-timetable" : "overview"}
+      >
+        {!(
+          actor.status === "ready" &&
+          actor.mode === "student" &&
+          params.view !== "my-timetable"
+        ) && (
+          <PageHeading
+            eyebrow="YOUR SCHOOL WORKSPACE"
+            title={
+              params.view === "my-timetable" ? "My timetable" : "Your workspace"
+            }
+            description="Access follows your school role and linked school records."
+          />
+        )}
+        {params.view === "my-timetable" && actor.status === "ready" ? (
+          <Suspense
+            key={`${mode}:${child?.success ? child.data : ""}:${params.myTimetablePage ?? "1"}`}
+            fallback={<p role="status">Loading your timetable...</p>}
+          >
+            <MyTimetablePanel
+              actor={actor}
+              page={params.myTimetablePage}
+              context={context}
+            />
+          </Suspense>
+        ) : (
+          <RoleOverview
+            actor={actor}
+            availableModes={modes}
+            schoolName={context.school.name}
+            context={context}
+            studentProfileRead={studentProfileRead}
+          />
+        )}
       </PortalShell>
     );
   }
@@ -116,6 +368,7 @@ export default async function Dashboard({
   if (params.view === "timetable")
     return (
       <PortalShell
+        profileMenu={profileMenu}
         preview={false}
         admin={admin}
         modes={modes}
@@ -145,6 +398,7 @@ export default async function Dashboard({
   if (params.view === "teaching")
     return (
       <PortalShell
+        profileMenu={profileMenu}
         preview={false}
         admin={admin}
         modes={modes}
@@ -174,6 +428,7 @@ export default async function Dashboard({
   if (params.view === "registers")
     return (
       <PortalShell
+        profileMenu={profileMenu}
         preview={false}
         admin={admin}
         modes={modes}
@@ -198,6 +453,7 @@ export default async function Dashboard({
   if (params.view === "academic")
     return (
       <PortalShell
+        profileMenu={profileMenu}
         preview={false}
         admin={admin}
         modes={modes}
@@ -222,6 +478,7 @@ export default async function Dashboard({
   if (params.view === "people")
     return (
       <PortalShell
+        profileMenu={profileMenu}
         preview={false}
         admin={admin}
         modes={modes}
@@ -249,19 +506,22 @@ export default async function Dashboard({
     );
   return (
     <PortalShell
+      profileMenu={profileMenu}
       preview={false}
       admin={admin}
       modes={modes}
       schoolName={context.school.name}
       view={settings ? "settings" : "overview"}
     >
-      <PageHeading
-        eyebrow="YOUR SCHOOL WORKSPACE"
-        title={
-          settings ? "School settings" : `Welcome to ${context.school.name}`
-        }
-        description={`Signed in with verified access: ${context.roles.map((role) => roleLabels[role]).join(" · ")}`}
-      />
+      {(settings || !admin) && (
+        <PageHeading
+          eyebrow="YOUR SCHOOL WORKSPACE"
+          title={
+            settings ? "School settings" : `Welcome to ${context.school.name}`
+          }
+          description={`Signed in with verified access: ${context.roles.map((role) => roleLabels[role]).join(" · ")}`}
+        />
+      )}
       {settings ? (
         <section className="content-panel">
           {admin ? (
@@ -281,33 +541,19 @@ export default async function Dashboard({
         </section>
       ) : (
         <>
-          {admin && <AdminProfile />}
-          <section className="content-panel">
-            <h2>Your secure foundation is connected.</h2>
-            <p className="muted" style={{ marginTop: 12 }}>
-              Your identity, active school membership and roles were checked
-              before this page was shown. Administrators can now create years,
-              terms, grades, subjects and classes in Academic setup. School
-              registers support student, teacher and guardian records, guardian
-              links and initial class enrollment.
-            </p>
-            {admin && (
-              <Link
-                className="button primary"
-                href="/dashboard?view=settings"
-                style={{ marginTop: 22 }}
-              >
-                Manage school settings
-              </Link>
-            )}
-          </section>
-          <div className="quiet-note">
-            <ShieldCheck size={21} />
-            <p>
-              Daily attendance is available from the sidebar. Marks and finance
-              are planned for later phases.
-            </p>
-          </div>
+          {admin && (
+            <>
+              <Suspense fallback={<p role="status">Loading your profile...</p>}>
+                <AdminProfile
+                  dashboard
+                  headingOnly
+                  context={context}
+                  profileRead={adminProfileRead}
+                />
+              </Suspense>
+              <DailyOverview context={context} />
+            </>
+          )}
         </>
       )}
     </PortalShell>

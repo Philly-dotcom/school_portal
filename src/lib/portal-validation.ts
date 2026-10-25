@@ -14,8 +14,14 @@ export function availablePortalModes(roles: readonly string[]): PortalMode[] {
   return portalModeSchema.options.filter((mode) => roles.includes(mode));
 }
 
+export const portalViews = ["overview", "my-timetable", "attendance", "homework", "announcements", "documents"] as const;
+export type PortalView = (typeof portalViews)[number];
+export function isPortalView(view: string): view is PortalView {
+  return portalViews.some((candidate) => candidate === view);
+}
+
 export function portalHref(
-  view: "overview" | "my-timetable" | "attendance" | "homework" | "announcements" | "documents",
+  view: PortalView,
   mode: PortalMode,
   child?: string | null,
   page = 1,

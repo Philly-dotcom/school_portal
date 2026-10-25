@@ -6,6 +6,9 @@ import { parseRoles } from "@/lib/permissions";
 
 // Not wrapped in React cache(): server actions mutate access and then re-render in the same
 // request, and a memoised context would show a just-demoted admin stale controls.
+export type SchoolContext = Awaited<ReturnType<typeof getSchoolContext>>;
+export type ReadySchoolContext = Extract<SchoolContext, { status: "ready" }>;
+
 export async function getSchoolContext() {
   if (!isPortalConfigured()) return { status: "unconfigured" as const };
   const supabase = await createClient();

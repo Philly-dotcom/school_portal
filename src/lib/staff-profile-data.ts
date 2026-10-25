@@ -1,10 +1,15 @@
 import "server-only";
 
 import { z } from "zod";
-import { getSchoolContext } from "@/lib/auth-context";
+import { getSchoolContext, type ReadySchoolContext } from "@/lib/auth-context";
 import { loadPortalActor } from "@/lib/portal-data";
+import type { PortalActor } from "@/lib/portal-validation";
+
 import { schoolDate } from "@/lib/school-date";
 import { createClient } from "@/lib/supabase/server";
+
+// Server-only input from this page render; never persisted or accepted from a form.
+type ProfileRead = { context: ReadySchoolContext; actor: Extract<PortalActor, { status: "ready" }> };
 
 const assignmentSchema = z.object({
   starts_on: z.iso.date(),
@@ -13,12 +18,13 @@ const assignmentSchema = z.object({
   academic_years: z.object({ id: z.uuid(), name: z.string() }),
 });
 
-export async function loadTeacherProfile() {
-  const actor = await loadPortalActor("teacher");
+export async function loadTeacherProfile(read?: ProfileRead) {
+  const actor = read?.actor ?? await loadPortalActor("teacher");
   if (actor.status !== "ready") return { status: actor.status } as const;
-  const context = await getSchoolContext();
+  const context = read?.context ?? await getSchoolContext();
   if (
     context.status !== "ready" ||
+    actor.mode !== "teacher" ||
     context.school.id !== actor.schoolId ||
     !context.roles.includes("teacher")
   )
@@ -76,8 +82,8 @@ export async function loadTeacherProfile() {
   }
 }
 
-export async function loadAdminProfile() {
-  const context = await getSchoolContext();
+export async function loadAdminProfile(verifiedContext?: ReadySchoolContext) {
+  const context = verifiedContext ?? await getSchoolContext();
   if (context.status !== "ready" || !context.roles.includes("school_admin")) {
     return { status: "forbidden" } as const;
   }

@@ -5,6 +5,9 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth-context", () => ({ getSchoolContext: mock.context }));
 vi.mock("@/lib/portal-data", () => ({ loadPortalActor: mock.actor }));
 vi.mock("@/app/login/actions", () => ({ signOut: vi.fn() }));
+vi.mock("@/components/profile-menu", () => ({ ProfileMenu: () => "Account menu" }));
+vi.mock("@/lib/staff-profile-data", () => ({ loadAdminProfile: vi.fn().mockResolvedValue({ status: "unavailable" }) }));
+vi.mock("@/lib/student-profile-data", () => ({ loadStudentProfile: vi.fn().mockResolvedValue({ status: "unavailable" }) }));
 vi.mock("@/components/staff-profile", () => ({
   AdminProfile: () => "Admin profile",
   TeacherProfile: () => "Teacher profile",
@@ -57,7 +60,7 @@ beforeEach(() => {
 });
 it("opens the assigned non-admin workspace by default", async () => {
   expect(await render()).toContain("Fictional Teacher");
-  expect(mock.actor).toHaveBeenCalledWith("teacher", undefined);
+  expect(mock.actor).toHaveBeenCalledWith("teacher", undefined, expect.objectContaining({ status: "ready" }));
 });
 it.each([
   { mode: "school_admin" },
@@ -66,18 +69,19 @@ it.each([
   { child: "bad" },
   { child: ["x", "y"] },
 ])("denies forged or ambiguous role/child requests", async (params) => {
-  expect(await render(params)).toContain("This workspace is not available");
+  expect(await render(params)).toMatch(/This workspace is not available|That workspace is not available/);
   expect(mock.actor).not.toHaveBeenCalled();
 });
-it("keeps admin overview and exposes an explicitly assigned second role", async () => {
+it("requires a workspace choice for multiple roles including Admin", async () => {
   context(["school_admin", "teacher"]);
-  expect(await render()).toContain("Manage school settings");
+  expect(await render()).toContain("How would you like to continue?");
+  expect(await render({ mode: "school_admin" })).toContain("Manage school settings");
   expect(mock.actor).not.toHaveBeenCalled();
   expect(await render({ mode: "teacher" })).toContain("Fictional Teacher");
 });
 it("does not turn role workspace routing into admin access", async () => {
   expect(await render({ view: "timetable", mode: "teacher" })).toContain(
-    "Administrator access required",
+    "Administrator workspace required",
   );
   expect(await render({ view: "my-timetable", mode: "teacher" })).toContain(
     "Personal timetable",
@@ -94,4 +98,13 @@ it("keeps the public preview disconnected from role links", () => {
   );
   expect(html).not.toContain("my-timetable");
   expect(html).not.toContain("teacher workspace");
+});
+
+it("does not choose Teacher automatically for a Teacher/Guardian account", async () => {
+  context(["teacher", "guardian"]);
+  const html = await render();
+  expect(html).toContain("Continue as Teacher");
+  expect(html).toContain("Continue as Parent / Guardian");
+  expect(html).not.toContain("Continue as School Admin");
+  expect(mock.actor).not.toHaveBeenCalled();
 });

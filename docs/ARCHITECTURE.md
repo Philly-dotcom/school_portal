@@ -1,6 +1,6 @@
 # How School Portal fits together
 
-Updated 20 October 2026. This describes the local implementation. Hosted acceptance remains separate. The stack and one-school-first plan have not changed.
+Updated 25 October 2026. This describes the local implementation. Hosted acceptance remains separate. The stack and one-school-first plan have not changed.
 
 ## A request from start to finish
 
@@ -106,6 +106,13 @@ Migration 020 adds announcements. Admin manages school-wide and class notices; t
 
 Migration 021 adds document metadata and the private `school-documents` bucket. It reuses those same current-class permission helpers. The server action reserves metadata, uploads an immutable generated path using the user's credentials, then finalizes a draft. Unfinished entries stay staff-only and can be reviewed or withdrawn. The authenticated download route applies selected-role checks, verifies stored size/hash, and returns an attachment with no-store headers. Storage RLS independently controls the bytes. Restrictive bucket guards prevent unrelated permissive policies from granting overwrite or deletion. Basic PDF checks are not malware scanning; retention and physical cleanup remain live-readiness work. See DOCUMENTS.md for details.
 
-## Overview profiles
+## Shared profiles and workspace navigation
 
-Student and teacher profile loaders resolve the signed-in linked person on the server, then read only that person's school-scoped enrolments or subject assignments through existing RLS. Date labels use the school timezone. Guardian profile details reuse the explicitly granted child list; classroom roster access does not become guardian access. Admin details come from their own saved profile, active membership ID and authenticated email. These displays do not change authorization or add schema. The broader daily dashboard remains unfinished.
+Student and teacher profile loaders resolve the signed-in linked person on the server, then read only that person's school-scoped enrolments or subject assignments through existing RLS. Date labels use the school timezone. Guardian profile details reuse the explicitly granted child list; classroom roster access does not become guardian access. Admin details come from their own saved profile, active membership ID and authenticated email. These displays do not change authorization or add schema. The daily dashboard is implemented; browser acceptance remains open.
+
+
+Every role now uses the same top-right profile menu. The verified membership supplies the available workspace choices; a URL selects a role but cannot grant it. A normal multi-role sign-in reaches the chooser, while a single-role account goes directly to its workspace. Switching uses the existing session and starts at the selected overview without learner/edit parameters. The dropdown is the sole workspace-switching control. Guardian grants are still resolved independently of Teacher access.
+
+The dashboard page reuses the verified context, selected actor and Student/Admin profile promises within that render. There is no cross-request permission cache. Server components may perform user-scoped reads; server actions and SQL still enforce mutations independently. No schema, RLS, authentication provider or dependency changed for the new menu.
+
+Two review items remain: full Teacher/Student profile history is fetched on module pages even with the dropdown closed; legacy management URLs without mode can implicitly select an authorised Admin workspace. These are current limitations to resolve, not completed optimisations. See DOCUMENTS.md REVIEW-01/REVIEW-02.

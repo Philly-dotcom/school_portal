@@ -1,9 +1,11 @@
-import Link from "next/link";
+import { DailyOverview } from "@/components/daily-overview";
+import { Suspense } from "react";
+import type { ReadySchoolContext } from "@/lib/auth-context";
 
 import { ChildSelector } from "@/components/child-selector";
 import { StudentProfile } from "@/components/student-profile";
-import { TeacherProfile } from "@/components/staff-profile";
-import { portalModeLabels as modeLabels, portalHref } from "@/lib/portal-validation";
+import type { loadStudentProfile } from "@/lib/student-profile-data";
+import { portalModeLabels as modeLabels } from "@/lib/portal-validation";
 import type {
   PortalActor,
   PortalMode,
@@ -12,12 +14,15 @@ import type {
 
 export function RoleOverview({
   actor,
-  availableModes,
   schoolName,
+  context,
+  studentProfileRead,
 }: {
   actor: PortalActor;
   availableModes: PortalMode[];
   schoolName: string;
+  context?: ReadySchoolContext;
+  studentProfileRead?: ReturnType<typeof loadStudentProfile>;
 }) {
   if (actor.status === "unavailable") {
     return (
@@ -52,37 +57,6 @@ export function RoleOverview({
 
   return (
     <>
-      {availableModes.length > 1 && (
-        <section className="content-panel" style={{ marginBottom: 24 }}>
-          <div className="section-heading">
-            <div>
-              <h2>Choose your workspace</h2>
-              <p className="muted" style={{ marginTop: 8 }}>
-                Your account has more than one role. Choose the view you want
-                to use.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3" style={{ marginTop: 18 }}>
-            {availableModes.map((mode) => {
-              const active =
-                actor.mode === mode;
-
-              return (
-                <Link
-                  key={mode}
-                  href={`/dashboard?view=overview&mode=${mode}`}
-                  className={`button ${active ? "primary" : "secondary"}`}
-                >
-                  {modeLabels[mode]}
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
       {actor.status === "empty" ? (
         <section className="content-panel">
           <div className="section-heading">
@@ -97,42 +71,26 @@ export function RoleOverview({
           </div>
         </section>
       ) : (
-        <section className="content-panel">
+        <section className={`content-panel daily-profile ${actor.mode === "student" ? "student-overview-heading" : ""}`}>
           <div className="section-heading">
             <div>
-              <h2>{actor.person.fullName}</h2>
+              {actor.mode === "student" ? <h1>Welcome back, {actor.person.fullName}</h1> : <h2>Welcome back, {actor.person.fullName}</h2>}
               <p className="muted" style={{ marginTop: 8 }}>
-                {modeLabels[actor.mode]} workspace
+                {modeLabels[actor.mode]} workspace · {schoolName}
               </p>
             </div>
 
             <span className="phase-tag">{modeLabels[actor.mode]}</span>
           </div>
 
-          {actor.mode === "teacher" && (
-            <TeacherProfile />
-          )}
-
           {actor.mode === "student" && (
-            <StudentProfile />
+            <Suspense fallback={<p role="status">Loading your profile and enrolments...</p>}>
+              <StudentProfile dashboard summaryOnly profileRead={studentProfileRead} read={context ? { context, actor } : undefined} />
+            </Suspense>
           )}
 
           {actor.mode === "guardian" && (
             <div style={{ marginTop: 24 }}>
-              <h3>My profile</h3>
-              <dl className="grid gap-3 sm:grid-cols-2" style={{ marginTop: 12 }}>
-                <div><dt className="muted">Full name</dt><dd>{actor.person.fullName}</dd></div>
-                <div><dt className="muted">School</dt><dd>{schoolName}</dd></div>
-                <div>
-                  <dt className="muted">Linked students</dt>
-                  <dd>
-                    {actor.children.length ? (
-                      <ul>{actor.children.map((child) => <li key={child.id}>{child.fullName}</li>)}</ul>
-                    ) : "No students are linked with portal access. Contact your School Admin."}
-                  </dd>
-                </div>
-              </dl>
-
               <h3 style={{ marginTop: 24 }}>Learner access</h3>
 
               <p className="muted" style={{ marginTop: 8 }}>
@@ -158,38 +116,9 @@ export function RoleOverview({
               )}
             </div>
           )}
-          {(actor.mode !== "guardian" || actor.selectedChild) && (
-            <Link className="button secondary" style={{ marginTop: 20 }}
-              href={portalHref("my-timetable", actor.mode, actor.mode === "guardian" ? actor.selectedChild?.id : null)}>
-              My timetable
-            </Link>
-          )}
-          {(actor.mode !== "guardian" || actor.selectedChild) && (
-            <Link className="button secondary" style={{ marginTop: 20, marginLeft: 12 }}
-              href={portalHref("attendance", actor.mode, actor.mode === "guardian" ? actor.selectedChild?.id : null)}>
-              Attendance
-            </Link>
-          )}
-          {(actor.mode !== "guardian" || actor.selectedChild) && (
-            <Link className="button secondary" style={{ marginTop: 20, marginLeft: 12 }}
-              href={portalHref("homework", actor.mode, actor.mode === "guardian" ? actor.selectedChild?.id : null)}>
-              Homework
-            </Link>
-          )}
-          {(actor.mode !== "guardian" || actor.selectedChild) && (
-            <Link className="button secondary" style={{ marginTop: 20, marginLeft: 12 }}
-              href={portalHref("announcements", actor.mode, actor.mode === "guardian" ? actor.selectedChild?.id : null)}>
-              Announcements
-            </Link>
-          )}
-          {(actor.mode !== "guardian" || actor.selectedChild) && (
-            <Link className="button secondary" style={{ marginTop: 20, marginLeft: 12 }}
-              href={portalHref("documents", actor.mode, actor.mode === "guardian" ? actor.selectedChild?.id : null)}>
-              Documents
-            </Link>
-          )}
         </section>
       )}
+      {actor.status === "ready" && context && <DailyOverview key={`${actor.mode}:${actor.mode === "guardian" ? actor.selectedChild?.id ?? "" : actor.person.id}`} context={context} actor={actor} />}
     </>
   );
 }

@@ -8,8 +8,10 @@ function ProfileUnavailable() {
   );
 }
 
-export async function TeacherProfile() {
-  const profile = await loadTeacherProfile();
+export async function TeacherProfile({
+  read,
+}: { read?: Parameters<typeof loadTeacherProfile>[0] } = {}) {
+  const profile = await loadTeacherProfile(read);
   if (profile.status !== "ready") return <ProfileUnavailable />;
   return (
     <div style={{ marginTop: 24 }}>
@@ -48,32 +50,68 @@ export async function TeacherProfile() {
   );
 }
 
-export async function AdminProfile() {
-  const profile = await loadAdminProfile();
+export async function AdminProfile({
+  context,
+  dashboard = false,
+  detailsOnly = false,
+  headingOnly = false,
+  profileRead,
+}: {
+  context?: Parameters<typeof loadAdminProfile>[0];
+  dashboard?: boolean;
+  detailsOnly?: boolean;
+  headingOnly?: boolean;
+  profileRead?: ReturnType<typeof loadAdminProfile>;
+} = {}) {
+  const profile = await (profileRead ?? loadAdminProfile(context));
+  const details =
+    profile.status !== "ready" ? (
+      <ProfileUnavailable />
+    ) : (
+      <dl className="admin-profile-fields">
+        <div>
+          <dt>Full name</dt>
+          <dd>{profile.fullName}</dd>
+        </div>
+        <div>
+          <dt>Admin reference (school membership ID)</dt>
+          <dd>{profile.reference}</dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{profile.email}</dd>
+        </div>
+        <div>
+          <dt>School</dt>
+          <dd>{profile.schoolName}</dd>
+        </div>
+      </dl>
+    );
+  if (detailsOnly) return details;
   return (
-    <section className="content-panel" style={{ marginBottom: 24 }}>
-      <h2>My profile</h2>
-      {profile.status !== "ready" ? (
-        <ProfileUnavailable />
-      ) : (
-        <dl className="grid gap-4 sm:grid-cols-2" style={{ marginTop: 16 }}>
-          <div>
-            <dt className="muted">Full name</dt>
-            <dd>{profile.fullName}</dd>
-          </div>
-          <div>
-            <dt className="muted">Admin reference (school membership ID)</dt>
-            <dd className="break-all">{profile.reference}</dd>
-          </div>
-          <div>
-            <dt className="muted">Email</dt>
-            <dd className="break-all">{profile.email}</dd>
-          </div>
-          <div>
-            <dt className="muted">School</dt>
-            <dd>{profile.schoolName}</dd>
-          </div>
-        </dl>
+    <section
+      className={dashboard ? "admin-overview-heading" : "content-panel"}
+      style={{ marginBottom: 24 }}
+    >
+      {dashboard && (
+        <>
+          <p className="eyebrow">SCHOOL ADMINISTRATION</p>
+          <h1>
+            {profile.status === "ready" &&
+            profile.fullName !== "Name not recorded"
+              ? `Welcome back, ${profile.fullName}`
+              : "Your school overview"}
+          </h1>
+          <p className="muted">
+            {context?.school.name} · Your school at a glance
+          </p>
+        </>
+      )}
+      {!headingOnly && (
+        <details className="admin-profile-disclosure" open={!dashboard}>
+          <summary>My profile</summary>
+          {details}
+        </details>
       )}
     </section>
   );

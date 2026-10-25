@@ -4,27 +4,22 @@ School Portal is a portal for one school, built so we can add more schools later
 
 This project lives at `C:\Users\moses\Documents\School_portal`. Its database, accounts and decisions belong to this project only.
 
-## Where we are — 20 October 2026
+## Where we are — 25 October 2026
 
-We are in **Phase 3: Daily Operations**. Role workspaces, personal timetables, attendance, view-only homework, announcements and private PDF documents are implemented. All four roles now have read-only overview profiles. The daily dashboard still needs completion and redesign after testing.
+We are in **Phase 3: Daily Operations**. Role workspaces, personal timetables, attendance, view-only homework, announcements and private PDF documents are implemented. All four roles now have a shared top-right profile dropdown. Multi-role accounts choose their workspace after login and switch from that dropdown; single-role accounts open directly. The daily dashboard now has role-specific quick actions and authorized daily cards; its new browser acceptance checks remain open.
 
 Migrations through **021 are user-confirmed applied**. Do not rerun them. The user completed 13 hosted document checks; School B isolation is deferred because School B is not registered. The remaining tests and known defects are in the [combined Phase 3 checklist](docs/DOCUMENTS.md#remaining-phase-3-checklist).
 
-The latest local checks passed **lint, TypeScript, 482 tests in 53 files and production build**. Hosted checks remain separate. Start with [the current checkpoint](docs/RESUME.md) or [verification status](docs/VERIFICATION.md).
+The latest local checks passed **lint, TypeScript, 510 tests in 56 files and production build**. Hosted checks remain separate. Start with [the current checkpoint](docs/RESUME.md) or [verification status](docs/VERIFICATION.md).
 
-| Area | What is available | What still needs attention |
+| Area | Current position | Remaining boundary |
 | --- | --- | --- |
-| Sign-in and school access | Password login, verified school membership and role checks | Full session and hosted permission tests; administrator recovery |
-| People & access | Member roles/status, prepared invitations, invitation history and bulk preparation | Email delivery is off; invitation and recovery delivery remain untested |
-| Academic setup | Years, terms, grades, subjects, classes and name corrections | Review test-data dates; date/relationship corrections and year rollover are not built |
-| School registers | Students, teachers, guardians, family links and enrollment | Hosted tests of corrections, login links and guardian access |
-| Enrollment | Transfers and withdrawals that keep placement history | Hosted workflow and simultaneous-save tests |
-| Teaching assignments | Dated creation/listing, ending/replacing with history; 014 applied and testing confirmed by you | Broader corrections and timetable handover remain separate |
-| Timetable | Admin planning and read-only current-week views for linked teachers, students and guardians | Hosted role, date and conflict checks |
-| Attendance | Daily registers, teacher history, admin corrections with a reason, learner/guardian history | Hosted stale saves, transfers and permission checks; 018 applied by you |
-| Homework | Draft, publish, edit and withdraw; original-publication audience; no learner submissions; 019 applied and homework working, as confirmed by you | Finish publication, role access, transfer and revoked-access checks |
-| Announcements | School-wide and class notices, drafts, publication and withdrawal; 020 applied | Finish announcement browser/security checks |
-| Documents | Private PDF drafts, publication, withdrawal and authenticated downloads; current-class readers | Hosted School B isolation and separately recorded anonymous/public checks remain |
+| Foundation and account access | Auth, membership roles, invitations and explicit acceptance implemented | Email/recovery delivery remains off or unverified; live security and deployment gates are separate. |
+| Academic setup and registers | Years/classes/subjects, people, account links, grants and corrections implemented | Broader date/relationship editors, rollover and imports are not agreed scope. Preserve recorded user tests. |
+| Enrolment, teaching and timetable | Dated history-preserving workflows, searchable choices and personal timetables implemented | Keep current/future date rules; hosted School B isolation remains open. |
+| Attendance, homework, announcements and PDFs | Implemented; P3-01–P3-30 and original document checks user-reported passed | Those passes predate the latest shared-menu revision; do targeted regressions, not a blanket reset. |
+| Daily dashboard and profiles | All-role dashboard UI and top-right profiles implemented; local checks pass | Latest browser/mobile/error acceptance, production timing and two code-review follow-ups remain. |
+| Phase 3 sign-off | Not complete | School B isolation, remaining checklist and explicit acceptance are required before Phase 4. |
 
 Teacher, student and guardian workspaces now use linked school records. Adding a student record does not create a login, and recording a family relationship does not automatically give a guardian access.
 

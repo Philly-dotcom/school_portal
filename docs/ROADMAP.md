@@ -1,12 +1,12 @@
 # Delivery roadmap
 
-Updated 20 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
+Updated 25 October 2026. Older dated reports describe earlier work; they are not instructions to repeat setup.
 
 ## Current position
 
-You have confirmed applying migrations through 021 and completing 13 hosted document checks. The document School B isolation check remains deferred because that school is not registered. We are in Phase 3; the remaining module tests, known defects and daily dashboard completion/redesign are tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). Do not repeat applied migrations or completed document checks.
+You have confirmed applying migrations through 021 and completing 13 hosted document checks. The document School B isolation check remains deferred because that school is not registered. We are in Phase 3; the remaining acceptance, two code-review follow-ups and dashboard sign-off are tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). Do not repeat applied migrations or completed document checks.
 
-**Phase 3: Daily Operations**, with Phase 1 live readiness and parts of Phase 2 acceptance still open. The move into Phase 3 was explicitly authorized by the user; it did not close those earlier checks. Preserve the original six-phase plan, one-school-first experience and school-aware ownership.
+**Phase 3: Daily Operations**, with core implementation complete and final acceptance still open. Phase 1 live-readiness work and any Phase 2 evidence not covered by recorded cases remain separate. The move into Phase 3 was explicitly authorized by the user; it did not close those earlier checks. Preserve the original six-phase plan, one-school-first experience and school-aware ownership.
 
 ## Phase 1: foundation
 
@@ -24,13 +24,13 @@ Still open before live use:
 
 | Area | Local implementation | Remaining work / evidence |
 | --- | --- | --- |
-| Academic structure | Years, terms, grades, subjects, classes; versioned name corrections | Verify correction workflows and decide how required date/relationship mistakes should be handled; name editing does not change those fields. |
+| Academic structure | Years, terms, grades, subjects, classes; versioned name corrections | Retain recorded correction tests; decide how required date/relationship mistakes should be handled; name editing does not change those fields. |
 | School registers | Students, teachers, guardians; name/reference corrections | Verify corrections and capacity behavior in the intended school dataset. |
-| Relationships and access | Guardian relationships, explicit child grants, versioned login links, dated role-scoped reads | Hosted verification of grants/linking, suspension and cross-school denial. Role workspaces now exist in Phase 3. |
-| Enrollment | Dated placement, history-preserving transfers/withdrawals and overlap protection | Hosted lifecycle and simultaneous-save tests, including future transfers. |
+| Relationships and access | Guardian relationships, explicit child grants, versioned login links, dated role-scoped reads | Relevant role/grant checks have user-reported passes in P3-01–P3-06; hosted cross-school denial and latest navigation regression remain. |
+| Enrollment | Dated placement, history-preserving transfers/withdrawals and overlap protection | Retain recorded lifecycle and future-transfer passes. Any standalone enrolment concurrency case without its own evidence remains unverified; do not infer it from attendance conflict tests. |
 | Teaching assignments | Dated creation/listing and versioned end/replacement with retained history; 014 application and testing user-confirmed | Subject/class/start-date corrections remain outside this editor; timetable changes must be reviewed separately. |
-| Timetable foundations | Admin creation/listing/filtering/removal with clash checks | Hosted removal/conflict/concurrency checks. Role-facing daily use belongs to Phase 3. |
-| Capacity | All Phase 2 display lists have pagination; academic, teaching, guardian-link, enrollment, account-link and timetable choices are searchable | 015 and 016 application is user-confirmed. Newer browser checks remain outstanding. |
+| Timetable foundations | Admin creation/listing/filtering/removal with clash checks | P3-07–P3-10 are user-reported passed; keep those results. Role-facing timetable views are implemented in Phase 3. |
+| Capacity | All Phase 2 display lists have pagination; academic, teaching, guardian-link, enrollment, account-link and timetable choices are searchable | 015 and 016 application is user-confirmed. Use recorded case results; do not infer a fresh outstanding test from an older guide. |
 
 Existing hosted evidence: the user tested academic setup, school registers and teaching assignments. Later synthetic admin creation workflows, including timetable lessons, were exercised in the connected app. Those checks do not prove all hosted policies, edits or concurrent operations.
 
@@ -50,15 +50,15 @@ Academic CSV imports are **optional and undecided**. They appeared in an expande
 
 ### Next sequence
 
-The planned Phase 2 search conversions are implemented and migrations 015–016 are confirmed applied. Correction scope and acceptance checks remain recorded above while user-authorized Phase 3 development continues. The user is now working through the remaining browser checks.
+The planned Phase 2 search conversions are implemented and migrations 015–016 are confirmed applied. Correction scope and acceptance checks remain recorded above while user-authorized Phase 3 development continues. The current acceptance tracker is DOCUMENTS.md; the latest code passed all 510 local tests and production build.
 
 ## Phase 3: daily operations
 
-Built: role workspaces and child selection, current-week personal timetables (017), daily attendance and permitted history (018), and view-only homework with draft/publication/withdrawal (019). Migrations 017–019 are user-confirmed applied, and the user reports homework working. Remaining tests are in progress. Homework uses the original-publication enrollment audience, not current-class access. No learner submissions were added.
+Built: role workspaces and child selection, current-week personal timetables (017), daily attendance and permitted history (018), and view-only homework with draft/publication/withdrawal (019). Migrations 017–019 are user-confirmed applied, and the user reports homework working. P3-01–P3-30 are user-reported passed; latest navigation regressions and cross-school isolation remain open. Homework uses the original-publication enrollment audience, not current-class access. No learner submissions were added.
 
-Announcements and Documents are implemented, with migrations 020 and 021 user-confirmed applied. Both modules are linked from the dashboard sidebar and role overview. The user's completed document checks are recorded in DOCUMENTS.md; remaining announcement and other module checks stay separate. Read-only profiles now exist for all four roles.
+Announcements and Documents are implemented, with migrations 020 and 021 user-confirmed applied. Both modules are linked from the dashboard sidebar and role overview. The user's completed document checks are recorded in DOCUMENTS.md; the recorded module passes should not be reset by older guide wording. Shared top-right profiles and a multi-role workspace chooser now exist for all four roles.
 
-Remaining: complete the combined Phase 3 checklist, resolve reproduced defects, verify hosted cross-school isolation once the test setup is agreed, then complete and redesign the daily dashboard as agreed with the user. No Phase 4 work starts merely because the local modules are present. See RESUME.md for the checkpoint and DOCUMENTS.md for the working checklist.
+Remaining: complete the combined Phase 3 checklist, resolve reproduced defects, verify hosted cross-school isolation once the test setup is agreed, then accept the implemented daily-dashboard UI against its new role/browser checklist. No Phase 4 work starts merely because the local modules are present. See RESUME.md for the checkpoint and DOCUMENTS.md for the working checklist.
 
 ## Phase 4: academic performance
 

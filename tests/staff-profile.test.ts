@@ -52,6 +52,24 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 
+it("shares one verified profile read between header identity details and greeting", async () => {
+  const profileRead = loadAdminProfile();
+  const header = renderToStaticMarkup(await AdminProfile({ detailsOnly: true, profileRead }));
+  const heading = renderToStaticMarkup(await AdminProfile({ dashboard: true, headingOnly: true, profileRead }));
+  expect(header).toContain("Fictional Admin"); expect(header).toContain("admin@example.invalid");
+  expect(heading).toContain("Welcome back, Fictional Admin");
+  expect(heading).not.toContain("admin-profile-disclosure");
+  expect(mocks.user).toHaveBeenCalledTimes(1);
+});
+
+it("greets the verified admin without removing profile details or fetching them twice", async () => {
+  const html = renderToStaticMarkup(await AdminProfile({ dashboard: true }));
+  expect(html).toContain("Welcome back, Fictional Admin");
+  expect(html).toContain("admin@example.invalid"); expect(html).toContain("school membership ID");
+  expect(mocks.user).toHaveBeenCalledTimes(1);
+  expect(html).not.toContain('<details class="admin-profile-disclosure" open');
+});
+
 it("scopes teacher subjects to their own linked record and school, deduplicating class assignments", async () => {
   replies.teaching_assignments.data = [assignment, assignment, {
     ...assignment, starts_on: "2027-01-18", ends_on: "2027-11-26",
@@ -119,7 +137,7 @@ it("shows only the guardian's granted learners without selecting a child automat
       selectedChild: null,
     },
   }));
-  for (const value of ["Full name", "Fictional Guardian", "Fictional School", "Linked students", "Granted Student"]) {
+  for (const value of ["Fictional Guardian", "Fictional School", "Learner access", "Granted Student"]) {
     expect(html).toContain(value);
   }
   expect(html).not.toContain("PRIVATE-GU-REF");

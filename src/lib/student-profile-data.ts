@@ -1,10 +1,15 @@
 import "server-only";
 
 import { z } from "zod";
-import { getSchoolContext } from "@/lib/auth-context";
+import { getSchoolContext, type ReadySchoolContext } from "@/lib/auth-context";
 import { loadPortalActor } from "@/lib/portal-data";
+import type { PortalActor } from "@/lib/portal-validation";
+
 import { schoolDate } from "@/lib/school-date";
 import { createClient } from "@/lib/supabase/server";
+
+// Server-only input from this page render; never persisted or accepted from a form.
+type ProfileRead = { context: ReadySchoolContext; actor: Extract<PortalActor, { status: "ready" }> };
 
 const enrollmentSchema = z.object({
   id: z.uuid(),
@@ -20,13 +25,14 @@ const enrollmentSchema = z.object({
 
 export type StudentEnrollment = z.infer<typeof enrollmentSchema>;
 
-export async function loadStudentProfile() {
+export async function loadStudentProfile(read?: ProfileRead) {
   // Resolve identity on the server; never accept a learner ID from the page URL.
-  const actor = await loadPortalActor("student");
+  const actor = read?.actor ?? await loadPortalActor("student");
   if (actor.status !== "ready") return { status: actor.status } as const;
-  const context = await getSchoolContext();
+  const context = read?.context ?? await getSchoolContext();
   if (
     context.status !== "ready" ||
+    actor.mode !== "student" ||
     context.school.id !== actor.schoolId ||
     !context.roles.includes("student")
   )

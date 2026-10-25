@@ -1,8 +1,10 @@
 # Linking register records to sign-ins (migration 010)
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 School registers (`students`, `teachers`, `guardians`) are separate from sign-in accounts. Migration `202610020010` adds an optional `membership_id` to each, so a person's *record* can be tied to their *login*. Until a record is linked, that person sees none of its personal or relationship data.
 
-## What each linked person can read (read-only; all writes stay administrator-only)
+## What each linked person can read (register access; linking and register writes stay administrator-only)
 
 | Role | Sees |
 | --- | --- |
@@ -23,11 +25,11 @@ New tables that hold learner data must follow the same pattern: no policy `using
 
 Policy performance note: helpers run per row. This is fine for a single school; if registers grow into the tens of thousands, review query plans (`explain analyze`) before adding more modules.
 
-Teacher, student and guardian workspaces are now implemented, including read-only overview profiles. They use authenticated queries and server-resolved linked identities. Guardian learner selection stays explicit. Basic role-session checks have passed; remaining acceptance is tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist).
+Teacher, student and guardian workspaces are now implemented, including read-only top-right profiles. They use authenticated queries and server-resolved linked identities. Guardian learner selection stays explicit. Basic role-session checks have passed; remaining acceptance is tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist).
 
 ## Pre-deployment repair rules (2026-10-02)
 
-Migration 010 is user-confirmed applied, followed by 013's email-return-type fix. Hosted linking and role-specific access still need testing. `link_register_to_member` requires `expected_version`: an old form fails with 40001 instead of overwriting a newer edit. Reload and review before retrying. Both SQL and the UI require an active same-school membership with the matching role. Existing inactive links remain visible for removal. The selector shows verified Auth email and the full membership ID alongside the editable display name, and requires confirmation.
+Migration 010 is user-confirmed applied, followed by 013's email-return-type fix. Relevant linking/grant and role checks are recorded in the combined checklist; cross-school and latest navigation acceptance remain open. `link_register_to_member` requires `expected_version`: an old form fails with 40001 instead of overwriting a newer edit. Reload and review before retrying. Both SQL and the UI require an active same-school membership with the matching role. Existing inactive links remain visible for removal. The selector shows verified Auth email and the full membership ID alongside the editable display name, and requires confirmation.
 
 Guardian relationships remain historical family records. New and existing rows have `access_enabled=false`; login linking alone does not grant access to children. The School Admin explicitly grants/revokes child access through the versioned, audited `set_guardian_access` RPC and the Guardian links form. Removing that grant preserves the relationship and immediately removes derived child access. Reactivation restores only still-granted relationships.
 
@@ -35,10 +37,10 @@ Teacher rosters and enrollment reads require today's school-local date within BO
 
 ## Searchable account choices — migration 015
 
-Added on 5 October 2026; you have confirmed applying migration 015. Do not reapply it. Earlier migrations stay intact. Browser verification remains on hold.
+Added on 5 October 2026; you have confirmed applying migration 015. Do not reapply it. Earlier migrations stay intact. Use the current combined checklist for recorded results and remaining regressions.
 
 Open **Link sign-in**, enter a name or verified email and press **Search choices**. A blank search browses eligible accounts, 25 at a time. Accounts already linked to another record of this type are excluded in the database before paging. An existing inactive or wrong-role link remains visible for deliberate removal, but is not offered as a new eligible choice. Choose **No linked login**, confirm, then save to unlink.
 
 Searching grants no access and sends no email. The existing save RPC still checks role, ownership and record version; a search result can become stale if another admin changes an account. Current link IDs remain in the form payload while search is busy, preventing an omitted disabled selector from being interpreted as an unlink.
 
-The SQL search checks active School Admin authority and target-record ownership, allowlists the three person record types, bounds page/text input and reveals email only when verified. Local tests cover paging beyond 500, ownership exclusion, school/role denial and verified-email search. Browser checks are on hold at the user's request.
+The SQL search checks active School Admin authority and target-record ownership, allowlists the three person record types, bounds page/text input and reveals email only when verified. Local tests cover paging beyond 500, ownership exclusion, school/role denial and verified-email search. The earlier testing hold has ended; preserve the recorded passes and use the current checklist.

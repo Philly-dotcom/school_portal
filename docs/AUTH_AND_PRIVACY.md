@@ -1,6 +1,8 @@
 # Auth configuration, security headers and personal-data handling
 
-As of 4 October, migrations 009–013 are user-confirmed applied. Hosted Auth configuration, MFA enforcement and the privacy-cleanup procedure have not been fully verified. The commands below are controlled setup/operational steps, not a checklist to run automatically while reading this guide.
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
+As of 25 October, migrations through 021 are user-confirmed applied. Hosted Auth configuration, MFA enforcement and the privacy-cleanup procedure have not been fully verified. The commands below are controlled setup/operational steps, not a checklist to run automatically while reading this guide.
 
 ## 1. Auth settings are version-controlled (`supabase/config.toml`)
 The file now documents the intended hosted Auth settings: sign-ups off, 12-character minimum enforced by Supabase Auth itself (the form check alone can be bypassed with the public key), refresh-token rotation, confirmed email changes, rate limits, TOTP MFA enabled, and a 24-hour email-link lifetime.

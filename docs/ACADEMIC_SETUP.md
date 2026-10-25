@@ -1,5 +1,7 @@
 # Academic setup: first Phase 2 increment
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 Academic setup supports creation, listing and name corrections. Migration 007 added the name editor; see [Record corrections](RECORD_CORRECTIONS.md). Dates, relationships, rollover and archiving remain outside the editor's scope.
 
 The user reports completing activation and viewing the academic forms. All five creation forms now use specific field labels, example placeholders, buttons and success messages (for example, Subject name / Create subject). This is a presentation change; no additional migration is needed.
@@ -31,6 +33,6 @@ Duplicate names are rejected within their scope, ignoring capitalization and sur
 
 ## Next increments
 
-Registers, guardian links, dated enrollment, teaching assignments and timetable foundations now exist. The next work is verification and the remaining Phase 2 gaps in ROADMAP.md, rather than building those modules again.
+Registers, guardian links, dated enrollment, teaching assignments and timetable foundations now exist. Phase 3 daily operations and dashboards also exist. Use ROADMAP.md and the combined checklist for remaining acceptance, rather than rebuilding these modules.
 
 Hosted write/RLS checks and signed-in browser validation remain necessary after activation. Local database tests exercise real SQL with fictional schools; they do not verify hosted configuration.

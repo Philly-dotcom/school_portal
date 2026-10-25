@@ -1,8 +1,10 @@
 # Record corrections
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 ## Activate
 
-Migration 007 introduced corrections, and the existing test project now has the later migrations through user-confirmed 013. Do not rerun 007 or the earlier Grade 10 repair from this guide. Review the current fictional records and use the checks below to verify the editors.
+Migration 007 introduced corrections, and the existing test project now has the later migrations through user-confirmed 021. Do not rerun 007 or the earlier Grade 10 repair from this guide. Review the current fictional records and use the checks below to verify the editors.
 
 Refresh Academic setup or School registers (restart/rebuild if using a production preview). Each academic/person record has an **Edit [name]** control and specific input labels. Academic records allow name corrections. Students, teachers and guardians allow full-name and school-reference corrections.
 
@@ -23,4 +25,4 @@ The database RPC validates active admin access, an allowlisted record type, scho
 
 Audit events record actor, record ID, field names and version numbers; they do not copy names or references into logs. This is traceability, not a complete version-history/undo feature.
 
-At the time this correction feature was introduced, local checks passed lint, TypeScript, 79 tests across 15 files and production build. For the current 482-test baseline and remaining hosted checks, see [VERIFICATION.md](VERIFICATION.md). Database tests exercise all eight record types and preserve full enrollment, teaching assignment and guardian-link rows across edits. Hosted RPC/RLS behavior and signed-in browser testing of the editors remain pending.
+At the time this correction feature was introduced, local checks passed lint, TypeScript, 79 tests across 15 files and production build. For the current 510-test baseline and remaining hosted checks, see [VERIFICATION.md](VERIFICATION.md). Database tests exercise all eight record types and preserve full enrollment, teaching assignment and guardian-link rows across edits. Preserve the user-reported editor checks. Cross-school RPC/RLS acceptance remains open; see the current combined checklist.

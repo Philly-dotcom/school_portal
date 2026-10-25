@@ -3,11 +3,11 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { listPage, listPageSize } from "@/lib/list-pagination";
 import type { PortalActor } from "@/lib/portal-validation";
-import { getSchoolContext } from "@/lib/auth-context";
+import { getSchoolContext, type ReadySchoolContext } from "@/lib/auth-context";
 import { schoolDate } from "@/lib/school-date";
 
-async function emptyTimetableMessage(actor: Extract<PortalActor, { status: "ready" }>) {
-  const context = await getSchoolContext();
+async function emptyTimetableMessage(actor: Extract<PortalActor, { status: "ready" }>, verifiedContext?: ReadySchoolContext) {
+  const context = verifiedContext ?? await getSchoolContext();
   if (context.status !== "ready" || context.school.id !== actor.schoolId || !context.roles.includes(actor.mode)) {
     return "No lessons were returned. Your current placement could not be checked; please reload.";
   }
@@ -51,6 +51,7 @@ const lessonSchema = z.object({
 export async function loadMyTimetable(
   actor: Extract<PortalActor, { status: "ready" }>,
   rawPage?: string | string[],
+  verifiedContext?: ReadySchoolContext,
 ) {
   const page = listPage(rawPage);
   if (actor.mode === "guardian" && !actor.selectedChild) return null;
@@ -72,7 +73,7 @@ export async function loadMyTimetable(
       hasNext: result.data.length > listPageSize,
       emptyMessage: result.data.length === 0
         ? page === 1
-          ? await emptyTimetableMessage(actor)
+          ? await emptyTimetableMessage(actor, verifiedContext)
           : "No lessons were found on this page. Return to the previous page."
         : null,
     };

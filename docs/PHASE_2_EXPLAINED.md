@@ -1,17 +1,8 @@
-# School Portal: Phase 2 explained
+# Phase 2: what was built and why
 
-> Learning reference retained from Phase 2. For current migration status, tests and next steps, use [RESUME.md](RESUME.md) and [the Phase 3 checklist](DOCUMENTS.md#remaining-phase-3-checklist). Dated pending-work notes below are historical.
+Updated 25 October 2026. This remains the learning guide for Academic Setup. The project is now in Phase 3 acceptance, not Phase 2 development. Academic/register workflows, searchable account links and timetable choices are implemented. Migrations through 021 are user-confirmed applied, including searches 015 and 016. The latest local check passed ESLint, TypeScript, 510 tests in 56 files and production build.
 
-Status reviewed on **5 October 2026**.
-
-> Later update on 5 October: account-link search is implemented and migration 015 application is user-confirmed. Timetable search is also implemented locally; new migration 016 still needs hosted application. Browser checks remain on hold. The detailed explanation below records the earlier checkpoint, so its unfinished search items describe that earlier state. See [the current resume notes](RESUME.md) for the latest handover.
-
-
-This document brings the Phase 2 work into one place: what I built, why it was needed, how the pieces connect, and what remains before we can call this phase complete. It describes the current project, rather than proposing a new architecture.
-
-**We are still in Phase 2 — Academic Setup.** The main admin workflows are implemented. The remaining development is mainly searchable account-linking and timetable choices, followed by the remaining acceptance checks and a decision about the correction workflows the first school needs. Passing local tests does not, by itself, close the phase.
-
-You have confirmed applying migration 014 and completing the earlier pending tests with fictional records. That work counts. The newer search and pagination controls still need the browser checks you said you would handle. Detailed evidence of hosted security and simultaneous changes is a separate item.
+This guide explains the Phase 2 design without claiming all hosted or launch gates are closed. Use [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for current case results and [RESUME.md](RESUME.md) for the next step. The original dated explanation is [archived](../archive/2026-10/docs-before-20261025-reconciliation/docs/PHASE_2_EXPLAINED.md).
 
 ## 1. What Phase 2 was meant to achieve
 
@@ -23,7 +14,7 @@ The original scope was students, teachers, grades, classes, subjects, guardian l
 - Which guardians are linked to a learner, and which are allowed to see that learner's information?
 - When are classes scheduled, and does the timetable contain clashes?
 
-Academic years, enrollment dates and teaching history support those answers. They are part of making academic setup reliable. Attendance, marks and fees are still later-phase work.
+Academic years, enrollment dates and teaching history support those answers. They are part of making academic setup reliable. Attendance was subsequently implemented in Phase 3; marks and fees still belong to later phases.
 
 The design remains **one school first, with school ownership built in**. We have not added a platform-owner dashboard, subscriptions or automated school onboarding.
 
@@ -154,7 +145,7 @@ Back-to-back lessons are permitted. Removing a lesson requires confirmation and 
 
 **Why:** timetable correctness must hold even when another lesson is on a different page or two admins submit forms at almost the same time. Checking only the rows currently visible in the browser would be unreliable.
 
-**Current limits:** this is the admin scheduling foundation. Teacher, learner and guardian timetable screens belong to daily operations in Phase 3. Holiday exceptions, rotating weeks, room scheduling and automatic timetable generation are not included. Shared teaching responsibility does not yet provide a special shared-lesson scheduling model.
+**Phase 2 boundary:** this section describes the admin scheduling foundation. Teacher, learner and guardian timetable screens have since been implemented in Phase 3. Holiday exceptions, rotating weeks, room scheduling and automatic timetable generation are not included. Shared teaching responsibility does not yet provide a special shared-lesson scheduling model.
 
 ### Safe corrections, history and audit records
 
@@ -174,7 +165,7 @@ Academic, teaching, guardian-link and enrollment forms use searchable choices wi
 
 Timetable filtering now happens in the database **before** pagination. A filtered page therefore represents the chosen assignment rather than a filter applied to one incomplete page. An empty day on the current page is not presented as proof that the whole day is free.
 
-**Still unfinished:** sign-in account-linking choices and timetable assignment choices retain their 500-choice guards. Those guards prevent misleading incomplete selection, but can block normal work at a larger school. They are the next development items.
+**Completed follow-up:** account-link choices and timetable assignment choices now use on-demand searches through migrations 015 and 016. They no longer depend on a 500-choice catalogue.
 
 ## 4. How the academic records relate
 
@@ -196,7 +187,7 @@ flowchart TD
 
 School ownership applies throughout, not just to the academic-year branch drawn here. Database relationships prevent linking a record from School A to a record from School B. RLS controls which records each caller can read or change.
 
-The current UI is mainly for School Admin. Database access rules also account for linked teachers, students and guardians, including dated placement/responsibility and explicit child grants. That does not mean their full role-specific screens have already been built.
+Phase 2 management screens are for School Admin. Phase 3 now provides linked Teacher, Student and Guardian workspaces, with dated placement/responsibility checks and explicit child grants.
 
 ## 5. Database changes made during this work
 
@@ -216,10 +207,12 @@ Migrations are the ordered history of schema and permission changes. They remain
 | 012 — audit history and cleanup | Restricted correction history and audit/privacy maintenance. |
 | 013 — linkable-members email type | Fix a database return-type mismatch that prevented the register account-link query from working. |
 | 014 — teaching assignment lifecycle | End or replace a teacher while retaining history. |
+| 015 — register member search | Search eligible sign-in links with ownership and role checks. |
+| 016 — timetable assignment search | Search eligible dated assignments without a capped catalogue. |
 
 Migrations 001–002 established the earlier foundation and account management. They remain part of the full chain.
 
-You have confirmed applying migrations through 014. **Do not rerun them because they appear in this document.** The latest pagination and search changes do not require a migration after 014.
+You have confirmed applying migrations through 021. **Do not rerun them because they appear in this document.** Search functionality uses 015 and 016; later migrations support Phase 3.
 
 The 013 defect was reproduced in a local SQL test before being fixed. It was a query return-type problem, not a reason to recreate school records or broaden permissions.
 
@@ -260,7 +253,7 @@ Email remains disabled by agreement. Saving SMTP settings did not make delivery 
 
 ## 8. What has been tested, and what that proves
 
-The latest recorded full check, after the register search changes on 5 October, passed **lint, TypeScript, 206 tests across 30 files, and the production build**. I have not rerun those checks merely to write this document.
+At the 5 October checkpoint, the full check passed **lint, TypeScript, 206 tests across 30 files, and the production build**. I have not rerun those checks merely to write this document.
 
 | Check | What it helps establish | What it does not establish |
 | --- | --- | --- |
@@ -274,73 +267,29 @@ The last recorded production-mode browser run on 4 October passed all six tests.
 
 Connected admin creation/read checks were performed earlier, and you reported completing the pending fictional-data tests after 014. I am not treating those as untested. However, that broad confirmation does not identify every separate-role, cross-school or concurrent-save scenario. The evidence should say exactly what was checked before final acceptance.
 
-## 9. What remains before Phase 2 is complete
+## 9. Acceptance and remaining boundaries
 
-### A. Finish the two remaining selection workflows
+The account-link and timetable search conversions are complete. The user reported Phase 2 fictional-data testing, and P3-01–P3-30 now record relevant role, timetable, lifecycle and concurrency passes. Preserve those results rather than treating older to-do lists as current failures.
 
-| Remaining development | What completion should look like |
-| --- | --- |
-| Searchable sign-in account linking | Find eligible same-school, matching-role memberships without loading a capped complete list. Preserve existing links, show inactive links for deliberate unlinking, and never offer an account already owned by another record of that type. Keep confirmation and stale-version checks. |
-| Searchable timetable assignment choices and filter | Find assignments on demand with enough teacher, subject, class, year and date context to choose correctly. Retain selected/filter values across pages. Keep database conflict checks and removal safeguards unchanged. |
+Hosted School A/School B isolation remains outstanding and user-owned. Latest profile/chooser navigation also needs targeted browser acceptance. The current case list and evidence boundaries are in DOCUMENTS.md and VERIFICATION.md; this explanation is not a second checklist.
 
-These are targeted extensions of the existing design. They do not require a new platform or a redesign of the school model.
+Broad date/relationship editing, first-day replacement, undo, promotion and rollover remain outside the existing editors. Agree a support/correction workflow and pilot capacity before real-school use. The earlier mistaken academic-year dates were repaired with approval on 9 October; that repair is historical, not an instruction to alter the current records again.
 
-### B. Complete the newer browser checks
-
-You are handling these checks. The useful cases are:
-
-- Search, select an item, change the search or result page, and confirm the chosen item remains selected.
-- Choose a class and confirm the year/date information is correct.
-- Transfer a learner and confirm the destination choices stay within that year and exclude the current class.
-- Confirm withdrawal does not require choosing a destination class.
-- Navigate beyond the first page of each list without losing filters or related labels.
-- Save, refresh and confirm the expected record and history remain visible.
-
-Once the two remaining selectors are converted, include their account-eligibility and timetable-filter behavior in this review.
-
-### C. Record the remaining hosted security and history evidence
-
-Use only fictional schools and accounts. Keep any earlier scenario results that are already recorded; fill the gaps rather than rerunning everything without a reason.
-
-We need explicit outcomes for denied **reads and writes** across two schools; non-admin and suspended accounts; guardian grants and their removal; guessed record IDs/direct function calls; stale forms; future-dated access; and simultaneous conflicting changes from separate sessions.
-
-This matters because a successful admin save does not prove that an unauthorized caller would be refused. Similarly, migration success does not prove every hosted workflow.
-
-### D. Agree the correction boundary and pilot size
-
-We should decide which date or relationship mistakes the first school must be able to correct through the portal. Name corrections, transfers and teacher replacements already have defined behavior. Broader edits, first-day mistakes and undo do not.
-
-For each required case, either agree a controlled workflow or explicitly defer it with an understood support procedure. Do not quietly add general deletion, year rollover or promotion to Phase 2.
-
-We also need a representative fictional dataset and an agreed pilot size. Earlier notes flagged a year named 2027 with dates extending into 2030 and a grade named Thapelo. Review their current state before using them as acceptance examples; do not automatically delete or rename them.
-
-### E. Accept the phase explicitly
-
-```mermaid
-flowchart TD
-    A[Finish account-link and timetable search] --> B[Review new controls in the connected browser]
-    B --> C[Close gaps in hosted permission and history evidence]
-    C --> D[Agree corrections, pilot limits and deferred items]
-    D --> E[School Admin setup workflows accepted]
-    E --> F[Phase 2 complete]
-    F --> G[Begin agreed Phase 3 daily operations]
-```
-
-Phase 2 is complete when the admin can maintain the agreed academic setup reliably, the school boundaries and history rules have sufficient evidence, normal pilot-sized work is not unexpectedly blocked by choice limits, and you accept the workflows. A passing build alone is not that acceptance.
+Phase 3 development was authorised without declaring every earlier live-readiness gate closed. Explicit phase acceptance, email/recovery, security policy and operational readiness remain separate decisions.
 
 ## 10. What stays outside Phase 2
 
 | Later phase or decision | Work deliberately left for later |
 | --- | --- |
-| Phase 3 — Daily Operations | Attendance, role-facing timetables, view-only homework, announcements and private PDF documents. Confirm document upload permissions first. |
+| Phase 3 — Daily Operations | Attendance, role-facing timetables, view-only homework, announcements and private PDF documents. Upload rules are now confirmed: Admin school/class PDFs, assigned Teachers class PDFs; learners and permitted Guardians download only. |
 | Phase 4 — Academic Performance | Assessments, marks, authorized review, School Admin publication, report cards and performance summaries. |
 | Phase 5 — Finance and Communication | Fees, payment records, balances, parent communication and chosen notification channels. Online payment collection needs its own scope decision. |
-| Phase 6 — Smart Features |n8n automation, AI assistance and advanced analytics after the core workflows are stable... (Yah neh) |
+| Phase 6 — Smart Features | n8n automation, AI assistance and advanced analytics after the core workflows are stable. |
 | Later multi-school platform | Platform-owner administration, onboarding, subscriptions, domains and tenant provisioning. |
 | Optional, Phase 2 requirements | Academic CSV imports, automatic promotions, broad undo/archive tools and advanced scheduling. |
 
 There are also **Phase 1 live-readiness requirements** still to close before real users depend on the portal: invitation/recovery delivery, administrator recovery/security policy, relevant session tests, deployment settings, monitoring, backup/restore rehearsal and school acceptance before real learner data.
 
-Email can remain off while we finish local Phase 2 development, as agreed. That should be recorded as a live-readiness limitation rather than used to claim either that email is complete or that all academic development must stop.
+Email remains off during fictional-data development, as agreed. That should be recorded as a live-readiness limitation rather than used to claim either that email is complete or that all academic development must stop.
 
-The immediate next development step remains **searchable sign-in account linking, followed by timetable assignment search**. This document changes no application code, database records or migration state.
+Those search conversions are complete. The next work is the current Phase 3 review and acceptance checklist; this documentation changes no application code, database records or migration state.

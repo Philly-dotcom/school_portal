@@ -1,6 +1,8 @@
 # Announcements
 
-Added on 8 October 2026 as part of Phase 3. You subsequently confirmed applying migration `202610080020_announcements.sql` in Supabase. Do not rerun it. Admin draft/publish/withdraw/republish passed on 19 October. Reader transitions and other cases still need individual results. Use [DOCUMENTS.md P3-22–P3-26](DOCUMENTS.md#5-announcements--remaining-reader-and-lifecycle-checks) as the working checklist; the list below describes module coverage rather than a second progress tracker.
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
+Added on 8 October 2026 as part of Phase 3. You subsequently confirmed applying migration `202610080020_announcements.sql` in Supabase. Do not rerun it. Admin draft/publish/withdraw/republish passed on 19 October. The user has marked P3-22–P3-26 complete. Hosted School B isolation and the latest shared-navigation regressions remain outstanding. Use [DOCUMENTS.md P3-22–P3-26](DOCUMENTS.md#5-announcements--recorded-reader-and-lifecycle-passes) as the working checklist; the list below describes module coverage rather than a second progress tracker.
 
 ## Who can publish and read
 
@@ -37,17 +39,17 @@ Saves check the record version. If another person has already changed a notice, 
 
 The dashboard, sidebar and role overview link to this module. It uses the existing user-context Supabase client, shared class picker and pagination. No packages, environment variables or elevated credentials were added. Direct client writes to the table are denied; the save function checks permissions again inside the database.
 
-## Browser checks after applying 020
+## Regression scenarios (results live in DOCUMENTS.md)
 
-- [ ] As Admin, create a school-wide draft. It should stay hidden from teachers, students and guardians until published.
-- [ ] Publish it. Check each linked role can read it and only Admin can edit it.
-- [ ] As a teacher, create and publish a notice for a class you currently teach. A different class must not be available to you.
-- [ ] Check a current learner and an explicitly authorized guardian can read the class notice. An unrelated learner or guardian must not see it.
-- [ ] Test a combined teacher/guardian account in both modes. Guardian mode must not reveal other learners from the teacher's roster.
-- [ ] Transfer a fictional learner using dated enrollment. Once the transfer takes effect, the old class notice disappears and the new class's published notices become readable.
-- [ ] End a test teaching assignment, respecting existing timetable constraints. That teacher must lose class-notice editing access; Admin must retain it.
-- [ ] Withdraw a notice, confirm it disappears for readers, then republish it.
-- [ ] Edit the same notice in two tabs. The stale save must fail without overwriting the first change.
-- [ ] Check denied reads and writes with a second fictional school and direct API requests. Local SQL tests do not replace these hosted checks.
+- As Admin, create a school-wide draft. It should stay hidden from teachers, students and guardians until published.
+- Publish it. Check each linked role can read it and only Admin can edit it.
+- As a teacher, create and publish a notice for a class you currently teach. A different class must not be available to you.
+- Check a current learner and an explicitly authorized guardian can read the class notice. An unrelated learner or guardian must not see it.
+- Test a combined teacher/guardian account in both modes. Guardian mode must not reveal other learners from the teacher's roster.
+- Transfer a fictional learner using dated enrollment. Once the transfer takes effect, the old class notice disappears and the new class's published notices become readable.
+- End a test teaching assignment, respecting existing timetable constraints. That teacher must lose class-notice editing access; Admin must retain it.
+- Withdraw a notice, confirm it disappears for readers, then republish it.
+- Edit the same notice in two tabs. The stale save must fail without overwriting the first change.
+- Check denied reads and writes with a second fictional school and direct API requests. Local SQL tests do not replace these hosted checks.
 
 PDF attachments, notifications, read receipts and scheduled publication are not part of this increment. The separate [Documents library](DOCUMENTS.md) is now built under its confirmed upload rules; it does not attach files to notices or homework.

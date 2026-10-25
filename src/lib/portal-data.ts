@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getSchoolContext } from "@/lib/auth-context";
+import { getSchoolContext, type ReadySchoolContext } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/server";
 import { portalModeSchema, selectedChildSchema } from "@/lib/portal-validation";
 import type {
@@ -12,8 +12,10 @@ import type {
 export async function loadPortalActor(
   mode: PortalMode,
   selectedChildId?: string | null,
+  verifiedContext?: ReadySchoolContext,
 ): Promise<PortalActor> {
-  const context = await getSchoolContext();
+  // Only server-rendered reads pass their already verified context. Actions call fresh.
+  const context = verifiedContext ?? await getSchoolContext();
 
   if (
     !portalModeSchema.safeParse(mode).success ||

@@ -1,5 +1,7 @@
 # Teaching assignments
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 ## Ending or replacing a teacher — migration 014
 
 Built on 4 October. You have since confirmed applying `supabase/migrations/202610040014_teaching_assignment_lifecycle.sql` in the dedicated fictional-data project and completing the pending tests. Do not reapply it. This confirmation is user-reported; the checks below remain a useful regression checklist. Existing migrations stay unchanged.
@@ -18,7 +20,7 @@ Subject/class/start-date corrections, first-day replacement and automatic promot
 
 ### Checks after applying 014
 
-Use a disposable fictional assignment whose lessons already fit the planned cutoff. End or replace it, refresh and check the retained dates and audit entry. Try the old form in another tab and expect rejection. Also try a conflicting replacement period and a cutoff before an existing lesson ends; both should leave records unchanged. Verify dated access with separate teacher sessions. Local tests cover these SQL rules; hosted concurrent sessions and role-specific UI access remain unverified.
+Use a disposable fictional assignment whose lessons already fit the planned cutoff. End or replace it, refresh and check the retained dates and audit entry. Try the old form in another tab and expect rejection. Also try a conflicting replacement period and a cutoff before an existing lesson ends; both should leave records unchanged. Verify dated access with separate teacher sessions. Local tests cover these SQL rules; the specific user-reported cases are recorded in DOCUMENTS.md; do not infer unrecorded concurrency passes or reset completed role checks.
 
 ## Activate and test
 
@@ -31,7 +33,7 @@ Use fictional records when ready to test:
 3. Enter the assignment dates within the class year and save.
 4. Reload and confirm the assignment remains visible. Check recent activity in People & access for `teaching_assignments.insert`.
 5. Try the same teacher/subject/class for overlapping dates: it should be rejected. After 014, separate non-overlapping periods are allowed. A different teacher can share the subject/class for co-teaching.
-6. Test non-admin and second-school access with synthetic accounts before real use. Only the school's active administrators may create assignments. After migration 010, an explicitly linked active teacher can read their own assignments through RLS; role-facing screens remain future Phase 3 work.
+6. Test non-admin and second-school access with synthetic accounts before real use. Only the school's active administrators may create assignments. After migration 010, an explicitly linked active teacher can read their own assignments through RLS; role-facing screens are implemented in Phase 3.
 
 ## Scope
 
@@ -49,4 +51,4 @@ These controls no longer load a capped 500-record choice list. School ownership,
 
 ## Verification boundary
 
-Local SQL and action tests use fictional schools and mocked application context. The user tested academic setup, school registers and teaching assignments; later synthetic creation workflows were also exercised in the connected app. Complete hosted role/RLS and concurrent-operation verification remains pending. See ROADMAP.md for current migration evidence and unresolved work. Email stays disabled.
+Local SQL and action tests use fictional schools and mocked application context. The user tested academic setup, school registers and teaching assignments; later synthetic creation workflows were also exercised in the connected app. Preserve the specific user-reported role and lifecycle passes; hosted cross-school verification remains open, and no unrecorded concurrency result is implied. See ROADMAP.md for current migration evidence and unresolved work. Email stays disabled.

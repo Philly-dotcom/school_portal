@@ -1,62 +1,52 @@
 # Where we left off
 
-Updated 20 October 2026.
+Updated 25 October 2026.
 
 ## Current position
 
-We are in **Phase 3: Daily Operations**. Migrations through **021 are user-confirmed applied**. Do not rerun them. We still use fictional records in the dedicated School Portal project.
+We are in **Phase 3: Daily Operations**. The core modules and daily dashboards are implemented; Phase 3 has not been accepted and Phase 4 has not started. Migrations through **021 are user-confirmed applied**. Do not rerun them. Use fictional records in the dedicated School Portal project.
 
-Role workspaces, personal timetables, attendance, view-only homework, announcements and private PDF documents are implemented. Read-only profiles now appear on each role's overview:
+All roles now use a top-right profile dropdown. It contains identity details, the active role and Sign Out. Multi-role accounts get a workspace chooser at the normal dashboard entry and Switch Workspace in the dropdown. Single-role accounts open their workspace directly. Switching opens the chosen overview in the same session and clears learner/edit context. Guardian users must explicitly select a permitted learner again. The old sidebar role switcher has been removed.
 
-- Student: linked name, reference, school and enrolments, with year, grade, class, dates and Current/Upcoming/Past labels.
-- Teacher: linked name, reference, school and subjects grouped by academic year and date status.
-- Guardian: name, school and explicitly granted learners. A learner must still be selected before opening daily records.
-- Admin: saved name, authenticated email, school and school membership ID as the admin reference. There is no separate admin reference field.
+Student current grade/class/year tiles remain on the overview; identity and enrolment history are in the dropdown. Teacher subjects are in the dropdown. Guardian learner selection stays on the overview. Admin management links are grouped under School management; their reference is the active school membership ID, not a separate staff reference.
 
-The daily dashboard is not finished. The user wants it completed and redesigned after the pending tests, within the existing architecture and permissions. Phase 4 has not started.
+## Latest verification
 
-## Testing now
+On 25 October, after the shared profile/workspace change and UTF-8 repair, **npm run check passed ESLint, TypeScript, 510 tests in 56 files and production build**. No test relaxation or application fix was needed during that run. The earlier 509-test result is superseded. This run did not include Playwright, hosted RLS/Storage checks or new role-browser acceptance.
 
-Use [DOCUMENTS.md — remaining Phase 3 checklist](DOCUMENTS.md#remaining-phase-3-checklist). Cases P3-01–P3-35 have steps and expected results. Record the case ID, role, fictional record/date, actual result and pass/fail/blocked status. Do not repeat a completed case merely because an archived note says it was pending.
+The user marked P3-01 through P3-30, the original 13 document checks and DOC-ANON complete. Preserve those results as evidence for the versions tested. Earlier agent browser checks covered Teacher/Guardian navigation, Admin rendering/sidebar/profile and Student current 2026 versus upcoming 2027 placement. They do not validate the latest all-role dropdown and chooser.
 
-The user completed **13 document hosted checks**, including bucket configuration, file validation, role restrictions, transfers/revocations, interrupted uploads and stale visibility saves. Those boxes stay checked. School B isolation is deferred because School B is not registered. Anonymous/public document access has a separate unchecked item because its result was bundled into the deferred item and has not been recorded separately.
+## What comes next
 
-The latest full local validation passed **lint, TypeScript, 482 tests in 53 files and production build** on 20 October; the user also confirmed a passing run. These results do not prove the remaining hosted cases. The document upload error message is restored to its original wording and should stay as it is.
+Use [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) as the acceptance tracker. Do not repeat already passed cases without a relevant regression reason.
 
-## Known issues still open
+1. Review the two open code concerns: detailed Teacher/Student profile history now loads on every module page, even with the dropdown closed; legacy Admin management links can select Admin implicitly without an explicit mode. These were identified, not fixed.
+2. Complete browser acceptance of the new chooser, all four profile menus, switching, Guardian reselection, sign-out, denied roles and responsive/keyboard behavior.
+3. Complete populated dashboard, error/retry, pagination and warm production timing checks.
+4. The user handles all School B setup and hosted cross-school reads/writes/Storage checks: DOC-B, P3-31 and P3-32 remain open.
+5. Resolve reproduced failures, rerun checks after code changes, then review results together before signing off Phase 3.
 
-- Attendance: a second stale Admin tab stayed on “Saving…” for minutes. Reload preserved the first save, but the expected conflict feedback was missing. Do not change SQLSTATE mapping or retry logic without tracing the stalled request.
-- Enrolment form: the select reset while the “Selected” hint retained an older choice. Displayed and submitted choices must agree.
-- Guardian navigation: Announcements and Documents sidebar links dropped the selected learner/context. Re-selecting the learner is a workaround, not a pass.
-
-Profile browser checks, actual current-year lesson rendering, remaining non-document lifecycle/security tests and independent-session concurrency still need their own results. Document passes do not close similar cases in homework or announcements.
+Before Phase 4 implementation, confirm whether Admin may both review and publish, whether changed approved marks require re-review, grading rules and report layout. Marks, reports, finance, external notifications and AI have not been added.
 
 ## Existing fictional records
 
-Reuse the existing accounts and people; do not create duplicate schools, learners, accounts or guardian grants. The user logs into role accounts themselves and does not share credentials.
+Reuse existing accounts, people and grants. Do not create duplicate schools, learners or logins. The user signs in without sharing credentials.
 
-The authorized 2026 fixture is **Acceptance 12A**, Grade 12, class `11de7dc9-4a5e-477c-acec-370bcf311e48`. It was created using existing ST-003, ST-002 and DEMO-ST-002 learners and Mrs Leruo (TE-003), with placements/assignment from 1 October to 26 November 2026. Inspect the current state before testing: the user's document lifecycle checks may have changed placements, grants or assignments. Do not assume the older fixture snapshot is still exact.
+The authorised 2026 fixture was created as **Acceptance 12A**, class `11de7dc9-4a5e-477c-acec-370bcf311e48`, using existing ST-003, ST-002 and DEMO-ST-002 learners and Mrs Leruo (TE-003), dated 1 October to 26 November 2026. Later browser evidence showed the current Student class label as **12A - 2026**. Inspect current records before testing; labels, placements and grants may have changed during acceptance.
 
-Keep the 2027 planning records intact. The approved 9 October repair corrected the original year's dates to 18 January–26 November 2027, retained its ID/history, corrected ST-002's end date and reversed ST-003's accidental withdrawal. The existing 2026 year spans 18 January–26 November 2026. The applied repair is archived; never rerun it as setup.
+Keep the 2027 planning records intact. The approved 9 October repair corrected the original year to 18 January–26 November 2027, retained its ID/history, corrected ST-002's end date and reversed ST-003's accidental withdrawal. The existing 2026 year spans 18 January–26 November 2026. Archived repair SQL is not a setup script.
 
-Basic separate-session teacher, student and guardian checks passed on 19 October for permitted attendance/homework reads and several route denials. Admin notice draft/publish/withdraw/republish passed. These results are preserved in the [verification history](../archive/2026-10/docs/VERIFICATION_THROUGH_20261020.md).
+## Boundaries
 
-## Resume safely
+No cross-request authorization cache, elevated application credential or new authentication system was introduced. Mutations and RLS still enforce access. The measured 17-to-6 read reduction concerns the earlier context/actor/profile loader path, not the complete current dashboard or hosted latency.
 
-1. Read the current checklist and the user's latest results.
-2. Inspect the working tree before editing; preserve the user's UI changes and `.env.local`.
-3. Reuse current fictional records and normal authenticated permissions. Do not weaken date rules or RLS.
-4. Resolve recorded defects and retest their cases. Agree a separate School B test fixture before provisioning anything.
-5. Complete the daily dashboard after testing, then agree Phase 3 acceptance together.
-
-Email/invitation/recovery delivery remains disabled or unverified. Live recovery, backup/restore, monitoring, deployment and real-school approval remain separate gates. Do not deploy, start Phase 4 or treat this checkpoint as live readiness. The user's dev server belongs to their testing session; leave it running unless asked otherwise.
+Email remains off; live recovery, admin security policy, backups, monitoring, deployment and real-school approval are separate launch gates. Preserve migrations, local configuration and user work. Leave the user's dev server running unless asked otherwise.
 
 ## References
 
-- [Current checklist](DOCUMENTS.md#remaining-phase-3-checklist)
-- [Current verification summary](VERIFICATION.md)
-- [Roadmap](ROADMAP.md)
+- [Verification evidence](VERIFICATION.md)
+- [Phase 3 checklist](DOCUMENTS.md#remaining-phase-3-checklist)
 - [Architecture](ARCHITECTURE.md)
+- [Roadmap](ROADMAP.md)
 - [File guide](FILE_GUIDE.md)
-- [Archive index](../archive/README.md)
-- [Full resume notes before this refresh](../archive/2026-10/docs/RESUME_BEFORE_20261020_REFRESH.md)
+- [Earlier notes](../archive/2026-10/docs-before-20261025-reconciliation/docs/RESUME.md)

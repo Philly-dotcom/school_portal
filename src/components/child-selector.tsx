@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { PortalChild, PortalMode } from "@/lib/portal-validation";
 
 export function ChildSelector({
@@ -11,6 +14,7 @@ export function ChildSelector({
   mode: PortalMode;
   view: string;
 }) {
+  const [pending, setPending] = useState(false);
   if (!learners.length) {
     return (
       <p className="muted">
@@ -20,7 +24,7 @@ export function ChildSelector({
   }
 
   return (
-    <form method="get" action="/dashboard" className="access-form">
+    <form method="get" action="/dashboard" className="access-form" onSubmit={() => setPending(true)}>
       <input type="hidden" name="view" value={view} />
       <input type="hidden" name="mode" value={mode} />
 
@@ -39,9 +43,10 @@ export function ChildSelector({
         </select>
       </label>
 
-      <button type="submit" className="button secondary">
-        View learner
+      <button type="submit" className="button secondary" disabled={pending}>
+        {pending ? "Opening learner…" : "View learner"}
       </button>
+      {pending && <p role="status">Loading the selected learner. If the request fails, reload this page to try again.</p>}
     </form>
   );
 }

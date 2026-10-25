@@ -1,6 +1,6 @@
 # Documentation guide
 
-Start with the [main README](../README.md). Updated 20 October 2026: migrations through 021 are applied, profiles exist for all four roles, and the user has completed 13 hosted document checks. Phase 3 remains open. Use the [combined checklist](DOCUMENTS.md#remaining-phase-3-checklist) for remaining tests, known defects, deferred School B isolation and dashboard work.
+Start with the [main README](../README.md). Updated 25 October 2026: migrations through 021 are applied; daily dashboards, shared top-right profiles and the workspace chooser are implemented. The latest full local check passed ESLint, TypeScript, 510 tests in 56 files and production build. Phase 3 remains open for browser acceptance, review follow-ups and hosted School B isolation. Use the [combined checklist](DOCUMENTS.md#remaining-phase-3-checklist) for results and remaining tasks.
 
 RESUME.md is the current handover. VERIFICATION.md separates local and hosted evidence. Superseded repair notes, fixture snapshots and the temporary Phase 3 guide are in the [archive](../archive/README.md); do not follow their older pending-migration instructions.
 

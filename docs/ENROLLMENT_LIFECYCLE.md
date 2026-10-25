@@ -1,10 +1,12 @@
 # Enrollment transfers and withdrawals
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 ## Attendance and homework update — 8 October
 
 Migration 018, now user-confirmed applied, prevents a transfer or withdrawal from moving existing attendance outside its recorded enrollment. Later valid transfers retain the old marks. If a mark itself was entered incorrectly, an authorized staff member can explicitly clear it in the attendance register before an admin corrects the enrollment; its audit remains.
 
-Homework migration 019 uses enrollment history on the original publication date. Original recipients keep access after later transfers; newcomers do not gain older homework. Correcting enrollment history can change eligibility. The user confirmed applying 019 and reported homework working. The specific hosted transfer and access checks remain outstanding.
+Homework migration 019 uses enrollment history on the original publication date. Original recipients keep access after later transfers; newcomers do not gain older homework. Correcting enrollment history can change eligibility. The user confirmed applying 019 and reported homework working. Relevant transfer and access checks are user-reported passed in DOCUMENTS.md; cross-school checks remain open.
 
 Migration 009 introduced this Phase 2 feature on 1 October. The user has confirmed applying it, followed by 010–013. Do not rerun it. Existing placement dates and links are preserved; version and closure fields support history-preserving changes.
 
@@ -26,15 +28,15 @@ Dated changes, including future changes, are supported. Closure labels describe 
 
 `change_enrollment` is a narrowly scoped security-definer RPC using the signed-in caller's verified School Admin membership. No elevated key is used by the app. Direct updates/deletes remain denied, and callers cannot insert closure/version fields. Tenant-matching composite foreign keys remain in force.
 
-Application enrollment inserts and lifecycle changes acquire the same school-row lock. An insert/update trigger checks inclusive date overlaps and year bounds; a partial unique index prevents multiple unclosed placements. The RPC checks ownership, expected version, destination year and dates before changing history. Audit events retain the previous row and replacement ID. Hosted concurrency verification with independent sessions remains pending; embedded tests do not establish it.
+Application enrollment inserts and lifecycle changes acquire the same school-row lock. An insert/update trigger checks inclusive date overlaps and year bounds; a partial unique index prevents multiple unclosed placements. The RPC checks ownership, expected version, destination year and dates before changing history. Audit events retain the previous row and replacement ID. Local tests do not establish hosted concurrency. Use the exact recorded lifecycle/conflict cases in DOCUMENTS.md; do not infer additional passes or reset completed cases.
 
 The register UI still loads before migration 009, with lifecycle controls unavailable. No existing demo records were transferred or withdrawn during implementation.
 
 ## Verification
 
-Local `npm run check` passed lint, TypeScript, 90 tests across 17 files and production build. The actual SQL ran in embedded PostgreSQL with fictional schools. Tests cover school isolation, non-admin/suspended/anonymous denial, stale changes, same-class/cross-year/foreign destinations, date bounds, inclusive overlap rejection, transfer and withdrawal history, re-entry, audit data and rollback after a forced audit failure. Server-action tests cover permission checks, trusted school identity, validation and safe error handling.
+At introduction, local `npm run check` passed lint, TypeScript, 90 tests across 17 files and production build. The actual SQL ran in embedded PostgreSQL with fictional schools. Tests cover school isolation, non-admin/suspended/anonymous denial, stale changes, same-class/cross-year/foreign destinations, date bounds, inclusive overlap rejection, transfer and withdrawal history, re-entry, audit data and rollback after a forced audit failure. Server-action tests cover permission checks, trusted school identity, validation and safe error handling.
 
-Migration application is confirmed by the user; the following hosted workflow checks remain to be completed. Use only fictional learners, preferably a separate test learner to preserve the original demo dataset:
+Migration application is confirmed by the user. The following are regression scenarios; current results belong in DOCUMENTS.md, not a second progress tracker. Use only fictional learners, preferably a separate test learner to preserve the original demo dataset:
 
 1. Reload School registers without reapplying 009. Confirm existing dates and enrollments remain intact.
 2. Transfer a fictional learner to a second class in the same year partway through their date range. Confirm two rows, adjacent dates and the retained original end date.

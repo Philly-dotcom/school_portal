@@ -1,5 +1,7 @@
 # Activate account management
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 Member management is already active in the dedicated test project. The user has confirmed migrations through 021 applied; this guide describes the earlier account-management foundation. Setup steps below are for a fresh project; do not repeat migrations or administrator provisioning in the current one. The invitation sender has not been confirmed deployed or tested, and no email delivery is claimed.
 
 Public sign-ups were verified disabled on 30 September. Keep them disabled. The user saved Resend SMTP settings but has no registered sending domain. Invitation and recovery email flags remain off until delivery is ready and tested.

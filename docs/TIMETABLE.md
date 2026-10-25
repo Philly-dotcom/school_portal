@@ -1,5 +1,7 @@
 # Weekly timetable foundation
 
+> Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
+
 ## Current status — 8 October
 
 Migrations 016 and 017 are now user-confirmed applied. Do not repeat the old application instructions below. The original admin planning screen remains available. Linked teachers, students and guardians also have a read-only **My timetable** view for the current school week; guardian access requires an explicit child grant. Hosted role/date acceptance is outstanding and will be checked by the user after homework.
@@ -20,19 +22,19 @@ Use fictional records for testing. Creating register data, assignments and lesso
 
 Times are local wall-clock times in the school's configured timezone. Changing that timezone later changes their interpretation; this increment does not perform timezone conversion. Date ranges are inclusive; time ranges exclude the ending instant, allowing a 09:00–10:00 lesson followed by 10:00–11:00. Overnight lessons are not supported.
 
-The weekly view lists planning rules and their dates, including past/future rules; it is not a view of only today's active lessons. A shared weekday must occur in the overlapping dates before it is considered a clash. Holidays, closures, term exceptions, alternating-week cycles, rooms, publication approvals, printing and learner/guardian/teacher timetable access are future work.
+The weekly view lists planning rules and their dates, including past/future rules; it is not a view of only today's active lessons. A shared weekday must occur in the overlapping dates before it is considered a clash. Linked Teacher/Student/Guardian personal timetable views are implemented in Phase 3 through migration 017. Holidays, closures, term exceptions, alternating-week cycles, rooms, publication approvals and printing remain future scope.
 
 One lesson uses one teaching assignment and teacher. Shared co-teaching sessions are not represented yet; simultaneous lessons for the same class are rejected even if different teachers share that class/subject. Define shared-lesson requirements before extending this model.
 
-All timetable reads and mutations are administrator-only. Creation and removal derive school context from the verified session. The database checks admin access again, derives teacher/class IDs from the assignment, validates dates and serializes application timetable mutations using a school-row lock. Direct application table inserts/updates/deletes are denied. Future scheduling or assignment-edit operations must use the same locking protocol and maintain date/relationship constraints. Parallel hosted-request verification is still needed; the embedded SQL tests do not emulate independent concurrent PostgreSQL sessions.
+The planning screen and timetable mutations are administrator-only. Linked roles have the scoped personal reads provided by migration 017. Creation and removal derive school context from the verified session. The database checks admin access again, derives teacher/class IDs from the assignment, validates dates and serializes application timetable mutations using a school-row lock. Direct application table inserts/updates/deletes are denied. Future scheduling or assignment-edit operations must use the same locking protocol and maintain date/relationship constraints. P3-10 records a user-reported hosted concurrent-save pass; the embedded SQL tests do not emulate independent concurrent PostgreSQL sessions.
 
 The timetable shows up to 50 recurring lessons per page, ordered by weekday, start time and ID. It is a partial schedule: an empty weekday section means no lessons on this page, not that the day is free. Assignment filtering runs in the database before pagination. Save operations still check conflicts against all relevant lessons, including those on other pages.
 
 More than 500 lessons or assignment choices no longer blocks the screen. Both filtering and lesson creation search assignments in pages of 25. Enter a teacher name/reference, subject, class, grade or academic year, or leave search blank to browse. Labels include assignment dates to distinguish repeated teaching periods. The selected choice remains while browsing other search pages. Lesson date inputs use the chosen assignment bounds; the database checks those dates again on save. No timetable publication or notification is sent automatically.
 
-## Hosted verification still needed
+## Hosted regression scenarios
 
-After activation, test create/list/filter/remove, stale repeated removal, and cross-school/non-admin requests with synthetic accounts. Verify two simultaneous conflicting saves cannot both succeed on hosted Supabase. Check audit entries and confirm teaching assignments/enrollments remain after removal. Do not infer full hosted readiness from a successful migration or local test suite.
+P3-07–P3-10 are user-reported passed. Preserve those results; the scenarios below describe regression coverage, while School B requests remain outstanding. Verify two simultaneous conflicting saves cannot both succeed on hosted Supabase. Check audit entries and confirm teaching assignments/enrollments remain after removal. Do not infer full hosted readiness from a successful migration or local test suite.
 
 ## Search migration 016 — 5 October 2026
 
