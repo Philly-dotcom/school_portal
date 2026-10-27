@@ -137,10 +137,46 @@ it("shows only the guardian's granted learners without selecting a child automat
       selectedChild: null,
     },
   }));
-  for (const value of ["Fictional Guardian", "Fictional School", "Learner access", "Granted Student"]) {
+  for (const value of ["Welcome back, Fictional", "Fictional School", "My children", "Granted Student", "Select a learner to continue"]) {
     expect(html).toContain(value);
   }
   expect(html).not.toContain("PRIVATE-GU-REF");
-  expect(html).not.toContain("Viewing:");
+  expect(html).not.toContain('aria-label="Selected learner"');
   expect(html).not.toContain("view=attendance");
+});
+
+it("explains missing guardian grants without offering an impossible learner selection", () => {
+  const html = renderToStaticMarkup(createElement(RoleOverview, {
+    schoolName: "Fictional School", availableModes: ["guardian"],
+    actor: {
+      status: "ready", mode: "guardian", schoolId: "school",
+      person: { id, fullName: "Fictional Guardian", reference: "PRIVATE-GU-REF" },
+      children: [], selectedChild: null,
+    },
+  }));
+  expect(html).toContain("No learner access yet");
+  expect(html).toContain("Contact your School Admin");
+  expect(html).not.toContain("<select");
+  expect(html).not.toContain("Select a learner to continue");
+  expect(html).not.toContain("view=attendance");
+  expect(html).not.toContain("PRIVATE-GU-REF");
+});
+
+it("keeps the selected learner and guardian workspace in the picker", () => {
+  const learner = { id, fullName: "Granted Student", reference: "ST-003", relationship: "Parent" };
+  const html = renderToStaticMarkup(createElement(RoleOverview, {
+    schoolName: "Fictional School", availableModes: ["guardian"],
+    actor: {
+      status: "ready", mode: "guardian", schoolId: "school",
+      person: { id, fullName: "Fictional Guardian", reference: "PRIVATE-GU-REF" },
+      children: [learner], selectedChild: learner,
+    },
+  }));
+  expect(html).toContain('aria-label="Selected learner"');
+  expect(html).toContain("CURRENTLY VIEWING");
+  expect(html).toContain('name="mode" value="guardian"');
+  expect(html).toContain('name="view" value="overview"');
+  expect(html).toContain(`value="${id}" selected=""`);
+  expect(html).not.toContain("Select a learner to continue");
+  expect(html).not.toContain("PRIVATE-GU-REF");
 });

@@ -19,7 +19,7 @@ export function planningPageHref(
   page: number,
   assignment = "",
 ) {
-  const query = new URLSearchParams({ view });
+  const query = new URLSearchParams({ view, mode: "school_admin" });
   const safePage = listPage(String(page));
   if (safePage > 1) query.set(`${view}Page`, String(safePage));
   const filter = timetableFilter(assignment);

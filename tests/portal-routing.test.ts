@@ -1,13 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-const mock = vi.hoisted(() => ({ context: vi.fn(), actor: vi.fn() }));
+const mock = vi.hoisted(() => ({ context: vi.fn(), actor: vi.fn(), studentProfile: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/auth-context", () => ({ getSchoolContext: mock.context }));
 vi.mock("@/lib/portal-data", () => ({ loadPortalActor: mock.actor }));
 vi.mock("@/app/login/actions", () => ({ signOut: vi.fn() }));
 vi.mock("@/components/profile-menu", () => ({ ProfileMenu: () => "Account menu" }));
 vi.mock("@/lib/staff-profile-data", () => ({ loadAdminProfile: vi.fn().mockResolvedValue({ status: "unavailable" }) }));
-vi.mock("@/lib/student-profile-data", () => ({ loadStudentProfile: vi.fn().mockResolvedValue({ status: "unavailable" }) }));
+vi.mock("@/lib/student-profile-data", () => ({ loadStudentProfile: mock.studentProfile }));
 vi.mock("@/components/staff-profile", () => ({
   AdminProfile: () => "Admin profile",
   TeacherProfile: () => "Teacher profile",
@@ -31,6 +31,7 @@ vi.mock("@/components/timetable-panel", () => ({
 vi.mock("@/components/my-timetable-panel", () => ({
   MyTimetablePanel: () => "Personal timetable",
 }));
+vi.mock("@/components/student-profile", () => ({ StudentProfile: () => "Student enrolment history" }));
 import Dashboard from "../src/app/dashboard/page";
 import { PortalShell } from "../src/components/portal-shell";
 
@@ -51,6 +52,7 @@ async function render(
 beforeEach(() => {
   vi.clearAllMocks();
   context(["teacher"]);
+  mock.studentProfile.mockResolvedValue({ status: "unavailable" });
   mock.actor.mockResolvedValue({
     status: "ready",
     mode: "teacher",
@@ -107,4 +109,37 @@ it("does not choose Teacher automatically for a Teacher/Guardian account", async
   expect(html).toContain("Continue as Parent / Guardian");
   expect(html).not.toContain("Continue as School Admin");
   expect(mock.actor).not.toHaveBeenCalled();
+});
+
+it.each(["academic", "registers", "teaching", "people", "settings", "timetable"])(
+  "requires explicit workspace choice for legacy %s links with multiple roles",
+  async (view) => {
+    context(["school_admin", "teacher"]);
+    expect(await render({ view })).toContain("How would you like to continue?");
+    expect(mock.actor).not.toHaveBeenCalled();
+  },
+);
+it("keeps explicit Admin management navigation available", async () => {
+  context(["school_admin", "teacher"]);
+  expect(await render({ view: "academic", mode: "school_admin" })).toContain("Academic");
+  expect(mock.actor).not.toHaveBeenCalled();
+});
+it("does not load Student history for a timetable module request", async () => {
+  context(["student"]);
+  mock.actor.mockResolvedValue({
+    status: "ready", mode: "student", schoolId: "school",
+    person: { id: "student", fullName: "Fictional Student", reference: "S1" },
+  });
+  expect(await render({ view: "my-timetable", mode: "student" })).toContain("Personal timetable");
+  expect(mock.studentProfile).not.toHaveBeenCalled();
+  expect(await render({ view: "profile", mode: "student" })).toContain("Student enrolment history");
+  expect(mock.studentProfile).toHaveBeenCalledTimes(1);
+});
+it("loads Teacher subjects only in the authorised profile view", async () => {
+  expect(await render({ view: "profile", mode: "teacher" })).toContain("Teacher profile");
+  expect(await render({ view: "profile", mode: "student" })).toContain("That workspace is not available");
+});
+it("does not render another person's history when the profile actor is unavailable", async () => {
+  mock.actor.mockResolvedValue({ status: "empty", mode: "teacher", message: "No linked record" });
+  expect(await render({ view: "profile", mode: "teacher" })).toContain("Academic profile details are not available");
 });

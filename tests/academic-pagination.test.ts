@@ -162,7 +162,7 @@ it("gives a way back from stale or empty pages without claiming the register is 
     await AcademicPanel({ schoolId: school, pages: { subjectsPage: "9" } }),
   );
   expect(html).toContain("No records on this page.");
-  expect(html).toContain('href="/dashboard?view=academic#subjects"');
+  expect(html).toContain('href="/dashboard?view=academic&amp;mode=school_admin#subjects"');
   expect(html).toContain("subjectsPage=8#subjects");
 });
 
@@ -194,5 +194,5 @@ it("rejects malformed or repeated page parameters and keeps URLs allowlisted", (
       "grades",
       2,
     ),
-  ).toBe("/dashboard?view=academic&gradesPage=2&classesPage=3#grades");
+  ).toBe("/dashboard?view=academic&mode=school_admin&gradesPage=2&classesPage=3#grades");
 });

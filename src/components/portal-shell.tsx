@@ -164,7 +164,7 @@ export function PortalShell({
             <span>
               {view === "workspaces" ? "Choose workspace" : view === "setup"
                 ? "Setup guide"
-                : (items.find((item) => item.view === view)?.label ??
+                : ((view === "profile" ? "My profile" : items.find((item) => item.view === view)?.label) ??
                   "Overview")}
             </span>
           </div>

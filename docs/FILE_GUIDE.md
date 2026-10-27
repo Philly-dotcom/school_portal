@@ -251,12 +251,12 @@ The [test guide](../tests/README.md) explains each corresponding test file. The 
 
 | File | Current responsibility |
 | --- | --- |
-| `src/app/dashboard/page.tsx` | Verifies school membership and the selected role, shows the multi-role chooser and routes to the requested panel. Shares selected actor and Student/Admin profile reads within the render. Legacy Admin management URLs still have an implicit-mode fallback tracked in REVIEW-02. |
+| `src/app/dashboard/page.tsx` | Verifies school membership and the selected role, shows the multi-role chooser and routes to the requested panel. Shares selected actor and Student/Admin profile reads within the render. Routes the on-demand profile view and requires explicit workspace selection for multi-role accounts, including legacy management URLs. |
 | `src/components/portal-shell.tsx` | Shared sidebar/header. Admin links are grouped under School management. Daily links retain role/learner context; the sidebar has no role switcher. |
 | `src/components/profile-menu.tsx` | Shared top-right identity dropdown, active role, authorised workspace choices and existing Sign Out action. Chooser/unlinked fallback reads only the caller's saved profile name. |
 | `src/components/workspace-selector.tsx` | Same role destinations for the welcome chooser and dropdown. Switches to the chosen overview without learner/edit parameters; links never grant permission. |
 | `src/components/staff-profile.tsx` | Teacher identity/subjects and Admin identity fields/greeting. The shared menu owns the dropdown and Sign Out. |
-| `src/components/student-profile.tsx` | Existing enrolment history and school-local date labels in the dropdown; summary-only mode keeps current grade/class/year tiles on the overview. |
+| `src/components/student-profile.tsx` | Existing enrolment history and school-local date labels in the on-demand profile view; summary-only mode keeps current grade/class/year tiles on the overview. |
 | `src/components/role-overview.tsx` | Welcome/empty/error states, Student summary and explicit Guardian learner selection, followed by authorised daily cards. |
 | `src/components/daily-overview.tsx` | Role-specific actions, Admin counts, today's lessons and bounded published homework/notice/PDF previews with loading fallbacks. |
 | `src/lib/dashboard-data.ts` | Read-only adapters around existing scoped readers; exact Admin counts use school filters and the user's RLS context. |
@@ -266,6 +266,8 @@ The [test guide](../tests/README.md) explains each corresponding test file. The 
 | `src/app/dashboard/error.tsx` | Unexpected-error retry preserving the current URL; warns against repeating uncertain saves. |
 | `src/app/globals.css` | Existing palette, cards, sidebar groups, dropdown, focus and responsive styles. |
 
-These components reuse module readers, actions, school-date helpers and grants. No new service, dependency, authentication system, schema or RLS change was needed. Detailed Teacher/Student history currently loads on module pages even when the dropdown is closed; REVIEW-01 tracks this cost. Context reuse is per render, not a persistent authorization cache.
+These components reuse module readers, actions, school-date helpers and grants. No new service, dependency, authentication system, schema or RLS change was needed. Teacher/Student history opens on demand through a non-prefetched menu link, rather than loading inside a closed dropdown on each module page. Context reuse is per render, not a persistent authorization cache.
 
-Relevant tests: dashboard-overview.test.ts covers guarded cards and links; portal-routing.test.ts covers role entry and denial; workspace-navigation.test.ts covers sidebar URLs and authorised chooser destinations; staff-profile.test.ts and student-profile.test.ts cover scoped identity/history and shared reads; profile-request-count.test.ts measures the earlier loader path and fresh access checks. The latest full run passed all 510 tests in 56 files and production build. It is not a new browser or hosted-isolation result.
+Relevant tests: dashboard-overview.test.ts covers guarded cards and links; portal-routing.test.ts covers role entry and denial; workspace-navigation.test.ts covers sidebar URLs and authorised chooser destinations; staff-profile.test.ts and student-profile.test.ts cover scoped identity/history and shared reads; profile-request-count.test.ts measures the earlier loader path and fresh access checks. The latest full run passed all 524 tests in 57 files and production build. It is not a new browser or hosted-isolation result.
+
+The 26 October review fixes also add tests/profile-menu.test.ts: it checks Teacher/Student identity menus add no profile-data reads and keep explicit role links. Expanded portal-routing tests cover mode-less multi-role Admin entry, denied profiles and on-demand Student history. Pagination and timetable-form tests check explicit Admin mode.

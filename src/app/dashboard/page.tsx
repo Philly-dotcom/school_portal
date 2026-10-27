@@ -27,7 +27,8 @@ import { loadPortalActor } from "@/lib/portal-data";
 import { RoleOverview } from "@/components/role-overview";
 import { DailyOverview } from "@/components/daily-overview";
 import { loadAdminProfile } from "@/lib/staff-profile-data";
-import { AdminProfile } from "@/components/staff-profile";
+import { AdminProfile, TeacherProfile } from "@/components/staff-profile";
+import { StudentProfile } from "@/components/student-profile";
 import { MyTimetablePanel } from "@/components/my-timetable-panel";
 import {
   AttendancePanel,
@@ -120,19 +121,9 @@ export default async function Dashboard({
     "settings",
     "timetable",
   ];
-  // Old management links already identify an Admin destination. Bare entry and
-  // daily views require a deliberate choice when more than one role is available.
-  const implicitAdmin =
-    requested.mode === undefined &&
-    managementViews.includes(requested.view ?? "") &&
-    context.roles.includes("school_admin");
+  // Multi-role accounts choose explicitly, including on legacy management URLs.
   const candidate =
-    requested.mode ??
-    (implicitAdmin
-      ? "school_admin"
-      : context.roles.length === 1
-        ? context.roles[0]
-        : undefined);
+    requested.mode ?? (context.roles.length === 1 ? context.roles[0] : undefined);
   const activeRole =
     typeof candidate === "string" && context.roles.includes(candidate as Role)
       ? (candidate as Role)
@@ -174,7 +165,9 @@ export default async function Dashboard({
     : undefined;
   const adminProfileRead = admin ? loadAdminProfile(context) : undefined;
   const studentProfileRead =
-    selectedActor?.status === "ready" && selectedActor.mode === "student"
+    selectedActor?.status === "ready" &&
+    selectedActor.mode === "student" &&
+    (!params.view || params.view === "overview" || params.view === "profile")
       ? loadStudentProfile({ context, actor: selectedActor })
       : undefined;
   const profileMenu = (
@@ -184,10 +177,45 @@ export default async function Dashboard({
         activeRole={activeRole}
         actor={selectedActor}
         adminProfileRead={adminProfileRead}
-        studentProfileRead={studentProfileRead}
       />
     </Suspense>
   );
+  if (params.view === "profile") {
+    return (
+      <PortalShell
+        profileMenu={profileMenu}
+        preview={false}
+        admin={admin}
+        mode={admin ? undefined : (activeRole as Exclude<Role, "school_admin">)}
+        child={selectedActor?.status === "ready" && selectedActor.mode === "guardian" ? selectedActor.selectedChild?.id : undefined}
+        learnerName={selectedActor?.status === "ready" && selectedActor.mode === "guardian" ? selectedActor.selectedChild?.fullName : undefined}
+        schoolName={context.school.name}
+        view="profile"
+      >
+        <PageHeading
+          eyebrow="YOUR ACCOUNT"
+          title="My profile"
+          description="Your school identity and linked academic records."
+        />
+        <section className="content-panel">
+          {selectedActor?.status === "ready" && selectedActor.mode === "teacher" ? (
+            <Suspense fallback={<p role="status">Loading linked subjects...</p>}>
+              <TeacherProfile read={{ context, actor: selectedActor }} />
+            </Suspense>
+          ) : selectedActor?.status === "ready" && selectedActor.mode === "student" ? (
+            <Suspense fallback={<p role="status">Loading enrolment history...</p>}>
+              <StudentProfile
+                read={{ context, actor: selectedActor }}
+                profileRead={studentProfileRead}
+              />
+            </Suspense>
+          ) : (
+            <p role="status">Academic profile details are not available in this workspace. Use your account menu for identity details.</p>
+          )}
+        </section>
+      </PortalShell>
+    );
+  }
   if (!admin && managementViews.includes(params.view ?? "")) {
     return (
       <PortalShell
@@ -330,7 +358,7 @@ export default async function Dashboard({
       >
         {!(
           actor.status === "ready" &&
-          actor.mode === "student" &&
+          (actor.mode === "student" || actor.mode === "guardian") &&
           params.view !== "my-timetable"
         ) && (
           <PageHeading

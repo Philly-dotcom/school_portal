@@ -14,7 +14,7 @@ export function listPageHref<K extends string>(
   kind: K,
   page: number,
 ): string {
-  const query = new URLSearchParams({ view });
+  const query = new URLSearchParams({ view, mode: "school_admin" });
   for (const key of kinds) {
     const value = listPage(key === kind ? String(page) : params[`${key}Page`]);
     if (value > 1) query.set(`${key}Page`, String(value));

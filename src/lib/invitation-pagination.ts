@@ -4,5 +4,5 @@ export function invitationPage(value?: string) {
   return Number.isSafeInteger(number) && number > 0 && number <= 100000 ? number : 1;
 }
 export function invitationPageHref(page: number) {
-  return `/dashboard?view=people&invitationPage=${page}`;
+  return `/dashboard?view=people&mode=school_admin&invitationPage=${page}`;
 }

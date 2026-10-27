@@ -82,7 +82,7 @@ Documents reuse the existing announcement class picker and current-class permiss
 - [x] Withdraw a published PDF. Learner downloads must fail afterwards. Staff should still be able to review or republish it.
 - [x] Test an interrupted upload and the unfinished-entry recovery described above. Never expose the incomplete entry to learners.
 - [x] Open visibility controls in two tabs. A stale save must not overwrite a newer change.
-- [ ] **DOC-B — Deferred until School B is available:** test direct reads, guessed paths, uploads, overwrite and deletion attempts between School A and School B users. Denied attempts must not expose or change the other school's data or files. Outstanding. School B setup and all hosted cross-school testing belong to the user; no agent setup or testing is authorized.
+- [x] **DOC-B — User-reported passed 26 October 2026:** test direct reads, guessed paths, uploads, overwrite and deletion attempts between School A and School B users. Denied attempts must not expose or change the other school's data or files. The user reports this check completed. School B setup and hosted testing were user-owned; no agent rerun was performed.
 - [x] **DOC-ANON — Can run without School B:** in a signed-out/private browser, request an existing document download route and its Storage public URL. Neither should return the private PDF. Check anonymous direct metadata/Storage requests are denied too. The user has now marked this separate anonymous-access check complete; it does not require School B.
 
 The app does not issue signed URLs. If another tool creates one, its lifetime and continued validity after a permission change need separate review; do not assume withdrawal invalidates an already issued signed URL.
@@ -91,7 +91,7 @@ The 13 completed document items above are your reported hosted results. Keep the
 
 ## Remaining Phase 3 checklist
 
-Updated 25 October 2026. Checked cases are user-reported passes for the versions tested. The latest local check passed ESLint, TypeScript, 510 tests in 56 files and production build. This does not replace hosted acceptance or validate the new profile/chooser in a browser.
+Updated 26 October 2026. All hosted/browser cases are now user-reported passed. The latest local check passed ESLint, TypeScript, 524 tests in 57 files and production build after REVIEW-01/02. Local and user-reported hosted evidence remain separate.
 
 Use this as the current combined checklist. Older module checklists and dated verification notes describe earlier checkpoints. If you have already completed a case below, add its result here; you do not need to repeat a passed check just because the old notes are out of date.
 
@@ -163,28 +163,28 @@ The user has now marked the reader, lifecycle and concurrency checks below compl
 - [x] **P3-29 Empty versus failed reads:** with suitable existing fictional accounts/records, distinguish an unlinked account, no guardian grant, future placement, no current assignment, no published homework and a loading failure. If the backend request fails, the screen must not say the student has no records. Confirm retry/reload works once connectivity returns.
 - [x] **P3-30 Sessions and small screens:** sign out and confirm protected requests require login. Switch accounts using separate sessions and check no previous person's data appears. Check the overview and daily modules at a narrow phone width: labels, learner selection, save/error messages, lists and downloads must remain usable.
 
-### 7. Deferred hosted school isolation
+### 7. Hosted school isolation
 
-School B is unavailable. The user will handle its setup and all cross-school tests. DOC-B, P3-31 and P3-32 remain outstanding.
+On 26 October, the user reported completing School B setup and the cross-school checks and marked DOC-B, P3-31 and P3-32 passed. These are user-reported hosted results, not agent-observed results.
 
-- [ ] **P3-31 School B setup — deferred:** agree a small second fictional-school security fixture and its cleanup/retention plan first. This is a test fixture, not a request to build SaaS registration or a platform-owner dashboard. No second school is created by this checklist.
-- [ ] **P3-32 Cross-school reads and writes — blocked by P3-31:** use ordinary School A and School B sessions to try each other's learner IDs, classes, assignments, attendance, homework, notices and documents. Test reads and writes, forged school IDs, direct RPC/table calls and file paths. Every cross-school request must fail or return no unauthorized rows, with no changed data. Complete DOC-B above as part of this test and record both directions.
+- [x] **P3-31 School B setup — user-reported complete:** agree a small second fictional-school security fixture and its cleanup/retention plan first. This is a test fixture, not a request to build SaaS registration or a platform-owner dashboard. No second school is created by this checklist.
+- [x] **P3-32 Cross-school reads and writes — user-reported passed:** use ordinary School A and School B sessions to try each other's learner IDs, classes, assignments, attendance, homework, notices and documents. Test reads and writes, forged school IDs, direct RPC/table calls and file paths. Every cross-school request must fail or return no unauthorized rows, with no changed data. Complete DOC-B above as part of this test and record both directions.
 
 ### 8. Development work to finish after testing
 
-The dashboard and profile navigation are implemented and pass local checks. These items remain open until review and browser acceptance are complete.
+The user marked the dashboard and browser acceptance items below complete on 26 October. The separate code-review items at the end still need resolution.
 
-- [ ] **P3-33 Resolve reproduced defects:** review failures recorded above, make narrowly scoped fixes, then rerun their checks and relevant automated tests. Do not weaken date rules, roles or RLS to turn a failure into a pass.
-- [ ] **P3-34 Daily dashboard implementation acceptance:** the agreed role-specific layouts, authorised daily cards and shared top-right profiles are built. Review and accept the result using the regression list below. Keep marks, fees, external notifications and other later-phase features out of this work.
-- [ ] **P3-35 Dashboard acceptance:** verify the implemented P3-34 result: each role's daily information, links, learner context, empty/error states and mobile layout with existing fictional accounts. A teacher/guardian role switch must not mix the two views.
+- [x] **P3-33 Resolve reproduced defects:** review failures recorded above, make narrowly scoped fixes, then rerun their checks and relevant automated tests. Do not weaken date rules, roles or RLS to turn a failure into a pass.
+- [x] **P3-34 Daily dashboard implementation acceptance:** the agreed role-specific layouts, authorised daily cards and shared top-right profiles are built. Review and accept the result using the regression list below. Keep marks, fees, external notifications and other later-phase features out of this work.
+- [x] **P3-35 Dashboard acceptance:** verify the implemented P3-34 result: each role's daily information, links, learner context, empty/error states and mobile layout with existing fictional accounts. A teacher/guardian role switch must not mix the two views.
 
 ### Phase 3 completion gate
 
-- [ ] All applicable cases above have a recorded result; failures are fixed and retested. Blocked fixture cases remain visible rather than being marked passed.
-- [ ] Hosted School A/School B isolation, including Storage, is verified. Until then, hosted isolation remains unverified even though local two-school tests pass.
-- [ ] The daily dashboard is completed and accepted. No known stale-save, selection or guardian-context defect remains unresolved.
-- [x] Latest code revision: ESLint, TypeScript, 510 tests in 56 files and production build passed on 25 October. Reopen this gate after further code changes; do not rerun merely for documentation edits.
-- [ ] Review the result log together and explicitly agree Phase 3 is complete before starting Phase 4.
+- [x] All applicable cases above have a recorded result; failures are fixed and retested. Blocked fixture cases remain visible rather than being marked passed.
+- [x] Hosted School A/School B isolation, including Storage, is user-reported passed on 26 October.
+- [x] The daily dashboard is completed and accepted. No known stale-save, selection or guardian-context defect remains unresolved.
+- [x] Latest code revision: ESLint, TypeScript, 524 tests in 57 files and production build passed on 26 October after REVIEW-01/02. Reopen this gate after further code changes; do not rerun merely for documentation edits.
+- [x] Final Phase 3 sign-off: the user confirmed completion on 27 October 2026, including the REVIEW-01/02 browser checks. Phase 4 has not started.
 
 Email/SMTP delivery, live account recovery, backup/restore, monitoring, deployment, document retention/scanning and real-school launch approval remain separate live-readiness work. They are not silently marked complete by this checklist.
 
@@ -195,21 +195,47 @@ All four roles now use a top-right profile dropdown with identity details, activ
 
 The daily dashboard is implemented with authorised timetable/homework/announcement/PDF previews and role-specific quick links. Admin counts cover registered records/classes across years. Student current grade/class/year tiles remain on the overview; full history is in the profile menu. No notification bell, attendance chart, marks, finance, global search or events feature was added.
 
-Earlier P3-01–P3-30 passes remain recorded above. They do not establish acceptance of this latest navigation revision. Work through these targeted regressions rather than resetting every completed case:
+The user marked the following UI and performance checks complete on 26 October. Preserve these as user-reported results; detailed timing figures were not supplied.
 
-- [ ] **UI-01:** each single-role account signs in directly to its own workspace and sees its own top-right identity, active role and working Sign Out.
-- [ ] **UI-02:** the Teacher/Guardian account gets the welcome chooser with only authorised roles. Test both choices and profile-menu switching in both directions, without another login. Verify sidebar changes and explicit Guardian learner reselection; no Teacher roster becomes Guardian access.
-- [ ] **UI-03:** invalid, removed or revoked role/learner requests do not reveal protected data. Check profile and workspace error feedback.
-- [ ] **UI-04:** compare Admin counts with school-scoped records including future-year classes; open every quick action. Compare Teacher subjects, Student history and Guardian linked learners with their permitted records.
-- [ ] **UI-05:** on an eligible school day, compare populated lesson/homework/PDF cards and links against each role's module. Future planning must not become today's activities. Test Guardian links/downloads with the selected learner.
-- [ ] **UI-06:** check phone and wide desktop layout, keyboard controls, long names/titles, dropdown scrolling and header wrapping without page-wide horizontal scrolling.
-- [ ] **UI-07:** exercise controlled card/request failures and retry. Preserve role/learner context and distinguish failure from zero/empty data. Check larger lists and pagination warnings.
-- [ ] **PERF-01:** measure warm production-mode page loads, separating dev compilation from network/database latency. The earlier mocked 17-to-6 loader count is not a current whole-dashboard benchmark.
-- [ ] **REVIEW-01:** resolve the eager Teacher/Student full-history reads now performed on module pages even while the dropdown is closed; retain authorization and complete history access.
-- [ ] **REVIEW-02:** resolve the inconsistent implicit Admin selection for legacy management links; current access remains membership-checked, but navigation should use a consistent explicit role convention.
+- [x] **UI-01:** each single-role account signs in directly to its own workspace and sees its own top-right identity, active role and working Sign Out.
+- [x] **UI-02:** the Teacher/Guardian account gets the welcome chooser with only authorised roles. Test both choices and profile-menu switching in both directions, without another login. Verify sidebar changes and explicit Guardian learner reselection; no Teacher roster becomes Guardian access.
+- [x] **UI-03:** invalid, removed or revoked role/learner requests do not reveal protected data. Check profile and workspace error feedback.
+- [x] **UI-04:** compare Admin counts with school-scoped records including future-year classes; open every quick action. Compare Teacher subjects, Student history and Guardian linked learners with their permitted records.
+- [x] **UI-05:** on an eligible school day, compare populated lesson/homework/PDF cards and links against each role's module. Future planning must not become today's activities. Test Guardian links/downloads with the selected learner.
+- [x] **UI-06:** check phone and wide desktop layout, keyboard controls, long names/titles, dropdown scrolling and header wrapping without page-wide horizontal scrolling.
+- [x] **UI-07:** exercise controlled card/request failures and retry. Preserve role/learner context and distinguish failure from zero/empty data. Check larger lists and pagination warnings.
+- [x] **PERF-01:** measure warm production-mode page loads, separating dev compilation from network/database latency. The earlier mocked 17-to-6 loader count is not a current whole-dashboard benchmark.
+- [x] **REVIEW-01 — fixed 26 October:** the dropdown renders existing identity data without Teacher/Student history queries. A non-prefetched profile link loads the existing authorised detail component on demand. Student Overview still loads its current enrolment summary.
+- [x] **REVIEW-02 — fixed 26 October:** removed implicitAdmin. Multi-role users must choose a workspace on mode-less legacy links. Admin quick links, sidebar links, pagination, recovery links and timetable GET filters preserve explicit school_admin mode. Single-role users still open directly; membership checks are unchanged.
 
-The 25 October full local run passed all 510 tests and the production build after the UTF-8 repair. No new browser run accompanied it. School B remains entirely user-owned. P3-33, P3-34 and P3-35 stay open until the relevant review, fixes and acceptance are recorded.
+The 25 October full local run passed all 512 tests and the production build after the Guardian overview fixes. No new browser run accompanied it. School B checks and P3-33–P3-35 are now user-reported complete. Both review items were subsequently fixed and covered by the 26 October 524-test run; see the follow-up below.
 
 ## Evidence history
 
 Earlier progress appendices, test totals and browser observations are preserved in the [pre-refresh document](../archive/2026-10/docs-before-20261025-reconciliation/docs/DOCUMENTS.md). Use [VERIFICATION.md](VERIFICATION.md) for the current evidence summary. Historical passes do not imply the latest UI revision was browser-tested.
+
+## Guardian overview follow-up — 25 October 2026
+
+The updated Guardian design now keeps the learner picker and selected learner details in one panel. Accounts with no approved learner access get a clear explanation and a prompt to contact School Admin, rather than an unusable selection instruction. Accounts with linked learners still need to select one explicitly. The existing queries, role checks and RLS are unchanged.
+
+The 10 profile tests passed, including new empty-access and selected-learner cases. The full npm run check also passed ESLint, TypeScript, all 512 tests and the production build. Desktop/mobile browser review was subsequently reported complete by the user on 26 October. The two code-review items were subsequently fixed; final sign-off remains separate.
+
+## Local test timeout - 26 October 2026
+
+The user's run passed lint and TypeScript, then stopped at 511 passed tests and one timeout; the build did not run. The PostgreSQL literal-search test includes PGlite startup and shutdown inside Vitest's default 5-second limit. Its timeout is now 60 seconds, consistent with the database suites' setup allowance. Assertions and application behaviour are unchanged. The fresh full npm run check passed lint, TypeScript, all 512 tests in 56 files and production build.
+
+## REVIEW-01/02 follow-up - 26 October 2026
+
+The focused run passed 76 tests in nine files. The first sandbox run failed to load generated temporary modules; the rerun outside that sandbox passed. The full check then passed lint, TypeScript, all 524 tests in 57 files and production build.
+
+The menu regression tests measure zero extra client/profile-loader calls for a ready Teacher or Student actor. Routing tests prove Student module requests do not eagerly load enrolment history, while the explicit profile view does. This is not a claim about whole-page latency: the existing overview summary still reads enrolments and the authorised profile view still reads full history.
+
+No schema, RLS, authentication, account, dependency or environment configuration change was needed. Reused StudentProfile/TeacherProfile and their existing school-scoped readers; no new API or client-side authorization was added.
+
+- [x] Agent browser: Teacher menu shows identity/reference, opens the linked subject list, and retains Teacher mode. Switching to Guardian keeps the session and requires explicit learner selection.
+- [x] Agent browser: Student menu shows ST-003 identity and the history link; Overview retains Grade 12 / 12A - 2026 / 2026. The profile view shows current 2026 and upcoming 2027 enrolments with their dates.
+- [x] Agent browser: Admin sidebar and quick links include mode=school_admin; the timetable quick link, assignment-filter submission and clear-filter link retain Admin mode. Pagination URLs and multi-role Admin legacy entry are covered by automated tests; no multi-role Admin hosted session or multi-page fixture was exercised in this follow-up.
+
+## Phase 3 sign-off - 27 October 2026
+
+The user completed the REVIEW-01/02 browser follow-up and explicitly signed off Phase 3. These final browser results are user-reported; the earlier agent observations and local checks remain recorded above. No application or Auth setting was changed for sign-off. Live email/recovery, backups, deployment and other real-school launch requirements remain separate.

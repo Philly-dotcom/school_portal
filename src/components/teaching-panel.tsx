@@ -90,10 +90,10 @@ export async function TeachingPanel({
           <h2>Assign a teacher</h2>
           <TeachingForm />
           <div className="invitation-actions">
-            <Link className="button secondary" href="/dashboard?view=registers">
+            <Link className="button secondary" href="/dashboard?view=registers&mode=school_admin">
               School registers
             </Link>
-            <Link className="button secondary" href="/dashboard?view=academic">
+            <Link className="button secondary" href="/dashboard?view=academic&mode=school_admin">
               Academic setup
             </Link>
           </div>

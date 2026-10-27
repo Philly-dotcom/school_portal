@@ -88,12 +88,13 @@ export function Timetable({
               Filtered assignment:{" "}
               {assignments.find((a) => a.id === filter)?.label ??
                 "Unavailable assignment"}
-              . <Link href="/dashboard?view=timetable">Clear filter</Link>
+              . <Link href="/dashboard?view=timetable&mode=school_admin">Clear filter</Link>
             </p>
           )}
           <p className="small muted">Search by teacher name/reference, subject, class, grade or year.</p>
           <form action="/dashboard" method="get" className="access-form">
             <input type="hidden" name="view" value="timetable" />
+            <input type="hidden" name="mode" value="school_admin" />
             <input type="hidden" name="assignment" value={filterChoice} />
             <RecordSearchSelect
               kind="teaching_assignments"

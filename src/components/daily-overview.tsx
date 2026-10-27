@@ -234,7 +234,15 @@ export function DailyOverview({ context, actor }: Props) {
   const admin = !actor;
   return (
     <div
-      className={`daily-overview ${admin ? "admin-daily-layout" : actor.mode === "student" ? "student-daily-layout" : ""}`}
+    className={`daily-overview ${
+  admin
+    ? "admin-daily-layout"
+    : actor.mode === "student"
+      ? "student-daily-layout"
+      : actor.mode === "guardian"
+        ? "guardian-daily-layout"
+        : ""
+}`}
     >
       <div className="daily-date">
         <CalendarDays size={18} aria-hidden="true" />
@@ -267,7 +275,7 @@ export function DailyOverview({ context, actor }: Props) {
         </Link>
         <Link
           href={
-            admin ? "/dashboard?view=timetable" : href("my-timetable", actor)
+            admin ? "/dashboard?view=timetable&mode=school_admin" : href("my-timetable", actor)
           }
         >
           <CalendarDays size={21} aria-hidden="true" />
@@ -276,12 +284,12 @@ export function DailyOverview({ context, actor }: Props) {
         </Link>
         {admin ? (
           <>
-            <Link href="/dashboard?view=registers">
+            <Link href="/dashboard?view=registers&mode=school_admin">
               <Users size={21} aria-hidden="true" />
               Manage students and teachers
               <NavigationPending />
             </Link>
-            <Link href="/dashboard?view=academic">
+            <Link href="/dashboard?view=academic&mode=school_admin">
               <BookOpen size={21} aria-hidden="true" />
               Manage years and classes
               <NavigationPending />
@@ -291,7 +299,7 @@ export function DailyOverview({ context, actor }: Props) {
               Create announcement
               <NavigationPending />
             </Link>
-            <Link href="/dashboard?view=settings">
+            <Link href="/dashboard?view=settings&mode=school_admin">
               Manage school settings
               <NavigationPending />
             </Link>

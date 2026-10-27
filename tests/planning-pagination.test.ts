@@ -342,9 +342,9 @@ it("rejects malformed/repeated filter values and provides recovery for stale pag
     await TeachingPanel({ schoolId: school, page: "99" }),
   );
   expect(empty).toContain("No assignments on this page.");
-  expect(empty).toContain('href="/dashboard?view=teaching#teaching"');
+  expect(empty).toContain('href="/dashboard?view=teaching&amp;mode=school_admin#teaching"');
   expect(planningPageHref("timetable", 2, "bad")).toBe(
-    "/dashboard?view=timetable&timetablePage=2#timetable",
+    "/dashboard?view=timetable&mode=school_admin&timetablePage=2#timetable",
   );
 });
 

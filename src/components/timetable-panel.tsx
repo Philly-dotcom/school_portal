@@ -23,7 +23,7 @@ export async function TimetablePanel({
       <section className="content-panel">
         <h2>Invalid timetable filter</h2>
         <p>Choose a teaching assignment from the timetable.</p>
-        <Link href="/dashboard?view=timetable">Reset filter</Link>
+        <Link href="/dashboard?view=timetable&mode=school_admin">Reset filter</Link>
       </section>
     );
   const data = await loadPlanning(schoolId, "timetable", page, filter.id);

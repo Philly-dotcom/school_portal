@@ -366,7 +366,7 @@ it("shows only 50 rows, preserves other page positions, and offers a path back f
   expect(html).not.toContain("Fictional student-0050");
   expect(html).toContain("studentsPage=2&amp;teachersPage=9#students");
   expect(html).toContain("No records on this page.");
-  expect(html).toContain('href="/dashboard?view=registers#teachers"');
+  expect(html).toContain('href="/dashboard?view=registers&amp;mode=school_admin#teachers"');
   expect(listPage(["2", "3"])).toBe(1);
   expect(
     registerPageHref(
@@ -375,7 +375,7 @@ it("shows only 50 rows, preserves other page positions, and offers a path back f
       3,
     ),
   ).toBe(
-    "/dashboard?view=registers&teachersPage=2&enrollmentsPage=3#enrollments",
+    "/dashboard?view=registers&mode=school_admin&teachersPage=2&enrollmentsPage=3#enrollments",
   );
 });
 

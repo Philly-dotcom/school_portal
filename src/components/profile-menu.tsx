@@ -1,14 +1,13 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { signOut } from "@/app/login/actions";
-import { AdminProfile, TeacherProfile } from "@/components/staff-profile";
-import { StudentProfile } from "@/components/student-profile";
+import { AdminProfile } from "@/components/staff-profile";
 import { WorkspaceSelector } from "@/components/workspace-selector";
 import type { ReadySchoolContext } from "@/lib/auth-context";
 import { roleLabels, type Role } from "@/lib/permissions";
 import type { PortalActor } from "@/lib/portal-validation";
 import type { loadAdminProfile } from "@/lib/staff-profile-data";
-import type { loadStudentProfile } from "@/lib/student-profile-data";
 import { createClient } from "@/lib/supabase/server";
 
 export async function ProfileMenu({
@@ -16,13 +15,11 @@ export async function ProfileMenu({
   activeRole,
   actor,
   adminProfileRead,
-  studentProfileRead,
 }: {
   context: ReadySchoolContext;
   activeRole?: Role;
   actor?: PortalActor;
   adminProfileRead?: ReturnType<typeof loadAdminProfile>;
-  studentProfileRead?: ReturnType<typeof loadStudentProfile>;
 }) {
   const admin = adminProfileRead ? await adminProfileRead : undefined;
   let name: string =
@@ -84,13 +81,6 @@ export async function ProfileMenu({
               context={context}
               profileRead={adminProfileRead}
             />
-          ) : actor?.status === "ready" && actor.mode === "teacher" ? (
-            <TeacherProfile read={{ context, actor }} />
-          ) : actor?.status === "ready" && actor.mode === "student" ? (
-            <StudentProfile
-              read={{ context, actor }}
-              profileRead={studentProfileRead}
-            />
           ) : (
             <dl className="admin-profile-fields">
               <div>
@@ -101,6 +91,13 @@ export async function ProfileMenu({
                 <dt>School</dt>
                 <dd>{context.school.name}</dd>
               </div>
+              {actor?.status === "ready" &&
+                (actor.mode === "teacher" || actor.mode === "student") && (
+                  <div>
+                    <dt>{actor.mode === "teacher" ? "Teacher" : "Student"} reference</dt>
+                    <dd>{actor.person.reference}</dd>
+                  </div>
+                )}
               {actor?.status === "ready" && actor.mode === "guardian" && (
                 <div>
                   <dt>Linked students</dt>
@@ -120,6 +117,16 @@ export async function ProfileMenu({
             </dl>
           )}
         </Suspense>
+        {actor?.status === "ready" &&
+          (actor.mode === "teacher" || actor.mode === "student") && (
+            <Link
+              href={`/dashboard?view=profile&mode=${actor.mode}`}
+              prefetch={false}
+              className="button secondary compact"
+            >
+              {actor.mode === "teacher" ? "View linked subjects" : "View enrolment history"}
+            </Link>
+          )}
         {actor && actor.status !== "ready" && (
           <p role="status" className="quiet-note">
             {actor.status === "empty"

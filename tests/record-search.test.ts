@@ -170,6 +170,7 @@ it("passes search text as a literal ILIKE pattern rather than an OR filter", asy
   await searchSchoolRecords({ ...base, query: "  Grade_%\\  " });
   expect(mock.calls[0].pattern).toBe(literalSearchPattern("Grade_%\\"));
 });
+// Includes PGlite startup and shutdown, like the database suites' 60s setup hooks.
 it("matches percent, underscore and backslash literally in PostgreSQL", async () => {
   const db = new PGlite();
   try {
@@ -188,7 +189,7 @@ it("matches percent, underscore and backslash literally in PostgreSQL", async ()
   } finally {
     await db.close();
   }
-});
+}, 60000);
 it("returns class labels and year dates from separately school-scoped references", async () => {
   mock.rows.classes = [
     {

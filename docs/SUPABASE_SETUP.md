@@ -76,6 +76,100 @@ Restart `npm run dev`. Visit `/login`. Merely supplying environment variables do
 
 Do not use real learner data until invitations/recovery, privileged-account protections, backup/restore procedures and these hosted tests have been completed.
 
+## School B: fictional isolation-test setup
+
+Added 26 October 2026. These are instructions for you to run, not a record that School B has been created or tested. Keep this fixture for the remaining acceptance checks; agree its cleanup separately. Do not remove School A records or rerun migrations.
+
+Use the **same dedicated Supabase project as School A**. A separate database would not test isolation between schools sharing our tables. The portal has no school-registration screen yet.
+
+### Understand the two UUIDs
+
+- **User UUID:** copied from Authentication → Users. It identifies a login account.
+- **School UUID:** generated when a row is inserted into `public.schools`. It identifies the school and belongs in `SCHOOL_PORTAL_SCHOOL_ID`.
+- **Membership:** connects the user to the school; `membership_roles` assigns their role.
+
+Create a confirmed fictional School B administrator in Supabase Authentication, with a different email from School A's accounts. Keep public sign-ups disabled. If you already created this user, reuse it. Copy its UUID, not School A's UUID. Keep passwords out of SQL and documentation.
+
+### Create School B and link its administrator
+
+If you already ran this provisioning block, skip it and use the SELECT query below. Otherwise replace `REPLACE_WITH_NEW_AUTH_USER_UUID` and run this block once in the dedicated project's SQL Editor as the database owner. It creates the records together and stops if the school name exists or the user already has a school membership. If it stops, inspect the existing records rather than removing the safeguards.
+
+```sql
+do $$
+declare
+  admin_user uuid := 'REPLACE_WITH_NEW_AUTH_USER_UUID';
+  school_b uuid;
+  admin_membership uuid;
+begin
+  if not exists (
+    select 1 from auth.users where id = admin_user
+  ) then
+    raise exception 'Auth user does not exist.';
+  end if;
+
+  if exists (
+    select 1 from public.schools
+    where name = 'School B Test School'
+  ) then
+    raise exception 'School B already exists. Inspect it before continuing.';
+  end if;
+
+  if exists (
+    select 1 from public.school_memberships
+    where user_id = admin_user
+  ) then
+    raise exception 'Use a separate test account with no existing school membership.';
+  end if;
+
+  insert into public.schools(name, timezone)
+  values ('School B Test School', 'Africa/Johannesburg')
+  returning id into school_b;
+
+  insert into public.profiles(user_id, display_name)
+  values (admin_user, 'School B Test Administrator')
+  on conflict (user_id) do nothing;
+
+  insert into public.school_memberships(school_id, user_id)
+  values (school_b, admin_user)
+  returning id into admin_membership;
+
+  insert into public.membership_roles(membership_id, school_id, role)
+  values (admin_membership, school_b, 'school_admin');
+
+  raise notice 'School B ID: %', school_b;
+end $$;
+```
+
+### Find School B's school UUID
+
+This query is read-only and can be repeated:
+
+```sql
+select id, name, active
+from public.schools
+where name = 'School B Test School';
+```
+
+The returned `id` is School B's UUID. To compare both schools, use:
+
+```sql
+select id, name, active
+from public.schools
+order by created_at;
+```
+
+### Open the existing app for School B
+
+1. Sign out and stop the development server.
+2. Save the current School A value of `SCHOOL_PORTAL_SCHOOL_ID` so you can restore it.
+3. In `.env.local`, change only `SCHOOL_PORTAL_SCHOOL_ID` to School B's school UUID. Keep the same Supabase URL and publishable key; do not overwrite the file from `.env.example`.
+4. Run `npm run dev` and sign in with School B's administrator.
+5. Confirm the school name is School B Test School and School A records are not shown.
+
+To return to School A, sign out, stop the server, restore its school UUID and restart. Each running app is configured for one school. Switch Workspace changes roles, not schools.
+
+Build the small fictional School B fixture through its portal, including the academic structure, people and linked records needed for the tests. Provisioning alone does not pass DOC-B or P3-32. Cross-school checks must use ordinary authenticated School A and School B sessions and test denied reads and writes in both directions, including documents and Storage. SQL Editor owner access is not evidence that RLS protects normal users. Record results in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist); School B setup and testing remain user-owned.
+
 ## Remaining authentication work
 
 Member management, recovery and invitation acceptance are implemented. Account-management migrations are already in the current project. Follow [account management](ACCOUNT_MANAGEMENT.md) for the remaining email setup and verification, not to reapply its migration. Hosted integration checks and required admin MFA remain outstanding.

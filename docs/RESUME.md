@@ -1,18 +1,31 @@
 # Where we left off
 
+## Phase 3 signed off - 27 October 2026
+
+The user confirmed final Phase 3 sign-off and completed the REVIEW-01/02 browser checks. Phase 3 is complete. Phase 4 has not started. The last full local validation remains the 26 October pass: ESLint, TypeScript, 524 tests in 57 files and production build; it was not rerun for this documentation update. Earlier pending-sign-off statements below describe prior checkpoints and are superseded. Production launch readiness remains separate.
+
+## 26 October checkpoint
+
+The user reports all remaining hosted/browser checks completed and has checked them in DOCUMENTS.md, including School B isolation, Guardian layout and UI/performance checks. No agent hosted rerun was performed and no timing figures were supplied.
+
+Their npm run check passed lint and TypeScript, then stopped with 511 tests passed and one 5-second timeout in record-search.test.ts. The timed test includes PGlite startup, queries and shutdown; its local timeout is now 60 seconds, matching database setup hooks elsewhere. All assertions remain intact. The fresh npm run check passed ESLint, TypeScript, all 512 tests in 56 files and the production build on 26 October.
+
+REVIEW-01 and REVIEW-02 are now implemented and locally verified. Teacher/Student identity stays in the dropdown; an explicit, non-prefetched profile link opens the existing subject/history component on demand. Student Overview still loads its enrolment summary. Admin links, pagination and timetable filters carry mode=school_admin; multi-role users following a mode-less legacy management URL get the workspace chooser. The full check passed ESLint, TypeScript, 524 tests in 57 files and production build. Phase 4 has not started. Earlier outstanding browser lists below are historical; use DOCUMENTS.md for the remaining targeted follow-up and final sign-off.
+
+
 Updated 25 October 2026.
 
 ## Current position
 
-We are in **Phase 3: Daily Operations**. The core modules and daily dashboards are implemented; Phase 3 has not been accepted and Phase 4 has not started. Migrations through **021 are user-confirmed applied**. Do not rerun them. Use fictional records in the dedicated School Portal project.
+We are in **Phase 3: Daily Operations**. The core modules and daily dashboards are implemented; the user accepted Phase 3 on 27 October. Phase 4 has not started. Migrations through **021 are user-confirmed applied**. Do not rerun them. Use fictional records in the dedicated School Portal project.
 
 All roles now use a top-right profile dropdown. It contains identity details, the active role and Sign Out. Multi-role accounts get a workspace chooser at the normal dashboard entry and Switch Workspace in the dropdown. Single-role accounts open their workspace directly. Switching opens the chosen overview in the same session and clears learner/edit context. Guardian users must explicitly select a permitted learner again. The old sidebar role switcher has been removed.
 
-Student current grade/class/year tiles remain on the overview; identity and enrolment history are in the dropdown. Teacher subjects are in the dropdown. Guardian learner selection stays on the overview. Admin management links are grouped under School management; their reference is the active school membership ID, not a separate staff reference.
+Student current grade/class/year tiles remain on the overview; identity is in the dropdown, with an on-demand enrolment-history link. Teacher subjects open through the same profile-menu pattern. Guardian learner selection stays on the overview. Admin management links are grouped under School management; their reference is the active school membership ID, not a separate staff reference.
 
 ## Latest verification
 
-On 25 October, after the shared profile/workspace change and UTF-8 repair, **npm run check passed ESLint, TypeScript, 510 tests in 56 files and production build**. No test relaxation or application fix was needed during that run. The earlier 509-test result is superseded. This run did not include Playwright, hosted RLS/Storage checks or new role-browser acceptance.
+On 25 October, after the Guardian overview fixes, **npm run check passed ESLint, TypeScript, 512 tests in 56 files and production build**. Two Guardian regression tests were added and the existing heading assertion was updated. The earlier 510-test result is superseded. This run did not include Playwright, hosted RLS/Storage checks or new role-browser acceptance.
 
 The user marked P3-01 through P3-30, the original 13 document checks and DOC-ANON complete. Preserve those results as evidence for the versions tested. Earlier agent browser checks covered Teacher/Guardian navigation, Admin rendering/sidebar/profile and Student current 2026 versus upcoming 2027 placement. They do not validate the latest all-role dropdown and chooser.
 
@@ -20,11 +33,9 @@ The user marked P3-01 through P3-30, the original 13 document checks and DOC-ANO
 
 Use [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) as the acceptance tracker. Do not repeat already passed cases without a relevant regression reason.
 
-1. Review the two open code concerns: detailed Teacher/Student profile history now loads on every module page, even with the dropdown closed; legacy Admin management links can select Admin implicitly without an explicit mode. These were identified, not fixed.
-2. Complete browser acceptance of the new chooser, all four profile menus, switching, Guardian reselection, sign-out, denied roles and responsive/keyboard behavior.
-3. Complete populated dashboard, error/retry, pagination and warm production timing checks.
-4. The user handles all School B setup and hosted cross-school reads/writes/Storage checks: DOC-B, P3-31 and P3-32 remain open.
-5. Resolve reproduced failures, rerun checks after code changes, then review results together before signing off Phase 3.
+1. REVIEW-01/02 are implemented and the full 524-test check passed. Record only their targeted post-change browser results in DOCUMENTS.md; do not reset the user's passed acceptance cases.
+2. The user reports School B isolation, dashboard, responsive, role and performance checks complete. No production timing numbers were supplied.
+3. Review the final evidence together and explicitly sign off Phase 3 before starting Phase 4.
 
 Before Phase 4 implementation, confirm whether Admin may both review and publish, whether changed approved marks require re-review, grading rules and report layout. Marks, reports, finance, external notifications and AI have not been added.
 
@@ -50,3 +61,13 @@ Email remains off; live recovery, admin security policy, backups, monitoring, de
 - [Roadmap](ROADMAP.md)
 - [File guide](FILE_GUIDE.md)
 - [Earlier notes](../archive/2026-10/docs-before-20261025-reconciliation/docs/RESUME.md)
+
+## Guardian overview follow-up — 25 October 2026
+
+The updated Guardian design now keeps the learner picker and selected learner details in one panel. Accounts with no approved learner access get a clear explanation and a prompt to contact School Admin, rather than an unusable selection instruction. Accounts with linked learners still need to select one explicitly. The existing queries, role checks and RLS are unchanged.
+
+The 10 profile tests passed, including new empty-access and selected-learner cases. The full npm run check also passed ESLint, TypeScript, all 512 tests and the production build. Desktop/mobile browser review of this layout remains outstanding; Phase 3 remains open.
+
+## REVIEW-01/02 browser follow-up - 26 October
+
+Teacher identity and on-demand subjects passed in the existing combined Teacher/Guardian session. Switching back to Guardian required explicit learner selection. Student identity/history passed, with current 2026 and upcoming 2027 labels and the existing overview summary retained. Admin sidebar/quick links and timetable filter/clear-filter retained explicit Admin mode. No school records or configuration were changed. Pagination and multi-role Admin legacy-link behavior passed automated tests; those two scenarios were not repeated in a hosted browser session. The full local check passed 524 tests in 57 files, lint, TypeScript and production build. Both review fixes are implemented; final Phase 3 sign-off remains a separate decision.

@@ -67,6 +67,7 @@ it("lets an admin reach invitations older than the previous 100-row cutoff", asy
   expect(html).toContain("Previous invitations");
   expect(html).not.toContain("Next invitations");
   expect(html).toContain("invitationPage=2");
+  expect(html).toContain("view=people&amp;mode=school_admin&amp;invitationPage=2");
 });
 it("shows the next page and handles invalid page requests safely", async () => {
   for (const value of [undefined, "-1", "0", "1.5", "Infinity", "100001"])
