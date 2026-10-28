@@ -1,5 +1,15 @@
 # Where we left off
 
+## Next: Phase 4 preparation - 29 October 2026
+
+Phase 3 is signed off. Phase 4 remains planning-only; development is intended to begin on 30 October, after reviewing the concrete schema/workflow design. Read [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md). The user's decision report is now reconciled with the plan; Section 10 contains the final permission matrix and workflow details.
+
+Settled: dated eligibility and explicit roster freeze, complete assessment-roster review, learner-specific correction invalidation, scoped reviewer/historical-correction grants, Admin policy approval, and separate Admin output review/publication for subject-term results and reports. Self-review is allowed; publication is never automatic. Missing blocks submission. Unchanged learners' published results remain visible during another learner's correction.
+
+Still needed from the school: actual numerical grading policies, absence/exemption calculation rules and final report presentation. Next design work: data relationships, version/dependency constraints and an existing-fixture test plan. No new fixtures, application code, migrations, database records or Auth settings were changed for this planning update. Existing user changes in next-env.d.ts and scripts/production-e2e-server.mjs were left alone.
+
+Session-timeout work stays in Phase 6. The latest recorded full validation remains the 26 October 524-test/build pass; tests were not rerun for documentation. Earlier dated status sections below are historical and do not reopen Phase 3.
+
 ## Phase 3 signed off - 27 October 2026
 
 The user confirmed final Phase 3 sign-off and completed the REVIEW-01/02 browser checks. Phase 3 is complete. Phase 4 has not started. The last full local validation remains the 26 October pass: ESLint, TypeScript, 524 tests in 57 files and production build; it was not rerun for this documentation update. Earlier pending-sign-off statements below describe prior checkpoints and are superseded. Production launch readiness remains separate.
@@ -15,7 +25,7 @@ REVIEW-01 and REVIEW-02 are now implemented and locally verified. Teacher/Studen
 
 Updated 25 October 2026.
 
-## Current position
+## Historical position - 25 October (superseded)
 
 We are in **Phase 3: Daily Operations**. The core modules and daily dashboards are implemented; the user accepted Phase 3 on 27 October. Phase 4 has not started. Migrations through **021 are user-confirmed applied**. Do not rerun them. Use fictional records in the dedicated School Portal project.
 
@@ -23,13 +33,13 @@ All roles now use a top-right profile dropdown. It contains identity details, th
 
 Student current grade/class/year tiles remain on the overview; identity is in the dropdown, with an on-demand enrolment-history link. Teacher subjects open through the same profile-menu pattern. Guardian learner selection stays on the overview. Admin management links are grouped under School management; their reference is the active school membership ID, not a separate staff reference.
 
-## Latest verification
+## Historical verification - 25 October
 
 On 25 October, after the Guardian overview fixes, **npm run check passed ESLint, TypeScript, 512 tests in 56 files and production build**. Two Guardian regression tests were added and the existing heading assertion was updated. The earlier 510-test result is superseded. This run did not include Playwright, hosted RLS/Storage checks or new role-browser acceptance.
 
 The user marked P3-01 through P3-30, the original 13 document checks and DOC-ANON complete. Preserve those results as evidence for the versions tested. Earlier agent browser checks covered Teacher/Guardian navigation, Admin rendering/sidebar/profile and Student current 2026 versus upcoming 2027 placement. They do not validate the latest all-role dropdown and chooser.
 
-## What comes next
+## Historical next steps - superseded by the 29 October checkpoint
 
 Use [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) as the acceptance tracker. Do not repeat already passed cases without a relevant regression reason.
 
@@ -37,7 +47,7 @@ Use [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) as the acceptance t
 2. The user reports School B isolation, dashboard, responsive, role and performance checks complete. No production timing numbers were supplied.
 3. Review the final evidence together and explicitly sign off Phase 3 before starting Phase 4.
 
-Before Phase 4 implementation, confirm whether Admin may both review and publish, whether changed approved marks require re-review, grading rules and report layout. Marks, reports, finance, external notifications and AI have not been added.
+These earlier open questions are now resolved by the 29 October decision record, except actual numerical school policies and final report presentation. Marks, reports, finance, external notifications and AI have not been added.
 
 ## Existing fictional records
 

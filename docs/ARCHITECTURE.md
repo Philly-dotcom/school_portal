@@ -82,7 +82,7 @@ Invitation preparation is built. The separate Supabase Edge Function for sending
 
 Delivery remains disabled and unverified. Saved SMTP settings are not enough while the sending domain is unregistered. Password recovery also needs a working delivery path before live use.
 
-Private PDF uploads, document metadata and authenticated downloads are implemented. The recorded document hosted checks passed according to the user; hosted cross-school Storage isolation remains open. Notifications, n8n and AI remain future work. Results will need review and School Admin publication states in Phase 4. School selection, SaaS billing and platform administration remain later decisions.
+Private PDF uploads, document metadata and authenticated downloads are implemented. The recorded document hosted checks passed according to the user; hosted cross-school Storage isolation was subsequently reported complete by the user at Phase 3 sign-off; it was not independently repeated for this planning update. Notifications, n8n and AI remain future work. Results will need review and School Admin publication states in Phase 4. School selection, SaaS billing and platform administration remain later decisions.
 
 ## What the tests establish
 
@@ -116,3 +116,10 @@ Every role now uses the same top-right profile menu. The verified membership sup
 The dashboard page reuses the verified context, selected actor and Student/Admin profile promises within that render. There is no cross-request permission cache. Server components may perform user-scoped reads; server actions and SQL still enforce mutations independently. No schema, RLS, authentication provider or dependency changed for the new menu.
 
 REVIEW-01/02 were fixed on 26 October. Teacher/Student menus reuse the verified actor identity and link to view=profile with prefetch disabled; that view reuses the existing authorised detail readers. Student Overview still reads enrolments for its summary. Admin navigation explicitly carries mode=school_admin. Multi-role accounts entering any mode-less URL, including legacy management links, choose their workspace; single-role accounts still open directly. No authorization cache or new API was introduced.
+
+
+## Phase 4 planning boundary - 29 October 2026
+
+Phase 3 is signed off; Phase 4 is not implemented. [PHASE_4_PLAN.md](PHASE_4_PLAN.md) describes the sequence and reuse points. [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) defines the academic contract and permission matrix. New assessment/result/report relationships still need concrete schema design and additive migrations.
+
+Keep versioned assessment rosters, per-learner result versions, explicit review grants and Admin-only publication. Corrections must invalidate only affected current results and dependent reports/downloads atomically. Report snapshots need their own output review/publication. Existing authentication, school ownership, RLS and Guardian access boundaries remain the foundation. These are planning requirements, not claims that new tables or policies exist. Session-timeout changes remain Phase 6.

@@ -1,5 +1,9 @@
 # Verification status
 
+## Planning documentation - 29 October 2026
+
+The Phase 4 decision record and plan have been reconciled, including the permission matrix and workflow rules. Documentation links, UTF-8 readability and whitespace were checked. No application tests, build, browser checks or hosted database operations were run for this documentation-only work. The recorded 524-test/build pass below remains the last full validation, not a fresh check of today's checkout. Phase 4 implementation has not begun.
+
 ## Phase 3 signed off - 27 October 2026
 
 The user confirmed final Phase 3 sign-off and completed the REVIEW-01/02 browser checks. Phase 3 is complete. Phase 4 has not started. The last full local validation remains the 26 October pass: ESLint, TypeScript, 524 tests in 57 files and production build; it was not rerun for this documentation update. Earlier pending-sign-off statements below describe prior checkpoints and are superseded. Production launch readiness remains separate.

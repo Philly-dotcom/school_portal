@@ -4,22 +4,15 @@ School Portal is a portal for one school, built so we can add more schools later
 
 This project lives at `C:\Users\moses\Documents\School_portal`. Its database, accounts and decisions belong to this project only.
 
-## Where we are — 25 October 2026
+## Where we are - 29 October 2026
 
-We are in **Phase 3: Daily Operations**. Role workspaces, personal timetables, attendance, view-only homework, announcements and private PDF documents are implemented. All four roles now have a shared top-right profile dropdown. Multi-role accounts choose their workspace after login and switch from that dropdown; single-role accounts open directly. The daily dashboard now has role-specific quick actions and authorized daily cards; its new browser acceptance checks remain open.
+**Phase 3 is complete and signed off. We are preparing Phase 4: Academic Performance.** Attendance, view-only homework, announcements, private PDFs, daily dashboards and role-aware profiles/navigation are implemented. The user completed the remaining hosted/browser checks, including School B isolation and REVIEW-01/02.
 
-Migrations through **021 are user-confirmed applied**. Do not rerun them. The user completed 13 hosted document checks; School B isolation is deferred because School B is not registered. The remaining tests and known defects are in the [combined Phase 3 checklist](docs/DOCUMENTS.md#remaining-phase-3-checklist).
+Migrations through **021 are user-confirmed applied**. Do not rerun them. The last full local check passed **lint, TypeScript, 524 tests in 57 files and production build** on 26 October. Hosted results and local checks are separate evidence.
 
-The latest local checks passed **lint, TypeScript, 510 tests in 56 files and production build**. Hosted checks remain separate. Start with [the current checkpoint](docs/RESUME.md) or [verification status](docs/VERIFICATION.md).
+Read [the Phase 4 plan](docs/PHASE_4_PLAN.md) for assessment setup, marks, review/Admin publication, learner results and report cards. The [academic decision record](docs/PHASE_4_ACADEMIC_DECISIONS.md) now settles workflow and permissions; actual school grading formulas and final report presentation are still required; no Phase 4 code or migrations have been added. Session inactivity/logout work is deferred to Phase 6. Email/recovery, backups and deployment remain separate live-readiness work.
 
-| Area | Current position | Remaining boundary |
-| --- | --- | --- |
-| Foundation and account access | Auth, membership roles, invitations and explicit acceptance implemented | Email/recovery delivery remains off or unverified; live security and deployment gates are separate. |
-| Academic setup and registers | Years/classes/subjects, people, account links, grants and corrections implemented | Broader date/relationship editors, rollover and imports are not agreed scope. Preserve recorded user tests. |
-| Enrolment, teaching and timetable | Dated history-preserving workflows, searchable choices and personal timetables implemented | Keep current/future date rules; hosted School B isolation remains open. |
-| Attendance, homework, announcements and PDFs | Implemented; P3-01–P3-30 and original document checks user-reported passed | Those passes predate the latest shared-menu revision; do targeted regressions, not a blanket reset. |
-| Daily dashboard and profiles | All-role dashboard UI and top-right profiles implemented; local checks pass | Latest browser/mobile/error acceptance, production timing and two code-review follow-ups remain. |
-| Phase 3 sign-off | Not complete | School B isolation, remaining checklist and explicit acceptance are required before Phase 4. |
+Start with [the current checkpoint](docs/RESUME.md), [Phase 3 acceptance](docs/DOCUMENTS.md#remaining-phase-3-checklist) or [verification status](docs/VERIFICATION.md).
 
 Teacher, student and guardian workspaces now use linked school records. Adding a student record does not create a login, and recording a family relationship does not automatically give a guardian access.
 

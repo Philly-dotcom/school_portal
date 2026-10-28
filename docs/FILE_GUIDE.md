@@ -10,6 +10,16 @@ When you create a grade, `src/app/dashboard/page.tsx` selects the Academic setup
 
 A **register record** is a student, teacher or guardian entry. An **Auth account** is a sign-in. A **membership** connects that account to a school and roles. Keeping those separate is why the login-link files exist.
 
+## Phase 4 planning documents
+
+Added to this guide on 29 October 2026. No Phase 4 application files or migrations have been created.
+
+| File | Purpose |
+| --- | --- |
+| [PHASE_4_PLAN.md](PHASE_4_PLAN.md) | Implementation order, reuse points, remaining school inputs and acceptance work. Proposed code paths are not existing files. |
+| [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) | The user's policy report, reconciled workflow details and action/role matrix in Section 10. |
+| [RESUME.md](RESUME.md) | Latest checkpoint and the exact next design work. Older dated sections are historical. |
+
 ## Root files and tooling
 
 | File | What it does |

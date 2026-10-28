@@ -6,9 +6,9 @@ School Portal is completely isolated from the user's other projects. No architec
 
 ## Authorization and current stage
 
-The user authorized Phase 1, Phase 2 without email, and assistant-led Phase 3 development. As of 25 October, migrations through 021 are user-confirmed applied. Role accounts are established and basic separate-session checks have passed. The user completed 13 hosted document checks; School B isolation and the remaining UI acceptance cases in [the current checklist](DOCUMENTS.md#remaining-phase-3-checklist) remain open.
+Phase 3 was signed off on 27 October 2026, including the remaining School B and REVIEW-01/02 browser checks reported by the user. Migrations through 021 are user-confirmed applied. The last full local check passed lint, TypeScript, 524 tests in 57 files and production build on 26 October.
 
-All four roles have read-only top-right profile dropdowns. The daily dashboard and shared workspace chooser are implemented; latest local checks passed ESLint, TypeScript, 510 tests in 56 files and production build. Browser acceptance of the latest revision remains open. Phase 3 is not yet accepted and Phase 4 has not started. Email delivery remains off. Public deployment and additional cloud resources are not authorized by this status update.
+Phase 4 preparation is authorised; application and database implementation have not started. Use [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and the reconciled [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md), including the permission matrix in Section 10. Session inactivity/logout proposals are on hold until Phase 6. Email delivery remains off; public deployment and additional cloud resources are not authorised by this update.
 
 At the user's request, superseded guides are now archived, including the temporary Phase 3 implementation guide. Use RESUME.md, VERIFICATION.md and the current checklist for progress; archived instructions are historical reference.
 
@@ -24,7 +24,9 @@ Roles: School Admin, Teacher, Student, Parent/Guardian. Platform Super Admin is 
 - At the normal post-login entry, multi-role accounts choose an authorised workspace; single-role accounts open directly. Switching retains the session, starts at the selected overview and requires a new explicit Guardian learner selection.
 
 
-- School Admin publishes results after review by an authorized person.
+- School Admin publishes results after review by a specifically authorised teacher or Admin. Self-review is allowed (confirmed 27 October).
+- Editing an approved result requires another review and immediately hides affected published results. Only School Admin republishes after approval; review approval itself does not publish.
+- Session inactivity/logout and maximum-session proposals are deferred to Phase 6; proposed durations are not approved settings.
 - Homework is posted for learners to view. There are no learner submissions.
 - Admin and teachers with current assignment access can publish homework directly, without an extra approval step. Authorship does not preserve editing rights after an assignment ends.
 - Homework is visible only to learners whose dated enrollment covers its original publication date, plus guardians with current explicit access to those learners. Later joiners do not inherit older work. Editing and republishing do not reset the audience date. Eligibility follows the recorded enrollment history; correcting that history can change eligibility.
@@ -37,8 +39,7 @@ Roles: School Admin, Teacher, Student, Parent/Guardian. Platform Super Admin is 
 
 ## Recommendations awaiting decisions before their module is built
 
-- Whether a School Admin can both review and publish results.
-- Re-review when approved marks change.
+- Actual school-approved weights/formulas, rounding, bands and absent/exempt calculation treatment remain required. Reviewer scope, review/publication unit, dated eligibility and distinct score states are settled in the academic decision record.
 - File scanning and retention/physical cleanup procedures before live school use; homework attachments remain outside the current library.
 - Exact grading, report layout, fee policy, school identity and account provisioning conventions.
 

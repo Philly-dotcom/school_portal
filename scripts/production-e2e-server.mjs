@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from "node:child_process";
 
-// Playwright supplies disconnected environment values. Never point browser tests at a school.
+// Playwright supplies disconnected environment values. It Never point browser tests at a school.
 const next = "node_modules/next/dist/bin/next";
 const build = spawnSync(process.execPath, [next, "build"], {
   stdio: "inherit",
