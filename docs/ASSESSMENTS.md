@@ -73,16 +73,29 @@ On 30 October, the user reported an empty search for Geography / 12A - 2026 / 20
 
 ## Freeze a roster and enter raw marks
 
-Migration 023 adds this workflow. Apply it once to the dedicated Supabase project when ready to resume hosted checks. It creates no school records on installation.
+Migration 023 adds this workflow. The tester confirmed it has been applied to the dedicated Supabase project. It creates no school records on installation.
 
 1. In the Admin or assigned Teacher workspace, open **Assessments → Roster and draft marks**. Preview shows the placements covering the assessment date. Opening the page saves nothing.
 2. Once the school-local date reaches the assessment date and Admin has authorised the scale, choose **Freeze eligible roster**. This captures every page and locks the definition. Resolve conflicting placements before freezing.
 3. Choose Scored and enter the raw mark (zero is valid if the scale allows it), Absent, Exempt with a reason, or Missing. Save before changing pages. Untouched learners remain as they were. If a colleague saves first, reload and re-enter your changes against the newer draft.
-4. Staff can revisit saved drafts. Learners and guardians have no access. Historical teacher grants, roster amendments, submission and publication are separate work.
+4. Staff can revisit saved drafts. Learners and guardians have no access. Admin placement amendments are covered below. Historical teacher grants, submission and publication are still ahead.
 
 ### Hosted checks to return to
 
-- [ ] Apply migration 023. Preview an existing fictional assessment and check the learner placements before deliberately freezing it.
+- [x] Apply migration 023 (tester confirmed).
+- [ ] Preview an existing fictional assessment and check the learner placements before deliberately freezing it.
 - [ ] Check future-date and scale restrictions, freeze across pages, retained placement evidence and the locked definition.
 - [ ] Save a partial page, reload, check zero and non-score states, and reject a stale save from another staff session.
 - [ ] Verify direct API and table denials using anonymous, Student, Guardian and School B sessions. Recheck teacher access after an assignment ends.
+
+## Correct a frozen draft roster
+
+Migration 024 adds **Review roster changes** to a frozen assessment in the School Admin workspace. Use this when an enrolment correction changes who belonged in the class on the assessment date, or when its retained placement evidence needs updating.
+
+Open the comparison, check the learner and the before/after dates, and enter a reason for that learner. Adding a learner starts their mark at Missing. Removing a learner takes them off the working register and retains their mark history. Updating placement evidence for an existing learner keeps their current mark. If another staff member saves marks or the placement changes after preview, reload before deciding again.
+
+This screen uses the original assessment date and authorised scale. Changes to either need their own impact review. Before adding submission or publication, extend the amendment transaction to handle review and release invalidation.
+
+- [x] Apply migration 024 once in the dedicated project.
+- [ ] As School Admin, preview and apply a difference using fictional data. Check the affected learner, an unaffected learner and the reason in the amendment record.
+- [ ] Verify a stale preview and an old mark-entry tab are rejected. Verify Teacher, Student, Guardian and School B sessions cannot apply the change.

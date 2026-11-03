@@ -106,7 +106,7 @@ Implemented files: `src/lib/assessment-validation.ts`, `src/lib/assessment-data.
 
 ### 4.2 — Mark entry and retained learner history
 
-3 November 2026. Initial freeze and raw draft capture are implemented locally in migration 023. Hosted verification is deferred. Admin roster amendments and scoped historical correction grants remain open.
+3 November 2026. Initial freeze and raw draft capture are implemented locally in migration 023. Hosted verification is deferred. The tester confirmed migration 023. Migration 024 implements Admin amendments to placement membership/evidence on a frozen draft against its existing date and scale. Historical teacher correction grants and changes to the frozen date or scale remain open.
 
 - [x] Resolve the eligible learner roster from the agreed assessment-date rule and retain the relevant enrolment references.
 - [x] Add result records with unique assessment/learner ownership, score validation and explicit non-score status using the agreed distinct score states.

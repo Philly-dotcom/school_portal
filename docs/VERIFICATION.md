@@ -1,8 +1,12 @@
 # Verification status
 
+## 3 November 2026 — Admin amendments to frozen draft rosters
+
+ESLint, TypeScript, all 580 tests in 60 files and the production build passed locally, including seven new database cases for migration 024. They cover removing and restoring a learner, retaining earlier marks, updating a placement while keeping its score, requiring a reason, rejecting stale previews and denying preview and apply to unauthorised callers. The tester confirmed 023 was applied to Supabase. Migration 024 and its hosted checks remain outstanding.
+
 ## 3 November 2026 — Frozen rosters and draft marks
 
-The full local check passed ESLint, TypeScript, all 573 tests in 60 files and the production build. The database tests apply migration 023 to a disposable database. They exercise a 26-learner roster, a placement change after freeze, partial saves, score validation, rollback, stale revisions, locked definitions and access denial for learners, guardians and staff from another school. Hosted migration 023 and browser checks remain pending in [ASSESSMENTS.md](ASSESSMENTS.md).
+The full local check passed ESLint, TypeScript, all 573 tests in 60 files and the production build. The database tests apply migration 023 to a disposable database. They exercise a 26-learner roster, a placement change after freeze, partial saves, score validation, rollback, stale revisions, locked definitions and access denial for learners, guardians and staff from another school. The tester confirmed hosted migration 023. Browser checks remain pending in [ASSESSMENTS.md](ASSESSMENTS.md).
 
 ## 3 November 2026 — Admin authorisation from the assessment list
 

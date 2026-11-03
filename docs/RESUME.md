@@ -2,7 +2,7 @@
 
 ## 3 November 2026 — Assessment scale authorisation
 
-The tester marked migration 022, Admin creation/authorisation and Teacher proposal creation complete. Admin can now authorise a pending teacher proposal from the Assessments list. The tester has since confirmed this step. Phase 4.2 now has local roster preview, explicit freeze and private draft marks. Migration 023 and the remaining hosted checks are pending. See [ASSESSMENTS.md](ASSESSMENTS.md). The remaining hosted cases retain their individual checklist status.
+The tester marked migration 022, Admin creation/authorisation and Teacher proposal creation complete. Admin can now authorise a pending teacher proposal from the Assessments list. The tester has since confirmed this step. Phase 4.2 now has local roster preview, explicit freeze and private draft marks. The tester confirmed migration 023 was applied. Admin placement amendments are implemented locally in 024. Hosted checks are deferred. Next is scoped historical correction access for teachers. See [ASSESSMENTS.md](ASSESSMENTS.md). The remaining hosted cases retain their individual checklist status.
 
 ## Phase 4.1 assessment setup - 30 October 2026
 

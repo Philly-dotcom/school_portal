@@ -4,6 +4,7 @@ import type { ReadySchoolContext } from "../src/lib/auth-context";
 import { AssessmentPanel } from "../src/components/assessment-panel";
 import { loadAssessments } from "../src/lib/assessment-data";
 vi.mock("../src/components/marks-panel", () => ({ MarksPanel: vi.fn() }));
+vi.mock("../src/components/roster-amendment-panel", () => ({ RosterAmendmentPanel: vi.fn() }));
 
 vi.mock("../src/lib/assessment-data", () => ({ loadAssessments: vi.fn() }));
 vi.mock("@/app/dashboard/assessments/actions", () => ({

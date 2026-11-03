@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MarksPanel } from "./marks-panel";
+import { RosterAmendmentPanel } from "./roster-amendment-panel";
 import { marksHref } from "@/lib/marks-validation";
 import { z } from "zod";
 import type { ReadySchoolContext } from "@/lib/auth-context";
@@ -7,6 +8,7 @@ import { assessmentMode, assessmentHref } from "@/lib/assessment-validation";
 import { loadAssessments } from "@/lib/assessment-data";
 import { AssessmentForm, AuthoriseScaleButton } from "@/components/assessment-form";
 export type AssessmentParams = {
+  rosterChanges?: string | string[];
   marks?: string | string[];
   marksPage?: string | string[];
   assessmentPage?: string | string[];
@@ -43,11 +45,15 @@ export async function AssessmentPanel({
         Assessment planning is available only in an authorised staff workspace.
       </p>
     );
-  if (params.marks !== undefined || params.marksPage !== undefined) {
+  if (params.marks !== undefined || params.marksPage !== undefined || params.rosterChanges !== undefined) {
     const id = z.uuid().safeParse(params.marks);
     const index = z.string().regex(/^[1-9]\d{0,5}$/).transform(Number).pipe(z.number().max(100000)).safeParse(params.marksPage ?? "1");
     if (!id.success || !index.success || edit !== undefined)
       return <p role="alert">Invalid assessment roster link.</p>;
+    if (params.rosterChanges !== undefined) {
+      if (role.data !== "school_admin" || params.rosterChanges !== "1") return <p role="alert">School Admin access required.</p>;
+      return <RosterAmendmentPanel school={context.school.id} id={id.data} page={index.data} />;
+    }
     return <MarksPanel school={context.school.id} mode={role.data} id={id.data} page={index.data} />;
   }
   if (edit === "new")

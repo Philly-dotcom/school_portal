@@ -176,3 +176,82 @@ it.each([4,5,102,103])("denies draft RPCs and direct mark access to caller %s", 
         await db.exec("rollback to forbidden");
     }
 });
+
+type Difference = {learner_id: string; previous_placement: unknown; next_placement: unknown; revision: number};
+const differences = async (item: string) => (await db.query<Difference>(
+    "select * from preview_roster_amendments($1,$2)", [id(1),item])).rows;
+const amend = (item: string, row: Difference, reason = "Correct fictional placement") =>
+    db.query("select amend_draft_roster($1,$2,$3,$4,$5::jsonb,$6::jsonb,$7)", [
+        id(1),item,row.learner_id,row.revision,row.previous_placement && JSON.stringify(row.previous_placement),
+        row.next_placement && JSON.stringify(row.next_placement),reason,
+    ]);
+async function movePlacement(days: number) {
+    await db.exec("reset role");
+    await db.query("update enrollments set starts_on=current_date+$1::integer,record_version=record_version+1 where student_id=$2",[days,id(200)]);
+    await user(2);
+}
+it("previews removals, retains marks and restores a re-eligible learner as Missing",async () => {
+    const item = await prepareDraft();
+    await freeze(item);
+    await user(3);
+    await write(item,1,[mark(0,"scored","10"),mark(1,"scored","7")]);
+    await movePlacement(0);
+    const [removed] = await differences(item);
+    expect(removed).toMatchObject({learner_id:id(200), next_placement:null, revision:2});
+    await amend(item,removed);
+    await user(3);
+    expect((await readDraft(item)).entries).toMatchObject([{id:id(201),score:"7"}]);
+    await db.exec("savepoint removed_write");
+    await expect(write(item,3,[mark(0,"absent")])).rejects.toThrow(/roster entry/);
+    await db.exec("rollback to removed_write");
+    await movePlacement(-10);
+    const [restored] = await differences(item);
+    expect(restored.previous_placement).toBeNull();
+    await amend(item,restored);
+    await user(3);
+    expect((await readDraft(item)).entries).toMatchObject([{id:id(200),state:"missing"},{id:id(201),score:"7"}]);
+    await db.exec("reset role");
+    expect((await db.query("select roster_version from assessment_roster_amendments order by roster_version")).rows)
+      .toEqual([{roster_version:2},{roster_version:3}]);
+    expect((await db.query("select score::text from assessment_mark_versions where student_id=$1 order by draft_version",[id(200)])).rows)
+      .toEqual([{score:"10"},{score:null}]);
+});
+it("rejects changed eligibility evidence even when the draft version is untouched",async () => {
+    const item=await prepareDraft();
+    await freeze(item);
+    await movePlacement(-9);
+    const [preview]=await differences(item);
+    await movePlacement(-8);
+    await expect(amend(item,preview)).rejects.toThrow(/preview changed/);
+});
+it("requires a reason, rejects a preview after a mark save and retains the mark on a placement refresh",async () => {
+    const item=await prepareDraft();
+    await freeze(item);
+    await movePlacement(-9);
+    const [oldPreview]=await differences(item);
+    await db.exec("savepoint blank_reason");
+    await expect(amend(item,oldPreview," ")).rejects.toThrow(/Reason/);
+    await db.exec("rollback to blank_reason");
+    await user(3);
+    await write(item,1,[mark(0,"scored","8")]);
+    await user(2);
+    await db.exec("savepoint stale");
+    await expect(amend(item,oldPreview)).rejects.toThrow(/changed/);
+    await db.exec("rollback to stale");
+    const [current]=await differences(item);
+    await amend(item,current);
+    expect(await differences(item)).toEqual([]);
+    await user(3);
+    expect((await readDraft(item)).entries[0]).toMatchObject({state:"scored",score:"8"});
+});
+it.each([3,4,5,102])("denies amendment preview and apply to caller %s",async who => {
+    const item=await prepareDraft();
+    await freeze(item);
+    await movePlacement(0);
+    const [preview]=await differences(item);
+    await user(who);
+    await db.exec("savepoint no_preview");
+    await expect(differences(item)).rejects.toThrow(/Admin/);
+    await db.exec("rollback to no_preview");
+    await expect(amend(item,preview)).rejects.toThrow(/Admin/);
+});
