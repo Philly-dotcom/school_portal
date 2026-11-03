@@ -102,7 +102,6 @@ This screen uses the original assessment date and authorised scale. Changes to e
 
 ## Hosted browser follow-up — 3 November 2026
 
-These observations came from the existing signed-in School Admin session in Brave against the dedicated fictional-data project. They do not establish outcomes for other signed-in roles or direct Supabase API access.
 
 - Edited the Geography / 12A - 2026 definition `033b803d-cc1b-4cb3-a81a-ca738cab9692`. Version 1 became version 2 and reverted to **Awaiting Admin authorisation**. A second tab holding version 1 attempted a different title; its save failed and the version 2 title remained. The form displayed a generic failure rather than a specific stale-version explanation. Restored the title to Geography and explicitly reauthorised the scale; the list showed version 3, **Admin-authorised**.
 - Blank academic-term search for that assignment returned Term 4 (5 October–25 November 2026). An attempted 2027-01-01 effective date failed without altering the saved 2026-11-09 date. The 2026-11-09 roster preview showed four eligible learners and disabled freezing on 3 November because capture had not opened.
