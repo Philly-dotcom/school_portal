@@ -55,8 +55,8 @@ Use existing fictional accounts and structures. Do not create another school or 
 - [x] Admin: create a fictional definition against an existing assignment/term with a valid effective date; authorise its explicitly fictional scale.
 - [x] Teacher: see only permitted definitions and current/future assignment choices; save a proposal without authorisation.
 - [x] Admin: authorise the teacher's saved version (tester reported completion on 3 November).
-- [ ] Edit: confirm the definition version increases and fresh authorisation is required.
-- [ ] Two tabs: save from one, then reject the stale save in the other without losing the first change.
+- [x] Edit: confirm the definition version increases and fresh authorisation is required.
+- [x] Two tabs: save from one, then reject the stale save in the other without losing the first change.
 - [ ] Future planning: a valid future assignment/date succeeds; invalid date/term combinations fail without changing data.
 - [ ] Teacher/Guardian account: switching roles retains correct navigation; Guardian cannot open the staff feature or read its tables/RPCs directly.
 - [ ] Student, Guardian, anonymous and School B: verify denied direct reads/writes using ordinary sessions, not SQL Editor owner access.
@@ -83,7 +83,7 @@ Migration 023 adds this workflow. The tester confirmed it has been applied to th
 ### Hosted checks to return to
 
 - [x] Apply migration 023 (tester confirmed).
-- [ ] Preview an existing fictional assessment and check the learner placements before deliberately freezing it.
+- [x] Preview an existing fictional assessment and check the learner placements before deliberately freezing it.
 - [ ] Check future-date and scale restrictions, freeze across pages, retained placement evidence and the locked definition.
 - [ ] Save a partial page, reload, check zero and non-score states, and reject a stale save from another staff session.
 - [ ] Verify direct API and table denials using anonymous, Student, Guardian and School B sessions. Recheck teacher access after an assignment ends.
@@ -99,3 +99,15 @@ This screen uses the original assessment date and authorised scale. Changes to e
 - [x] Apply migration 024 once in the dedicated project.
 - [ ] As School Admin, preview and apply a difference using fictional data. Check the affected learner, an unaffected learner and the reason in the amendment record.
 - [ ] Verify a stale preview and an old mark-entry tab are rejected. Verify Teacher, Student, Guardian and School B sessions cannot apply the change.
+
+## Hosted browser follow-up — 3 November 2026
+
+These observations came from the existing signed-in School Admin session in Brave against the dedicated fictional-data project. They do not establish outcomes for other signed-in roles or direct Supabase API access.
+
+- Edited the Geography / 12A - 2026 definition `033b803d-cc1b-4cb3-a81a-ca738cab9692`. Version 1 became version 2 and reverted to **Awaiting Admin authorisation**. A second tab holding version 1 attempted a different title; its save failed and the version 2 title remained. The form displayed a generic failure rather than a specific stale-version explanation. Restored the title to Geography and explicitly reauthorised the scale; the list showed version 3, **Admin-authorised**.
+- Blank academic-term search for that assignment returned Term 4 (5 October–25 November 2026). An attempted 2027-01-01 effective date failed without altering the saved 2026-11-09 date. The 2026-11-09 roster preview showed four eligible learners and disabled freezing on 3 November because capture had not opened.
+- Created a clearly labelled fictional assessment, **TEST ONLY — draft marks acceptance**, ID `6dcd19c0-0808-422e-8c2a-aa136b1700ff`, against the existing Geography / 12A - 2026 assignment and Term 4, dated 2026-11-03, with an explicitly Admin-authorised 0–100 integer scale. Preview showed four eligible fictional learners (ST-003, DEMO-ST-002, ST-005 and ST-002). Freezing succeeded and opened a private draft at version 1.
+- Saved a partial draft: ST-003 scored **0**, DEMO-ST-002 **Absent**, ST-005 **Exempt** with the reason “Fictional acceptance test”; ST-002 was untouched and stayed **Missing**. The screen showed saved draft version 2 with those states retained. A second tab loaded draft version 1 and tried changing ST-002, but remained on **Saving…** during observation. Do not count stale mark rejection as passed.
+- **Review roster changes** showed “No placement differences on this page.” No enrolment was changed to manufacture a difference; amendment application, audit reason, unaffected-learner preservation and stale-preview rejection remain unverified.
+
+The future-planning, freeze, marks and amendment checklist lines remain unchecked where they combine observed results with untested conditions. Separate Teacher, Student, Guardian, anonymous and School B sessions, ordinary-client table/RPC denial, mobile layout, pagination and post-assignment-end access still need hosted checks.
