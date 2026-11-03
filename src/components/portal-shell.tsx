@@ -1,3 +1,4 @@
+import { assessmentHref } from "@/lib/assessment-validation";
 import Link from "next/link";
 import { NavigationPending } from "@/components/navigation-pending";
 import {
@@ -66,6 +67,7 @@ export function PortalShell({
         navigation[0],
         ...(!admin && mode ? [{ view: "my-timetable", label: "My timetable", icon: BookOpen }] : []),
         ...(admin || mode ? [{ view: "attendance", label: "Attendance", icon: Users }] : []),
+        ...(admin || mode === "teacher" ? [{ view: "assessments", label: "Assessments", icon: BookOpen }] : []),
         ...(admin || mode ? [{ view: "homework", label: "Homework", icon: BookOpen }] : []),
         ...(admin || mode ? [{ view: "announcements", label: "Announcements", icon: BookOpen }] : []),
         ...(admin || mode ? [{ view: "documents", label: "Documents", icon: BookOpen }] : []),
@@ -119,7 +121,7 @@ export function PortalShell({
           {group.items.map(({ view: key, label, icon: Icon }) => (
             <Link
               key={key}
-              href={!preview && mode && isPortalView(key)
+              href={!preview && key === "assessments" ? assessmentHref(admin ? "school_admin" : "teacher") : !preview && mode && isPortalView(key)
                 ? portalHref(key, mode, child) : `${base}?view=${key}${!preview && admin ? "&mode=school_admin" : ""}`}
               className={`nav-item ${view === key ? "active" : ""}`}
               aria-current={view === key ? "page" : undefined}

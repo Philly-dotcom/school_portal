@@ -1,3 +1,4 @@
+import { AssessmentPanel, type AssessmentParams } from "@/components/assessment-panel";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
@@ -64,6 +65,7 @@ export default async function Dashboard({
       RegisterPageParams &
       AttendanceParams &
       HomeworkParams &
+      AssessmentParams &
       AnnouncementParams &
       DocumentParams &
       PlanningPageParams
@@ -213,6 +215,27 @@ export default async function Dashboard({
             <p role="status">Academic profile details are not available in this workspace. Use your account menu for identity details.</p>
           )}
         </section>
+      </PortalShell>
+    );
+  }
+  if (params.view === "assessments") {
+    return (
+      <PortalShell
+        profileMenu={profileMenu}
+        preview={false}
+        admin={admin}
+        mode={admin ? undefined : activeRole as Exclude<Role, "school_admin">}
+        schoolName={context.school.name}
+        view="assessments"
+      >
+        <PageHeading
+          eyebrow="ACADEMIC PERFORMANCE"
+          title="Assessments"
+          description="Plan assessments and authorise their scales."
+        />
+        <Suspense key={JSON.stringify(params)} fallback={<p role="status">Loading assessments…</p>}>
+          <AssessmentPanel params={params} context={context} mode={activeRole} />
+        </Suspense>
       </PortalShell>
     );
   }

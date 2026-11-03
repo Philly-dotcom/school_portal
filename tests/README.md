@@ -185,3 +185,8 @@ The user has now marked P3-01 through P3-30 and DOC-ANON complete. School B setu
 The user subsequently requested the full check. ESLint, TypeScript, all 510 tests in 56 files and production build passed after the shared-menu change and UTF-8 repair. The run did not include Playwright, hosted API/Storage checks or a new browser session.
 
 Routing coverage now includes multi-role selection (including Admin), single-role entry and forged mode rejection. Workspace-navigation assertions check authorised chooser destinations and removal of the sidebar switcher. Staff-profile assertions cover shared Admin identity reads and retained Guardian learner selection. Treat previous count measurements as scoped loader tests, not the cost of the entire current page. See DOCUMENTS.md for current UI and performance acceptance.
+
+
+## Phase 4 assessment setup
+
+`assessment-database.test.ts` builds a disposable database from all migrations, including 022, and checks retained definitions, Admin scale authorisation, same-school/year/date constraints, stale saves and denied reads/writes. `assessment-actions.test.ts` checks trusted school context, forged roles, scale/date validation and error handling. `workspace-navigation.test.ts` now checks explicit staff assessment links and Guardian exclusion. These tests do not verify hosted Supabase or browser form interactions. See `docs/ASSESSMENTS.md` for pending hosted cases.

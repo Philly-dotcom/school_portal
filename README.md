@@ -4,13 +4,13 @@ School Portal is a portal for one school, built so we can add more schools later
 
 This project lives at `C:\Users\moses\Documents\School_portal`. Its database, accounts and decisions belong to this project only.
 
-## Where we are - 29 October 2026
+## Where we are - 3 November 2026
 
-**Phase 3 is complete and signed off. We are preparing Phase 4: Academic Performance.** Attendance, view-only homework, announcements, private PDFs, daily dashboards and role-aware profiles/navigation are implemented. The user completed the remaining hosted/browser checks, including School B isolation and REVIEW-01/02.
+**Phase 3 is complete and signed off. Phase 4: Academic Performance has begun with local assessment planning.** Attendance, view-only homework, announcements, private PDFs, daily dashboards and role-aware profiles/navigation are implemented. The user completed the remaining hosted/browser checks, including School B isolation and REVIEW-01/02.
 
-Migrations through **021 are user-confirmed applied**. Do not rerun them. The last full local check passed **lint, TypeScript, 524 tests in 57 files and production build** on 26 October. Hosted results and local checks are separate evidence.
+Migrations through **022 are user-confirmed applied**. Do not rerun them. The last full local check passed **lint, TypeScript, 573 tests in 60 files and production build** on 3 November. Hosted results and local checks are separate evidence.
 
-Read [the Phase 4 plan](docs/PHASE_4_PLAN.md) for assessment setup, marks, review/Admin publication, learner results and report cards. The [academic decision record](docs/PHASE_4_ACADEMIC_DECISIONS.md) now settles workflow and permissions; actual school grading formulas and final report presentation are still required; no Phase 4 code or migrations have been added. Session inactivity/logout work is deferred to Phase 6. Email/recovery, backups and deployment remain separate live-readiness work.
+Read [the Phase 4 plan](docs/PHASE_4_PLAN.md) for assessment setup, marks, review/Admin publication, learner results and report cards. The [academic decision record](docs/PHASE_4_ACADEMIC_DECISIONS.md) now settles workflow and permissions; actual school grading formulas and final report presentation are still required; [assessment setup](docs/ASSESSMENTS.md) is implemented locally and the tester has verified the initial staff planning and authorisation flow. Frozen rosters and private raw marks are implemented locally in migration 023. Its hosted checks are pending. Session inactivity/logout work is deferred to Phase 6. Email/recovery, backups and deployment remain separate live-readiness work.
 
 Start with [the current checkpoint](docs/RESUME.md), [Phase 3 acceptance](docs/DOCUMENTS.md#remaining-phase-3-checklist) or [verification status](docs/VERIFICATION.md).
 

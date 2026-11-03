@@ -1,8 +1,28 @@
 # Verification status
 
+## 3 November 2026 — Frozen rosters and draft marks
+
+The full local check passed ESLint, TypeScript, all 573 tests in 60 files and the production build. The database tests apply migration 023 to a disposable database. They exercise a 26-learner roster, a placement change after freeze, partial saves, score validation, rollback, stale revisions, locked definitions and access denial for learners, guardians and staff from another school. Hosted migration 023 and browser checks remain pending in [ASSESSMENTS.md](ASSESSMENTS.md).
+
+## 3 November 2026 — Admin authorisation from the assessment list
+
+35 focused tests passed across assessment actions, database rules and the rendered list. TypeScript passed. The tests cover the pending scale button, staff access, saving the stored values and rejecting stale versions. The tester has marked migration 022, Admin assessment creation and Teacher proposal creation complete. The tester subsequently confirmed authorisation. Remaining hosted checks are recorded in [ASSESSMENTS.md](ASSESSMENTS.md).
+
+
+## Academic-term search regression - 30 October 2026
+
+All 19 assessment database tests passed in a focused run after adding blank/matching/unmatched term-search and empty-year coverage. This is separate from the earlier full 553-test pass. The reported hosted 2026 term links remain unverified; browser tools failed to initialise. No application code, migration or hosted record was changed.
+
+## Assessment setup - 30 October 2026
+
+A fresh `npm.cmd run check` completed successfully: ESLint, TypeScript, **553 tests in 59 files**, and the Next.js production build. This includes migration 022 in disposable local SQL tests and the new staff navigation test. The earlier sandbox run failed to load generated temporary SSR modules (ENOENT); the fresh outside-sandbox run passed without weakening any tests. The previous retry session was unavailable after the interruption, so its result was not assumed.
+
+Migration 022 has not been applied to hosted Supabase by the agent. No hosted accounts, assessments or other fixtures were created. Browser forms, independent-session stale saves and direct hosted RLS/API checks remain unchecked in [ASSESSMENTS.md](ASSESSMENTS.md). Phase 4.1 is locally implemented and validated; Phase 4 is not complete. Earlier dated results below remain historical evidence.
+
+
 ## Planning documentation - 29 October 2026
 
-The Phase 4 decision record and plan have been reconciled, including the permission matrix and workflow rules. Documentation links, UTF-8 readability and whitespace were checked. No application tests, build, browser checks or hosted database operations were run for this documentation-only work. The recorded 524-test/build pass below remains the last full validation, not a fresh check of today's checkout. Phase 4 implementation has not begun.
+The Phase 4 decision record and plan have been reconciled, including the permission matrix and workflow rules. Documentation links, UTF-8 readability and whitespace were checked. The follow-on data design reviewed local migrations, access helpers, download handling and SQL test patterns; its P4-D01–P4-D17 matrix is planned, not executed. No application tests, build, browser checks or hosted database operations were run for this documentation-only work. The recorded 524-test/build pass below remains the last full validation, not a fresh check of today's checkout. Phase 4 implementation has not begun.
 
 ## Phase 3 signed off - 27 October 2026
 

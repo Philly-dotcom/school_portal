@@ -6,9 +6,9 @@ School Portal is completely isolated from the user's other projects. No architec
 
 ## Authorization and current stage
 
-Phase 3 was signed off on 27 October 2026, including the remaining School B and REVIEW-01/02 browser checks reported by the user. Migrations through 021 are user-confirmed applied. The last full local check passed lint, TypeScript, 524 tests in 57 files and production build on 26 October.
+Phase 3 was signed off on 27 October 2026, including the remaining School B and REVIEW-01/02 browser checks reported by the user. Migrations through 021 are user-confirmed applied. The last full local check passed lint, TypeScript, 553 tests in 59 files and production build on 30 October.
 
-Phase 4 preparation is authorised; application and database implementation have not started. Use [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and the reconciled [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md), including the permission matrix in Section 10. Session inactivity/logout proposals are on hold until Phase 6. Email delivery remains off; public deployment and additional cloud resources are not authorised by this update.
+Phase 4.1 assessment planning is implemented locally; migration 022 and hosted acceptance are pending. Marks, review/publication and report cards remain unimplemented. See [ASSESSMENTS.md](ASSESSMENTS.md). Use [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and the reconciled [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md), including the permission matrix in Section 10. Session inactivity/logout proposals are on hold until Phase 6. Email delivery remains off; public deployment and additional cloud resources are not authorised by this update.
 
 At the user's request, superseded guides are now archived, including the temporary Phase 3 implementation guide. Use RESUME.md, VERIFICATION.md and the current checklist for progress; archived instructions are historical reference.
 

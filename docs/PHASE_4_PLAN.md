@@ -1,6 +1,6 @@
 # Phase 4 preparation: academic performance
 
-Prepared 27 October 2026; reconciled 29 October 2026. Phase 3 is signed off. This is a planning document: no Phase 4 application code, database migration or hosted change has been made.
+Prepared 27 October 2026; reconciled 29 October 2026. Phase 3 is signed off. The first assessment-planning slice is now implemented locally with migration 022; hosted application/acceptance remain pending. See [ASSESSMENTS.md](ASSESSMENTS.md). Later slices below remain planned.
 
 ## What we are building
 
@@ -88,27 +88,30 @@ This is the proposed state model, not implemented database states. Approval belo
 
 - [x] Reconcile reviewer scope, eligibility, roster/publication unit and correction decisions with the user's report (29 October).
 - [x] Write the role/action matrix and finalise freeze, correction, policy approval and report-review rules (decision record Section 10).
-- [ ] Draw the proposed data relationships and identify existing constraints that can be reused.
-- [ ] Define a small fictional assessment fixture using existing people/classes in School A and School B. Do not create duplicates or alter their planning records to make tests pass.
+- [x] Draw proposed data relationships and map reusable constraints in [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md) (29 October; design only).
+- [x] Define the fictional fixture roles/scenarios and acceptance matrix in the data design; no hosted fixtures created.
+- [ ] Bind the hosted fixture plan to verified existing School A/B IDs and current eligibility before hosted tests. Do not create duplicates or alter planning records to make tests pass.
 
 Expected result: a concrete schema/workflow proposal ready for implementation approval, with outstanding school numerical policies and report presentation clearly separated.
 
 ### 4.1 — Assessment setup
 
-- [ ] Add school-owned assessment definitions linked to existing class, subject, academic year and term where applicable.
-- [ ] Store assessment dates, score scale and responsible assignment using the agreed rules. Validate same-school relationships at the database boundary.
-- [ ] Let Admin prepare future assessments. Teachers only manage assessments within their agreed assignment scope.
-- [ ] Build a small assessment list/form using existing dashboard patterns, bounded pagination and scoped searches.
-- [ ] Test date boundaries, malformed scales, cross-school links and denied writes before hosted use.
+- [x] Add school-owned assessment definitions linked to existing class, subject, academic year and term where applicable.
+- [x] Store assessment dates, score scale and responsible assignment using the agreed rules. Validate same-school relationships at the database boundary.
+- [x] Let Admin prepare future assessments. Teachers only manage assessments within their agreed assignment scope.
+- [x] Build a small assessment list/form using existing dashboard patterns, bounded pagination and scoped searches.
+- [x] Test date boundaries, malformed scales, cross-school links and denied writes before hosted use.
 
-Proposed files, to create only when implementation starts: `src/lib/assessment-validation.ts`, `src/lib/assessment-data.ts`, `src/app/dashboard/assessments/actions.ts`, `src/components/assessment-panel.tsx`, `src/components/assessment-form.tsx`. Add a new SQL migration and focused validation/action/database tests. Names are provisional; do not split into extra layers without a need.
+Implemented files: `src/lib/assessment-validation.ts`, `src/lib/assessment-data.ts`, `src/app/dashboard/assessments/actions.ts`, `src/components/assessment-panel.tsx`, `src/components/assessment-form.tsx`. Migration 022, focused action/database tests and staff navigation coverage are present. Hosted migration and browser/API checks remain pending; see ASSESSMENTS.md. No roster or marks workflow is implemented.
 
 ### 4.2 — Mark entry and retained learner history
 
-- [ ] Resolve the eligible learner roster from the agreed assessment-date rule and retain the relevant enrolment references.
-- [ ] Add result records with unique assessment/learner ownership, score validation and explicit non-score status using the agreed distinct score states.
+3 November 2026. Initial freeze and raw draft capture are implemented locally in migration 023. Hosted verification is deferred. Admin roster amendments and scoped historical correction grants remain open.
+
+- [x] Resolve the eligible learner roster from the agreed assessment-date rule and retain the relevant enrolment references.
+- [x] Add result records with unique assessment/learner ownership, score validation and explicit non-score status using the agreed distinct score states.
 - [ ] Support draft entry, corrections and bounded roster pages. Saving one page must not erase untouched learners.
-- [ ] Use an atomic RPC with an expected version, fresh permissions and audit entries. Reject stale edits without silent overwrites.
+- [x] Use an atomic RPC with an expected version, fresh permissions and audit entries. Reject stale edits without silent overwrites.
 - [ ] Keep all drafts inaccessible to Student/Guardian sessions through both UI and direct API requests.
 
 Proposed files: `src/lib/marks-validation.ts`, `src/lib/marks-data.ts`, `src/app/dashboard/marks/actions.ts`, `src/components/marks-panel.tsx`, `src/components/marks-form.tsx`, plus migrations and tests. Reuse the server-action/RPC pattern; do not send elevated credentials to the application.

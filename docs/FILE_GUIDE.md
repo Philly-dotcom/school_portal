@@ -12,12 +12,13 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 
 ## Phase 4 planning documents
 
-Added to this guide on 29 October 2026. No Phase 4 application files or migrations have been created.
+Added to this guide on 29 October 2026. Assessment setup files and migration 022 now exist locally; see [ASSESSMENTS.md](ASSESSMENTS.md) for each new file and the pending hosted checks.
 
 | File | Purpose |
 | --- | --- |
 | [PHASE_4_PLAN.md](PHASE_4_PLAN.md) | Implementation order, reuse points, remaining school inputs and acceptance work. Proposed code paths are not existing files. |
 | [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) | The user's policy report, reconciled workflow details and action/role matrix in Section 10. |
+| [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md) | Proposed data relationships and constraints, staged file plan and test scenarios. It is not an applied schema. |
 | [RESUME.md](RESUME.md) | Latest checkpoint and the exact next design work. Older dated sections are historical. |
 
 ## Root files and tooling

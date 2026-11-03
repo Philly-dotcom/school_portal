@@ -1,12 +1,21 @@
 # Where we left off
 
+## 3 November 2026 — Assessment scale authorisation
+
+The tester marked migration 022, Admin creation/authorisation and Teacher proposal creation complete. Admin can now authorise a pending teacher proposal from the Assessments list. The tester has since confirmed this step. Phase 4.2 now has local roster preview, explicit freeze and private draft marks. Migration 023 and the remaining hosted checks are pending. See [ASSESSMENTS.md](ASSESSMENTS.md). The remaining hosted cases retain their individual checklist status.
+
+## Phase 4.1 assessment setup - 30 October 2026
+
+Assessment planning is implemented locally. Read [ASSESSMENTS.md](ASSESSMENTS.md) for files, migration 022 and pending hosted checks. Migration 022 has not been applied to Supabase by the agent. No hosted fixtures were created. Fresh full validation passed on 30 October: ESLint, TypeScript, 553 tests in 59 files and production build. See VERIFICATION.md. Next apply migration 022 once, then complete the hosted checklist in ASSESSMENTS.md using existing fictional accounts. Do not treat this as Phase 4 completion. Next slices are frozen rosters and raw marks; official grading/publication still need the school policy. Earlier planning-only statements below describe the prior checkpoint.
+
+
 ## Next: Phase 4 preparation - 29 October 2026
 
 Phase 3 is signed off. Phase 4 remains planning-only; development is intended to begin on 30 October, after reviewing the concrete schema/workflow design. Read [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md). The user's decision report is now reconciled with the plan; Section 10 contains the final permission matrix and workflow details.
 
 Settled: dated eligibility and explicit roster freeze, complete assessment-roster review, learner-specific correction invalidation, scoped reviewer/historical-correction grants, Admin policy approval, and separate Admin output review/publication for subject-term results and reports. Self-review is allowed; publication is never automatic. Missing blocks submission. Unchanged learners' published results remain visible during another learner's correction.
 
-Still needed from the school: actual numerical grading policies, absence/exemption calculation rules and final report presentation. Next design work: data relationships, version/dependency constraints and an existing-fixture test plan. No new fixtures, application code, migrations, database records or Auth settings were changed for this planning update. Existing user changes in next-env.d.ts and scripts/production-e2e-server.mjs were left alone.
+Still needed from the school: actual numerical grading policies, absence/exemption calculation rules and final report presentation. The relationship/version/dependency proposal and fixture scenarios are now in [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md), based on a read-only code/schema review on 29 October. Next is the first assessment-setup implementation slice after reviewing its concrete schema design. Hosted fixture IDs/eligibility still need read-only confirmation before hosted testing. No new fixtures, application code, migrations, database records or Auth settings were changed for this planning update. The working tree was clean at the start of the data-design task; only planning documents changed in this task.
 
 Session-timeout work stays in Phase 6. The latest recorded full validation remains the 26 October 524-test/build pass; tests were not rerun for documentation. Earlier dated status sections below are historical and do not reopen Phase 3.
 

@@ -1,6 +1,6 @@
 # Documentation guide
 
-Start with the [main README](../README.md). Updated 29 October 2026: Phase 3 is signed off and Phase 4 preparation is authorised. Migrations through 021 remain applied; the last full local check passed lint, TypeScript, 524 tests in 57 files and production build. Read [PHASE_4_PLAN.md](PHASE_4_PLAN.md) for the next sequence and [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) for the reconciled policy/workflow contract. Numerical school policies and final report presentation remain outstanding. Session-timeout work is deferred to Phase 6.
+Start with the [main README](../README.md). Updated 30 October 2026: Phase 3 is signed off and Phase 4.1 assessment planning is implemented locally; migration 022 and hosted acceptance are pending. Migrations through 021 remain applied; the last full local check passed lint, TypeScript, 553 tests in 59 files and production build. Read [PHASE_4_PLAN.md](PHASE_4_PLAN.md) for the next sequence and [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) for the reconciled policy/workflow contract. Numerical school policies and final report presentation remain outstanding. Session-timeout work is deferred to Phase 6.
 
 RESUME.md is the current handover. VERIFICATION.md separates local and hosted evidence. Superseded repair notes, fixture snapshots and the temporary Phase 3 guide are in the [archive](../archive/README.md); do not follow their older pending-migration instructions.
 
@@ -9,8 +9,10 @@ RESUME.md is the current handover. VERIFICATION.md separates local and hosted ev
 | File | When it helps |
 | --- | --- |
 | [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) | You want the completed Phase 3 acceptance record. |
+| [ASSESSMENTS.md](ASSESSMENTS.md) | Assessment setup, file responsibilities, migration 022 and pending hosted checks. |
 | [PHASE_4_PLAN.md](PHASE_4_PLAN.md) | You want the Phase 4 sequence, confirmed review/publication rules and decisions still needed before implementation. |
 | [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) | The user's academic policy report, final permission matrix, correction rules and outstanding school inputs. |
+| [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md) | Proposed relationships, integrity/versioning rules, first-slice file plan and unexecuted acceptance matrix. |
 | [RESUME.md](RESUME.md) | You want the current position and the next steps without reading the whole history. |
 | [FILE_GUIDE.md](FILE_GUIDE.md) | You want to know why a file exists and where to look for a particular feature. |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | You want to follow the path from a form to the database, including permissions. |

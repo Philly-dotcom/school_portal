@@ -4,7 +4,7 @@ Updated 27 October 2026. Older dated reports describe earlier work; they are not
 
 ## Current position
 
-**Phase 3 is complete and signed off on 27 October. Phase 4 preparation is now authorised; implementation has not started.** Migrations through 021 remain user-confirmed applied. All remaining Phase 3 hosted/browser checks, including School B isolation and REVIEW-01/02, are user-reported complete. The last local run passed lint, TypeScript, 524 tests in 57 files and production build on 26 October.
+**Phase 3 is complete and signed off on 27 October. Phase 4.1 assessment planning is now implemented locally; migration 022 and hosted checks are pending.** Migrations through 021 remain user-confirmed applied. All remaining Phase 3 hosted/browser checks, including School B isolation and REVIEW-01/02, are user-reported complete. The latest full local check passed lint, TypeScript, 553 tests in 59 files and production build on 30 October.
 
 Use [PHASE_4_PLAN.md](PHASE_4_PLAN.md) for the next steps and open grading decisions. Do not repeat completed setup or migrations. Production readiness, including live email/recovery, backup/restore and deployment, is a separate gate.
 
@@ -62,7 +62,7 @@ Signed off by the user on 27 October, including the final REVIEW-01/02 browser c
 
 ## Phase 4: academic performance
 
-Preparation is authorised. Build in order: assessment setup, mark entry, review/Admin publication, learner/Guardian results, versioned report cards, then focused summaries. See [PHASE_4_PLAN.md](PHASE_4_PLAN.md). Specifically authorised teachers or Admins may review, and self-review is allowed. Only Admin publishes. Editing approved results requires fresh review and hides affected published results until reviewed and explicitly republished by Admin. Reviewer scope, roster publication, eligibility and correction rules are settled in [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md), including its permission matrix. Actual school grading formulas/values and final report-layout details remain outstanding. Implementation has not begun.
+Assessment setup is implemented locally; see [ASSESSMENTS.md](ASSESSMENTS.md) for the unapplied migration 022 and hosted checks. Continue in order: assessment setup, mark entry, review/Admin publication, learner/Guardian results, versioned report cards, then focused summaries. See [PHASE_4_PLAN.md](PHASE_4_PLAN.md). Specifically authorised teachers or Admins may review, and self-review is allowed. Only Admin publishes. Editing approved results requires fresh review and hides affected published results until reviewed and explicitly republished by Admin. Reviewer scope, roster publication, eligibility and correction rules are settled in [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md), including its permission matrix. Actual school grading formulas/values and final report-layout details remain outstanding. Marks and later slices have not begun.
 
 ## Phase 5: finance and communication
 

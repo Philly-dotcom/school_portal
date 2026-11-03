@@ -92,3 +92,11 @@ it("does not put protected identities in the route loading screen", () => {
   expect(html).toContain('aria-busy="true"');
   expect(html).not.toContain(child);
 });
+
+it("keeps assessment planning in staff workspaces with explicit mode", () => {
+ expect(shell("teacher", "assessments")).toContain('href="/dashboard?view=assessments&amp;mode=teacher"');
+ expect(shell("guardian")).not.toContain("view=assessments");
+ const props = { preview: false, admin: true, children: "" };
+ const admin=renderToStaticMarkup(createElement(PortalShell,props));
+ expect(admin).toContain('href="/dashboard?view=assessments&amp;mode=school_admin"');
+});
