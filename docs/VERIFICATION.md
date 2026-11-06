@@ -1,8 +1,44 @@
 # Verification status
 
+## 6 November 2026 — School A assessment checks
+
+Separate Admin and Teacher sessions verified stale saves, reviewer revocation and correction access. A scoped audit lookup verified the retained approvals and invalidations. All 21 anonymous API probes returned permission denied. Authenticated API probes, simultaneous decision races and larger-roster checks remain open. School B was skipped. See the [assessment checklist](ASSESSMENTS.md) for the fixture and results. The review-detail UI passed TypeScript and 13 assessment panel tests. The latest full suite and build are recorded below.
+
+## 4 November 2026 — Disputed approval invalidation
+
+The full local check passed ESLint, TypeScript, 683 tests in 60 files and the production build. New cases cover Admin invalidation without reviewer authority, reason validation, retained approval evidence, fresh submission/review, stale and duplicate requests, cross-school/role/anonymous denial and rollback when the audit write fails. The targeted assessment database run also passed all 114 cases.
+
+The first full run failed to load temporary transformed modules from the sandbox directory, reporting ENOENT before tests in 50 suites could run. The same full command passed outside the sandbox. No application or test configuration changes were made for that runner failure.
+
+Migration 029 is user-confirmed applied. Migration 030 is user-confirmed applied. The [hosted checks](ASSESSMENTS.md) remain open. Independent-session races and browser behaviour remain unverified for this slice. The Subject Workspace idea is on hold. Numerical reporting-policy rules, policy approval/adoption and publication remain pending.
+
+## 4 November 2026 — Reporting policy draft setup
+
+The full local check passed ESLint, TypeScript, 668 tests in 60 files and the production build. Policy cases cover retained versions, safe repeated creates, unchanged saves, stale forms, fixed scope, future-year planning, school/date validation, pagination and denied reads/writes from other roles, anonymous sessions and the second synthetic school. Action and panel tests cover trusted school context and Admin workspace navigation.
+
+Migration 029 was subsequently confirmed applied by the user. Hosted/browser tests remain unchecked in [ASSESSMENTS.md](ASSESSMENTS.md). The school policy is still being gathered. This slice records drafts and source notes only. Supported configuration, policy approval, adoption into a newly reviewed package and publication remain pending.
+
+## 4 November 2026 — Complete submissions and reviewer decisions
+
+The full local check passed ESLint, TypeScript, 640 tests in 60 files and the production build. New cases cover complete snapshots, Missing on another page, explicit self-review, return reasons, stale submissions and decisions, invalidation after mark and scale changes, retained approvals after later grant revocation, historical submission access and anonymous/other-school denial. Server-action and navigation tests check trusted school context, role boundaries and mixed Guardian context.
+
+Migration 027 is confirmed applied. Migration 028 is user-confirmed applied. The PostgreSQL assertions ran through PGlite. Independent concurrent sessions, real hosted API permissions and signed-in browser behaviour remain unchecked for this slice. Use the [assessment checklist](ASSESSMENTS.md) with existing fictional records. Publication and approved reporting-policy binding remain future work.
+
+## 4 November 2026 — Assessment reviewer grants
+
+The full local check passed ESLint, TypeScript, 618 tests in 60 files and the production build. The reviewer tests cover explicit self-review authority, staff eligibility, term and school boundaries, overlapping dates, expiry, revocation and denied draft access. Migrations 026 and 027 were subsequently confirmed applied. Signed-in checks remain pending. See the [assessment checklist](ASSESSMENTS.md).
+
+## 4 November 2026 — Frozen date and scale amendments
+
+The full local check passed ESLint, TypeScript, 607 tests in 60 files and the production build. Twelve new database cases cover dated roster changes, old mark and definition history, scale-only amendments, incompatible precision and bounds, role and school isolation, empty rosters, required reasons and stale previews across pages. Migration 026 was subsequently confirmed applied. The signed-in browser checks remain pending in [ASSESSMENTS.md](ASSESSMENTS.md).
+
+## Phase 4.2 — Historical teacher access and save feedback
+
+The full local check passed ESLint, TypeScript, 595 tests in 60 files and the production build. Disposable SQL tests cover whole-assessment and single-learner access, atomic rejection of mixed batches, revocation, expiry, loss of teacher role/link and unauthorised issuance. Action tests cover explicit conflicts, an unclassified edit failure with a newer saved version and a mark save with an unknown outcome. Migration 025 is confirmed applied. Outstanding hosted acceptance, including the updated mark-conflict path, is tracked in [ASSESSMENTS.md](ASSESSMENTS.md).
+
 ## 3 November 2026 — Admin amendments to frozen draft rosters
 
-ESLint, TypeScript, all 580 tests in 60 files and the production build passed locally, including seven new database cases for migration 024. They cover removing and restoring a learner, retaining earlier marks, updating a placement while keeping its score, requiring a reason, rejecting stale previews and denying preview and apply to unauthorised callers. The tester confirmed 023 was applied to Supabase. Migration 024 and its hosted checks remain outstanding.
+ESLint, TypeScript, all 580 tests in 60 files and the production build passed locally, including seven new database cases for migration 024. They cover removing and restoring a learner, retaining earlier marks, updating a placement while keeping its score, requiring a reason, rejecting stale previews and denying preview and apply to unauthorised callers. The tester confirmed 023 was applied to Supabase. Migration 024 was subsequently applied. Hosted amendment checks remain on the assessment checklist.
 
 ## 3 November 2026 — Frozen rosters and draft marks
 
@@ -15,13 +51,13 @@ The full local check passed ESLint, TypeScript, all 573 tests in 60 files and th
 
 ## Academic-term search regression - 30 October 2026
 
-All 19 assessment database tests passed in a focused run after adding blank/matching/unmatched term-search and empty-year coverage. This is separate from the earlier full 553-test pass. The reported hosted 2026 term links remain unverified; browser tools failed to initialise. No application code, migration or hosted record was changed.
+All 19 assessment database tests passed in a focused run after adding blank/matching/unmatched term-search and empty-year coverage. This is separate from the earlier full 553-test pass. A later blank search returned Term 4 for the selected 2026 assignment. No application code, migration or hosted record was changed.
 
 ## Assessment setup - 30 October 2026
 
 A fresh `npm.cmd run check` completed successfully: ESLint, TypeScript, **553 tests in 59 files**, and the Next.js production build. This includes migration 022 in disposable local SQL tests and the new staff navigation test. The earlier sandbox run failed to load generated temporary SSR modules (ENOENT); the fresh outside-sandbox run passed without weakening any tests. The previous retry session was unavailable after the interruption, so its result was not assumed.
 
-Migration 022 has not been applied to hosted Supabase by the agent. No hosted accounts, assessments or other fixtures were created. Browser forms, independent-session stale saves and direct hosted RLS/API checks remain unchecked in [ASSESSMENTS.md](ASSESSMENTS.md). Phase 4.1 is locally implemented and validated; Phase 4 is not complete. Earlier dated results below remain historical evidence.
+Migration 022 was subsequently applied. The [assessment checklist](ASSESSMENTS.md) records individual hosted outcomes. The 30 October run established local coverage only.
 
 
 ## Planning documentation - 29 October 2026
@@ -47,7 +83,7 @@ Updated 25 October 2026. Local checks, user-reported hosted results and agent br
 
 **npm run check passed ESLint, TypeScript, 512 tests in 56 files and production build on 25 October 2026.** This covers the shared profile/workspace-choice implementation and the Guardian overview fixes. Presentation assertions were updated for the new heading; two regression tests cover missing learner access and explicit learner selection.
 
-Earlier passes of 490, 504, 507 and 509 tests belong to earlier revisions. They are retained in the [previous verification notes](../archive/2026-10/docs-before-20261025-reconciliation/docs/VERIFICATION.md). The initial decision not to run checks was superseded when the user requested and authorised the full run.
+Earlier passes of 490, 504, 507 and 509 tests belong to earlier revisions. They are retained in the [October dashboard verification](../archive/README.md#october-dashboard-verification). The initial decision not to run checks was superseded when the user requested and authorised the full run.
 
 This command does not run Playwright or hosted acceptance. PGlite tests execute SQL with fictional identities; they do not establish real gateway tokens, Storage HTTP access or independent hosted sessions. A successful build does not prove browser usability or production speed.
 
@@ -79,7 +115,7 @@ The old attendance stale-save and selection failures have user-reported passing 
 
 ## Current tracker and history
 
-Record new results in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). The detailed [pre-20 October history](../archive/2026-10/docs/VERIFICATION_THROUGH_20261020.md) and [pre-refresh notes](../archive/2026-10/docs-before-20261025-reconciliation/docs/VERIFICATION.md) remain available.
+Record new results in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). The detailed [pre-20 October history](../archive/2026-10/docs/VERIFICATION_THROUGH_20261020.md) and [October dashboard verification](../archive/README.md#october-dashboard-verification) remain available.
 
 The 25 October documentation reconciliation changed documentation only. It does not add browser evidence or close hosted tests. Phase 3 remains open; email, recovery, backups, monitoring, deployment and real-school readiness remain separate gates.
 

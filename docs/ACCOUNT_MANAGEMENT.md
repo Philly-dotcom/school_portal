@@ -108,7 +108,7 @@ Invitations expire after seven days and can be revoked. Existing memberships, es
 
 Hosted integration tests, admin MFA, account recovery procedures, email abuse controls/CAPTCHA where appropriate, monitoring and backup/restore remain part of Phase 1. Do not treat this local increment as production approval.
 
-## Pending migration 011 repair: management and retries
+## Migration 011 — invitation management and retries
 
 Invitation history is paginated in pages of 50 with stable created-at/ID ordering. Older pending invitations remain reachable beyond the former 100-row cutoff. Bulk creation still uses the existing invitation/acceptance system, 200 rows per transaction and 500 per school per day; malformed rows (including null roles on duplicates) reject the whole transaction.
 

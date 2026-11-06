@@ -79,23 +79,26 @@ export async function updateMarkDraft(input: z.input<typeof requestSchema>) {
   };
   try {
     const client = await createClient();
-    const { data, error } =
+    const request =
       operation.kind === "freeze"
-        ? await client.rpc("freeze_assessment_roster", {
+        ? client.rpc("freeze_assessment_roster", {
             ...scope,
             expected_version: version,
           })
-        : await client.rpc("save_assessment_draft", {
+        : client.rpc("save_assessment_draft", {
             ...scope,
             expected_revision: version,
             changes: operation.changes,
           });
+    const { data, error, status } = await request.abortSignal(AbortSignal.timeout(20000));
     if (error || typeof data !== "number") {
-      if (error?.code === "40001")
+      if (error?.code === "40001" || error?.code === "PT409")
         return {
           error:
             "This roster changed. Reload it before entering your changes again.",
         };
+      if (status === 0 || status >= 500)
+        return { error: "Save could not be confirmed. Reload and check the saved marks before retrying." };
       return {
         error:
           operation.kind === "freeze"

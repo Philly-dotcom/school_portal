@@ -2,7 +2,7 @@
 
 > Status reconciled 25 October 2026. This is a feature/setup reference. Use [RESUME.md](RESUME.md) for current progress, [VERIFICATION.md](VERIFICATION.md) for evidence and [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for acceptance. Existing migrations through 021 are applied; do not repeat setup on the current project.
 
-Added on 8 October 2026 as part of Phase 3. You subsequently confirmed applying migration `202610080020_announcements.sql` in Supabase. Do not rerun it. Admin draft/publish/withdraw/republish passed on 19 October. The user has marked P3-22–P3-26 complete. Hosted School B isolation and the latest shared-navigation regressions remain outstanding. Use [DOCUMENTS.md P3-22–P3-26](DOCUMENTS.md#5-announcements--recorded-reader-and-lifecycle-passes) as the working checklist; the list below describes module coverage rather than a second progress tracker.
+Added on 8 October 2026 as part of Phase 3. You subsequently confirmed applying migration `202610080020_announcements.sql` in Supabase. Do not rerun it. Admin draft/publish/withdraw/republish passed on 19 October. The user has marked P3-22–P3-26 complete. School B isolation and the shared-navigation checks were included in Phase 3 sign-off. Use [DOCUMENTS.md P3-22–P3-26](DOCUMENTS.md#5-announcements--recorded-reader-and-lifecycle-passes) as the working checklist; the list below describes module coverage rather than a second progress tracker.
 
 ## Who can publish and read
 

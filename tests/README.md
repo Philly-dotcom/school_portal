@@ -1,6 +1,6 @@
 # Tests: what they check and how to run them
 
-Updated 25 October 2026. The latest full local check passed lint, TypeScript, **510 tests in 56 files**, and production build. Migrations through 021 are user-confirmed applied. The user has completed 13 hosted document checks; School B isolation remains deferred. Local tests do not replace remaining hosted acceptance. See [verification status](../docs/VERIFICATION.md) and the [current checklist](../docs/DOCUMENTS.md#remaining-phase-3-checklist).
+The last full local check passed ESLint, TypeScript, 683 tests in 60 files and the production build. See [verification status](../docs/VERIFICATION.md) and the [assessment checklist](../docs/ASSESSMENTS.md) for hosted coverage.
 
 ## Start here
 
@@ -157,11 +157,11 @@ These are local checks. No hosted migration was applied and current browser resu
 
 `record-search.test.ts` checks the assignment RPC parameters, admin context, bounded results, date bounds, invalid filters and safe errors. `register-database.test.ts` runs migration 016 and searches more than 500 fictional assignments, covering teacher references, subject/class/grade/year matching, literal search text and denied school/role/anonymous access. These tests run before the suite deliberately suspends its admin.
 
-[timetable-search-forms.test.ts](timetable-search-forms.test.ts) checks that filter and creation searches remain available without preloaded choices, preserve the active filter ID with empty lesson results and reset pagination when applying a filter. Interactive selection/date changes remain deferred browser checks. Existing timetable SQL save/clash/removal tests remain in the suite.
+[timetable-search-forms.test.ts](timetable-search-forms.test.ts) checks that filter and creation searches remain available without preloaded choices, preserve the active filter ID with empty lesson results and reset pagination when applying a filter. Phase 3 browser coverage is recorded in [DOCUMENTS.md](../docs/DOCUMENTS.md). Existing timetable SQL save/clash/removal tests remain in the suite.
 
 ## Student profile coverage — 20 October 2026
 
-`student-profile.test.ts` checks that the overview reads the server-resolved student's records in their school, stops for unlinked accounts or mismatched schools, and distinguishes failed reads from no enrolments. It also checks school-local date boundaries, future and past placements, transfer labels and batched history reads. These are mocked data and rendering tests; earlier Student session checks are recorded; the latest dropdown/history placement still needs browser acceptance.
+`student-profile.test.ts` checks that the overview reads the server-resolved student's records in their school, stops for unlinked accounts or mismatched schools, and distinguishes failed reads from no enrolments. It also checks school-local date boundaries, future and past placements, transfer labels and batched history reads. These are mocked data and rendering tests; the Student dropdown and enrolment-history link were covered by REVIEW-01/02 at Phase 3 sign-off.
 
 `staff-profile.test.ts` covers teacher subject scoping and deduplication, missing roles or account links, failed subject reads, and the admin's own name, membership reference and authenticated email. It also checks that Guardian Overview offers the granted learners for explicit selection without selecting one automatically or showing the guardian reference. `portal-routing.test.ts` still tests which overview a role can open; its profile panels are mocked because their data and rendering are tested separately.
 
@@ -172,7 +172,7 @@ These are local checks. No hosted migration was applied and current browser resu
 
 `workspace-navigation.test.ts` renders the shared shell and checks every daily link and the home URL, the shared chooser role links, deliberate learner clearing, the active-workspace label and generic loading content. It complements the signed-in browser check; static markup alone cannot prove a real role transition or RLS.
 
-The user has now marked P3-01 through P3-30 and DOC-ANON complete. School B setup and all hosted cross-school tests remain outstanding and belong to the user. New error-boundary recovery and narrow-screen regression checks are listed in DOCUMENTS.md.
+The Phase 3 acceptance record includes DOC-ANON, School B isolation and the final navigation and layout checks. See [DOCUMENTS.md](../docs/DOCUMENTS.md#remaining-phase-3-checklist).
 
 
 ## Daily dashboard coverage - 24 October 2026
@@ -189,4 +189,4 @@ Routing coverage now includes multi-role selection (including Admin), single-rol
 
 ## Phase 4 assessment setup
 
-`assessment-database.test.ts` builds a disposable database from all migrations, including 022, and checks retained definitions, Admin scale authorisation, same-school/year/date constraints, stale saves and denied reads/writes. `assessment-actions.test.ts` checks trusted school context, forged roles, scale/date validation and error handling. `workspace-navigation.test.ts` now checks explicit staff assessment links and Guardian exclusion. These tests do not verify hosted Supabase or browser form interactions. See `docs/ASSESSMENTS.md` for pending hosted cases.
+`assessment-database.test.ts` applies the migrations to a disposable database and exercises definitions, scale authorisation, dated freeze, partial saves, amendments, historical access and denied writes across roles and schools. `assessment-actions.test.ts` covers validation, trusted school context and save feedback. `assessment-panel.test.ts` covers the staff list controls. Hosted acceptance is tracked in [ASSESSMENTS.md](../docs/ASSESSMENTS.md).

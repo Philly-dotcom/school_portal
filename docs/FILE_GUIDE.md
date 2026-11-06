@@ -12,14 +12,14 @@ A **register record** is a student, teacher or guardian entry. An **Auth account
 
 ## Phase 4 planning documents
 
-Added to this guide on 29 October 2026. Assessment setup files and migration 022 now exist locally; see [ASSESSMENTS.md](ASSESSMENTS.md) for each new file and the pending hosted checks.
+The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the dashboard, server actions, validation and database tests for Phases 4.1–4.2.
 
 | File | Purpose |
 | --- | --- |
 | [PHASE_4_PLAN.md](PHASE_4_PLAN.md) | Implementation order, reuse points, remaining school inputs and acceptance work. Proposed code paths are not existing files. |
 | [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) | The user's policy report, reconciled workflow details and action/role matrix in Section 10. |
 | [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md) | Proposed data relationships and constraints, staged file plan and test scenarios. It is not an applied schema. |
-| [RESUME.md](RESUME.md) | Latest checkpoint and the exact next design work. Older dated sections are historical. |
+| [RESUME.md](RESUME.md) | Latest checkpoint and the next implementation and verification work. Older dated sections are historical. |
 
 ## Root files and tooling
 
@@ -238,6 +238,22 @@ The existing dashboard route and portal shell connect these modules. They still 
 | `src/components/announcement-form.tsx` | Audience, message and publication editor. |
 | `src/components/announcement-panel.tsx` | Staff management and reader feeds with guardian learner selection. |
 | `supabase/migrations/202610080021_documents.sql` | Private PDF bucket, metadata, Storage RLS, upload reservations and versioned visibility. User-confirmed applied. |
+| `supabase/migrations/202610290022_assessment_setup.sql` | Assessment definitions, authorised scales and planning RPCs. |
+| `supabase/migrations/202611030023_assessment_drafts.sql` | Frozen placements and versioned private draft marks. |
+| `supabase/migrations/202611030024_roster_amendments.sql` | Reasoned Admin placement amendments and retained history. |
+| `supabase/migrations/202611030025_historical_mark_access.sql` | Historical teacher grants and explicit version-conflict responses. |
+| `supabase/migrations/202611040026_frozen_definition_amendments.sql` | Frozen date/scale impact preview and atomic Admin amendment with retained history. |
+| `supabase/migrations/202611040027_assessment_reviewer_grants.sql` | School Admin reviewer grants, staff search, revocation and scope checks for assessment review. |
+| `supabase/migrations/202611040028_assessment_review.sql` | Complete submission snapshots, versioned decisions and invalidation when draft inputs change. |
+| `src/app/dashboard/marks/review-actions.ts` | Server-checked submission and decision form handling. |
+| `src/components/assessment-review-form.tsx` | Submit, approve and return forms with save feedback. |
+| `src/components/assessment-review-panel.tsx` | Authorised review list and paginated submission detail. |
+| `supabase/migrations/202611040029_grading_policy_drafts.sql` | Admin policy draft identities, retained versions, scoped readers and version-checked saves. |
+| `supabase/migrations/202611040030_assessment_approval_invalidation.sql` | Reasoned Admin invalidation of a current approval, retained original decisions and staff status feedback. |
+| `src/lib/grading-policy-validation.ts` | Shared policy input/record validation and workspace links. |
+| `src/app/dashboard/assessments/policy-actions.ts` | Trusted Admin context, draft saves and conflict feedback. |
+| `src/components/grading-policy-form.tsx` | Policy fields and existing searchable year/grade/subject controls. |
+| `src/components/grading-policy-panel.tsx` | Paged policy list, editing and retained draft history. |
 | `src/lib/document-validation.ts` | Shared document types, 2 MiB limit, audience validation, generated paths and links. |
 | `src/lib/document-file.ts` | Server-only PDF header/end-marker, size and content-hash checks. |
 | `src/lib/document-data.ts` | Role-aware metadata reads with bounded pagination. |
@@ -279,6 +295,6 @@ The [test guide](../tests/README.md) explains each corresponding test file. The 
 
 These components reuse module readers, actions, school-date helpers and grants. No new service, dependency, authentication system, schema or RLS change was needed. Teacher/Student history opens on demand through a non-prefetched menu link, rather than loading inside a closed dropdown on each module page. Context reuse is per render, not a persistent authorization cache.
 
-Relevant tests: dashboard-overview.test.ts covers guarded cards and links; portal-routing.test.ts covers role entry and denial; workspace-navigation.test.ts covers sidebar URLs and authorised chooser destinations; staff-profile.test.ts and student-profile.test.ts cover scoped identity/history and shared reads; profile-request-count.test.ts measures the earlier loader path and fresh access checks. The latest full run passed all 524 tests in 57 files and production build. It is not a new browser or hosted-isolation result.
+Relevant tests: dashboard-overview.test.ts covers guarded cards and links; portal-routing.test.ts covers role entry and denial; workspace-navigation.test.ts covers sidebar URLs and authorised chooser destinations; staff-profile.test.ts and student-profile.test.ts cover scoped identity/history and shared reads; profile-request-count.test.ts measures the earlier loader path and fresh access checks. The Phase 3 sign-off run passed all 524 tests in 57 files and production build. It is not a new browser or hosted-isolation result.
 
 The 26 October review fixes also add tests/profile-menu.test.ts: it checks Teacher/Student identity menus add no profile-data reads and keep explicit role links. Expanded portal-routing tests cover mode-less multi-role Admin entry, denied profiles and on-demand Student history. Pagination and timetable-form tests check explicit Admin mode.

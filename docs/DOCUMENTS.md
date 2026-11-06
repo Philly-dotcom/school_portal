@@ -2,7 +2,7 @@
 
 Added in Phase 3 on 8 October 2026. Migrations **020 and 021 are confirmed applied**. Do not rerun them. On 20 October you confirmed completing the document checks below except for the deferred School B check.
 
-This file also contains the [remaining Phase 3 checklist](#remaining-phase-3-checklist) so you can record the rest of your testing in one place.
+The [Phase 3 checklist](#remaining-phase-3-checklist) below is the signed-off acceptance record.
 
 ## What is available
 
@@ -91,7 +91,7 @@ The 13 completed document items above are your reported hosted results. Keep the
 
 ## Remaining Phase 3 checklist
 
-Updated 26 October 2026. All hosted/browser cases are now user-reported passed. The latest local check passed ESLint, TypeScript, 524 tests in 57 files and production build after REVIEW-01/02. Local and user-reported hosted evidence remain separate.
+Updated 26 October 2026. All hosted/browser cases are now user-reported passed. The Phase 3 sign-off check passed ESLint, TypeScript, 524 tests in 57 files and production build after REVIEW-01/02. Local and user-reported hosted evidence remain separate.
 
 Use this as the current combined checklist. Older module checklists and dated verification notes describe earlier checkpoints. If you have already completed a case below, add its result here; you do not need to repeat a passed check just because the old notes are out of date.
 
@@ -172,7 +172,7 @@ On 26 October, the user reported completing School B setup and the cross-school 
 
 ### 8. Development work to finish after testing
 
-The user marked the dashboard and browser acceptance items below complete on 26 October. The separate code-review items at the end still need resolution.
+The user marked the dashboard and browser acceptance items below complete on 26 October. The final REVIEW-01/02 checks were subsequently signed off.
 
 - [x] **P3-33 Resolve reproduced defects:** review failures recorded above, make narrowly scoped fixes, then rerun their checks and relevant automated tests. Do not weaken date rules, roles or RLS to turn a failure into a pass.
 - [x] **P3-34 Daily dashboard implementation acceptance:** the agreed role-specific layouts, authorised daily cards and shared top-right profiles are built. Review and accept the result using the regression list below. Keep marks, fees, external notifications and other later-phase features out of this work.
@@ -183,8 +183,8 @@ The user marked the dashboard and browser acceptance items below complete on 26 
 - [x] All applicable cases above have a recorded result; failures are fixed and retested. Blocked fixture cases remain visible rather than being marked passed.
 - [x] Hosted School A/School B isolation, including Storage, is user-reported passed on 26 October.
 - [x] The daily dashboard is completed and accepted. No known stale-save, selection or guardian-context defect remains unresolved.
-- [x] Latest code revision: ESLint, TypeScript, 524 tests in 57 files and production build passed on 26 October after REVIEW-01/02. Reopen this gate after further code changes; do not rerun merely for documentation edits.
-- [x] Final Phase 3 sign-off: the user confirmed completion on 27 October 2026, including the REVIEW-01/02 browser checks. Phase 4 has not started.
+- [x] Phase 3 sign-off revision: ESLint, TypeScript, 524 tests in 57 files and production build passed on 26 October after REVIEW-01/02. Reopen this gate after further code changes; do not rerun merely for documentation edits.
+- [x] Final Phase 3 sign-off: the user confirmed completion on 27 October 2026, including the REVIEW-01/02 browser checks. See [PHASE_4_PLAN.md](PHASE_4_PLAN.md) for subsequent work.
 
 Email/SMTP delivery, live account recovery, backup/restore, monitoring, deployment, document retention/scanning and real-school launch approval remain separate live-readiness work. They are not silently marked complete by this checklist.
 
@@ -212,7 +212,7 @@ The 25 October full local run passed all 512 tests and the production build afte
 
 ## Evidence history
 
-Earlier progress appendices, test totals and browser observations are preserved in the [pre-refresh document](../archive/2026-10/docs-before-20261025-reconciliation/docs/DOCUMENTS.md). Use [VERIFICATION.md](VERIFICATION.md) for the current evidence summary. Historical passes do not imply the latest UI revision was browser-tested.
+The [October archive note](../archive/README.md#october-dashboard-verification) preserves the earlier dashboard measurements and browser observations. See [VERIFICATION.md](VERIFICATION.md) for subsequent evidence.
 
 ## Guardian overview follow-up — 25 October 2026
 

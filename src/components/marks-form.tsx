@@ -1,9 +1,20 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { updateMarkDraft } from "@/app/dashboard/marks/actions";
 import type { AssessmentMode } from "@/lib/assessment-validation";
 import { markState, type DraftRegister, type MarkChange } from "@/lib/marks-validation";
+
+function SaveProgress() {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), 8000);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return slow ? <p role="status">Still waiting for confirmation. If you reload, check the saved version before retrying.{" "}
+    <button type="button" onClick={() => window.location.reload()}>Reload saved roster</button>
+  </p> : null;
+}
 
 export function MarksForm({ id, mode, draft }: { id: string; mode: AssessmentMode; draft: DraftRegister }) {
   const [edits, setEdits] = useState<Record<string, MarkChange>>({});
@@ -26,6 +37,7 @@ export function MarksForm({ id, mode, draft }: { id: string; mode: AssessmentMod
         {pending ? "Freezing…" : "Freeze eligible roster"}
       </button>
       {feedback && <p role="alert">{feedback}</p>}
+      {pending && <SaveProgress />}
     </form>;
   }
   return <form action={action} className="access-form">
@@ -61,5 +73,6 @@ export function MarksForm({ id, mode, draft }: { id: string; mode: AssessmentMod
       {pending ? "Saving…" : "Save changed marks"}
     </button>
     {feedback && <p role="alert">{feedback}</p>}
+    {pending && <SaveProgress />}
   </form>;
 }

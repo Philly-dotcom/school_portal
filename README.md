@@ -4,19 +4,21 @@ School Portal is a portal for one school, built so we can add more schools later
 
 This project lives at `C:\Users\moses\Documents\School_portal`. Its database, accounts and decisions belong to this project only.
 
-## Where we are - 3 November 2026
+## Where we are - 6 November 2026
 
-**Phase 3 is complete and signed off. Phase 4: Academic Performance has begun with local assessment planning.** Attendance, view-only homework, announcements, private PDFs, daily dashboards and role-aware profiles/navigation are implemented. The user completed the remaining hosted/browser checks, including School B isolation and REVIEW-01/02.
+**Phase 3 is signed off. Phase 4.3 submission and review have passed the first School A browser checks. Further hosted checks remain open.** Staff can plan assessments, capture private draft marks and submit complete rosters to authorised reviewers. Migration 028 is user-confirmed applied. School Admin publication, learner results and report cards are the next steps.
 
-Migrations through **023 are user-confirmed applied**. Do not rerun them. The last full local check passed **lint, TypeScript, 580 tests in 60 files and production build** on 3 November. Hosted results and local checks are separate evidence.
+Migration 029 is applied. School Admin can record scoped policy drafts and retain their source and revision history while the school gathers its rules. Migration 030 adds reasoned invalidation of a disputed approval and is user-confirmed applied. Policy approval and publication remain pending.
 
-Read [the Phase 4 plan](docs/PHASE_4_PLAN.md) for assessment setup, marks, review/Admin publication, learner results and report cards. The [academic decision record](docs/PHASE_4_ACADEMIC_DECISIONS.md) now settles workflow and permissions; actual school grading formulas and final report presentation are still required; [assessment setup](docs/ASSESSMENTS.md) is implemented locally and the tester has verified the initial staff planning and authorisation flow. Frozen rosters and private raw marks are implemented locally in migration 023. The tester confirmed 023 was applied. Migration 024 adds local Admin roster amendments. Hosted browser checks are pending. Session inactivity/logout work is deferred to Phase 6. Email/recovery, backups and deployment remain separate live-readiness work.
+Migrations 001–030 are applied in the dedicated project. The last full local run passed ESLint, TypeScript, 683 tests in 60 files and the production build.
+
+Start with [the assessment workflow and hosted checklist](docs/ASSESSMENTS.md). The [Phase 4 plan](docs/PHASE_4_PLAN.md) lists remaining work, and the [academic decisions](docs/PHASE_4_ACADEMIC_DECISIONS.md) govern grading and permissions. Session-timeout work stays in Phase 6. Email/recovery, backups and deployment remain live-readiness work.
 
 Start with [the current checkpoint](docs/RESUME.md), [Phase 3 acceptance](docs/DOCUMENTS.md#remaining-phase-3-checklist) or [verification status](docs/VERIFICATION.md).
 
 Teacher, student and guardian workspaces now use linked school records. Adding a student record does not create a login, and recording a family relationship does not automatically give a guardian access.
 
-Marks, report cards, fees, external notifications and AI are still ahead. Homework attachments are not part of the Documents library. The public `/preview` remains a static design preview. We are still using fictional records.
+Published results, report cards, fees, external notifications and AI are still ahead. Homework attachments are not part of the Documents library. The public `/preview` remains a static design preview. We are still using fictional records.
 
 ## Catching up
 

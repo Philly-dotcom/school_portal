@@ -6,11 +6,13 @@ School Portal is completely isolated from the user's other projects. No architec
 
 ## Authorization and current stage
 
-Phase 3 was signed off on 27 October 2026, including the remaining School B and REVIEW-01/02 browser checks reported by the user. Migrations through 021 are user-confirmed applied. The last full local check passed lint, TypeScript, 553 tests in 59 files and production build on 30 October.
+Phase 3 was signed off on 27 October, including the reported School B and REVIEW-01/02 checks. The dedicated project has migrations 001–030. Use [VERIFICATION.md](VERIFICATION.md) for test evidence.
 
-Phase 4.1 assessment planning is implemented locally; migration 022 and hosted acceptance are pending. Marks, review/publication and report cards remain unimplemented. See [ASSESSMENTS.md](ASSESSMENTS.md). Use [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and the reconciled [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md), including the permission matrix in Section 10. Session inactivity/logout proposals are on hold until Phase 6. Email delivery remains off; public deployment and additional cloud resources are not authorised by this update.
+Phase 4.3 submission and review are implemented locally in migration 028, now user-confirmed applied. Staff can plan assessments, enter private marks on frozen rosters, amend placements, submit complete saved rosters and review them with explicit permission. Phase 4 hosted checks remain open. See [ASSESSMENTS.md](ASSESSMENTS.md), [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and the [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md). Publication and report cards remain planned. Session controls stay in Phase 6 and email delivery remains off.
 
 At the user's request, superseded guides are now archived, including the temporary Phase 3 implementation guide. Use RESUME.md, VERIFICATION.md and the current checklist for progress; archived instructions are historical reference.
+
+The user confirmed on 4 November that the first school reporting policy is not ready and requested setup meanwhile. Migration 029 is now user-confirmed applied. Numerical rules, supported configuration and policy approval remain open. The Subject Workspace idea is on hold. Migration 030 implements reasoned Admin invalidation of a disputed current approval and is user-confirmed applied. The user is handling hosted/browser tests.
 
 ## Product strategy
 

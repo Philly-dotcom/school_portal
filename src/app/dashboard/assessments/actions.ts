@@ -102,15 +102,24 @@ async function persistAssessment(
       new_precision: v.precision,
       authorise_scale: v.authorise,
     });
-    if (error || typeof data !== "string")
+    if (error || typeof data !== "string") {
+      // Some gateways replace database errors. Check the visible definition before
+      // reporting a generic failure; a lost response could also follow a committed save.
+      if (v.id && error && !["40001", "PT409", "55000", "42501", "22023"].includes(error.code)) {
+        const latest = await loadAssessments(schoolId, v.mode, 1, v.id);
+        const current = latest?.rows.find(row => row.id === v.id);
+        if (current && current.record_version !== v.version)
+          return { error: "The saved assessment version changed. Reload and check the saved definition before retrying.", saved: false };
+      }
       return {
         error:
-          error?.code === "40001"
+          error?.code === "40001" || error?.code === "PT409"
             ? "This assessment changed. Reload before saving again."
             : error?.code === "55000" ? "The roster has been frozen. This assessment definition is locked."
             : "Assessment could not be saved. Check assignment access, term dates and scale authorisation.",
         saved: false,
       };
+    }
     revalidatePath("/dashboard");
     return { error: "", saved: true };
   } catch {

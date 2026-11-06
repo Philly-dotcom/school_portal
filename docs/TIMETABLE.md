@@ -4,7 +4,7 @@
 
 ## Current status — 8 October
 
-Migrations 016 and 017 are now user-confirmed applied. Do not repeat the old application instructions below. The original admin planning screen remains available. Linked teachers, students and guardians also have a read-only **My timetable** view for the current school week; guardian access requires an explicit child grant. Hosted role/date acceptance is outstanding and will be checked by the user after homework.
+Migrations 016 and 017 are now user-confirmed applied. Do not repeat the old application instructions below. The original admin planning screen remains available. Linked teachers, students and guardians also have a read-only **My timetable** view for the current school week; guardian access requires an explicit child grant. See the signed-off Phase 3 timetable and role cases in [DOCUMENTS.md](DOCUMENTS.md).
 
 Migration 008 introduced the timetable. Hosted creation and persistence were checked with fictional lessons earlier; do not reapply it. Open **Timetable** as School Admin to review the existing schedule. Conflict, removal and concurrent-save checks are separate from confirming that the page loads.
 
@@ -34,7 +34,7 @@ More than 500 lessons or assignment choices no longer blocks the screen. Both fi
 
 ## Hosted regression scenarios
 
-P3-07–P3-10 are user-reported passed. Preserve those results; the scenarios below describe regression coverage, while School B requests remain outstanding. Verify two simultaneous conflicting saves cannot both succeed on hosted Supabase. Check audit entries and confirm teaching assignments/enrollments remain after removal. Do not infer full hosted readiness from a successful migration or local test suite.
+P3-07–P3-10 are user-reported passed. Preserve those results; the scenarios below describe regression coverage, and the later School B isolation checks are recorded at Phase 3 sign-off. Verify two simultaneous conflicting saves cannot both succeed on hosted Supabase. Check audit entries and confirm teaching assignments/enrollments remain after removal. Do not infer full hosted readiness from a successful migration or local test suite.
 
 ## Search migration 016 — 5 October 2026
 

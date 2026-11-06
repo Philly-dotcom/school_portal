@@ -28,8 +28,7 @@ export function AssessmentForm({
     return (
       <>
         <p role="status">
-          Assessment definition saved. Marks and publication are not available
-          yet.
+          Assessment definition saved. Open the assessment list to see its current scale and roster.
         </p>
         <Link href={assessmentHref(mode)}>Back to assessments</Link>
       </>

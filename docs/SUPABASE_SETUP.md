@@ -12,7 +12,7 @@ Keep public sign-ups disabled. Do not enable unrestricted registration to test l
 
 ## 2. Apply the migration
 
-> **Existing project, 4 October:** migrations 009–013 are user-confirmed applied. Do not rerun them or recreate the administrator. The following provisioning example is for a fresh project only. A fresh approved setup needs the complete ordered migration chain, 001–013; the foundation example below is only the first step. Applying SQL does not push Auth configuration or prove hosted workflows work. See RESUME.md and VERIFICATION.md for current progress.
+> The dedicated School Portal project has migrations 001–030. For a fresh, approved installation, apply all files in `supabase/migrations` in order. The example below explains the first migration and first Admin only. Keep existing memberships and school records intact. Auth configuration and hosted acceptance are separate steps.
 
 
 

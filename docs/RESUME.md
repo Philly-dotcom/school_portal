@@ -1,23 +1,14 @@
 # Where we left off
 
-## 3 November 2026 — Assessment scale authorisation
+## Current handover — Phase 4.3 approval invalidation
 
-The tester marked migration 022, Admin creation/authorisation and Teacher proposal creation complete. Admin can now authorise a pending teacher proposal from the Assessments list. The tester has since confirmed this step. Phase 4.2 now has local roster preview, explicit freeze and private draft marks. The tester confirmed migration 023 was applied. Admin placement amendments are implemented locally in 024. Hosted checks are deferred. Next is scoped historical correction access for teachers. See [ASSESSMENTS.md](ASSESSMENTS.md). The remaining hosted cases retain their individual checklist status.
+Migrations 001–030 are applied. Staff can plan assessments, authorise scales, freeze eligible rosters and capture private draft marks. School Admin can amend frozen placements and grant a teacher dated access to one learner or a whole frozen assessment. The latest local check passed lint, TypeScript, 683 tests in 60 files and the production build.
 
-## Phase 4.1 assessment setup - 30 October 2026
+Migration 029 is user-confirmed applied. The Subject Workspace idea is on hold. Phase 4.3 continues with migration 030, which lets School Admin invalidate a current disputed approval with a reason while retaining its original decision. You confirmed 030 was applied on 6 November. Hosted checks remain open. The school reporting rules are still outstanding. Policy configuration/approval, adoption into a fresh review package and School Admin publication remain pending. Use the existing fictional assessments and accounts for the unchecked [hosted cases](ASSESSMENTS.md). The [Phase 4 plan](PHASE_4_PLAN.md) and [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md) govern that work.
 
-Assessment planning is implemented locally. Read [ASSESSMENTS.md](ASSESSMENTS.md) for files, migration 022 and pending hosted checks. Migration 022 has not been applied to Supabase by the agent. No hosted fixtures were created. Fresh full validation passed on 30 October: ESLint, TypeScript, 553 tests in 59 files and production build. See VERIFICATION.md. Next apply migration 022 once, then complete the hosted checklist in ASSESSMENTS.md using existing fictional accounts. Do not treat this as Phase 4 completion. Next slices are frozen rosters and raw marks; official grading/publication still need the school policy. Earlier planning-only statements below describe the prior checkpoint.
+On 6 November the School A test assessment reached definition 2, draft 8 and submission 7, pending review. All temporary test grants were revoked. Resume with authenticated API checks and simultaneous reviewer decisions. The policy form also needs a fix for stale selection labels after a rejected save. School B was skipped. The [assessment checklist](ASSESSMENTS.md) records the individual results. Grade 10 Mathematics for 2027 is the proposed pilot while the user gathers [teacher input](TEACHER_REPORTING_POLICY_QUESTIONS.md).
 
-
-## Next: Phase 4 preparation - 29 October 2026
-
-Phase 3 is signed off. Phase 4 remains planning-only; development is intended to begin on 30 October, after reviewing the concrete schema/workflow design. Read [PHASE_4_PLAN.md](PHASE_4_PLAN.md) and [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md). The user's decision report is now reconciled with the plan; Section 10 contains the final permission matrix and workflow details.
-
-Settled: dated eligibility and explicit roster freeze, complete assessment-roster review, learner-specific correction invalidation, scoped reviewer/historical-correction grants, Admin policy approval, and separate Admin output review/publication for subject-term results and reports. Self-review is allowed; publication is never automatic. Missing blocks submission. Unchanged learners' published results remain visible during another learner's correction.
-
-Still needed from the school: actual numerical grading policies, absence/exemption calculation rules and final report presentation. The relationship/version/dependency proposal and fixture scenarios are now in [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md), based on a read-only code/schema review on 29 October. Next is the first assessment-setup implementation slice after reviewing its concrete schema design. Hosted fixture IDs/eligibility still need read-only confirmation before hosted testing. No new fixtures, application code, migrations, database records or Auth settings were changed for this planning update. The working tree was clean at the start of the data-design task; only planning documents changed in this task.
-
-Session-timeout work stays in Phase 6. The latest recorded full validation remains the 26 October 524-test/build pass; tests were not rerun for documentation. Earlier dated status sections below are historical and do not reopen Phase 3.
+The dated Phase 3 entries below are historical.
 
 ## Phase 3 signed off - 27 October 2026
 
@@ -79,7 +70,7 @@ Email remains off; live recovery, admin security policy, backups, monitoring, de
 - [Architecture](ARCHITECTURE.md)
 - [Roadmap](ROADMAP.md)
 - [File guide](FILE_GUIDE.md)
-- [Earlier notes](../archive/2026-10/docs-before-20261025-reconciliation/docs/RESUME.md)
+- [October dashboard verification](../archive/README.md#october-dashboard-verification)
 
 ## Guardian overview follow-up — 25 October 2026
 

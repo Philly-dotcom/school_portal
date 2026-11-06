@@ -1,8 +1,8 @@
 # Phase 2: what was built and why
 
-Updated 25 October 2026. This remains the learning guide for Academic Setup. The project is now in Phase 3 acceptance, not Phase 2 development. Academic/register workflows, searchable account links and timetable choices are implemented. Migrations through 021 are user-confirmed applied, including searches 015 and 016. The latest local check passed ESLint, TypeScript, 510 tests in 56 files and production build.
+This guide explains the implemented academic setup, registers, searchable account links, placements and teaching assignments. Phase 3 has since been signed off. See [RESUME.md](RESUME.md) for current work.
 
-This guide explains the Phase 2 design without claiming all hosted or launch gates are closed. Use [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for current case results and [RESUME.md](RESUME.md) for the next step. The original dated explanation is [archived](../archive/2026-10/docs-before-20261025-reconciliation/docs/PHASE_2_EXPLAINED.md).
+This guide explains the Phase 2 design without claiming all hosted or launch gates are closed. Use [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist) for current case results and [RESUME.md](RESUME.md) for the next step.
 
 ## 1. What Phase 2 was meant to achieve
 
@@ -271,7 +271,7 @@ Connected admin creation/read checks were performed earlier, and you reported co
 
 The account-link and timetable search conversions are complete. The user reported Phase 2 fictional-data testing, and P3-01–P3-30 now record relevant role, timetable, lifecycle and concurrency passes. Preserve those results rather than treating older to-do lists as current failures.
 
-Hosted School A/School B isolation remains outstanding and user-owned. Latest profile/chooser navigation also needs targeted browser acceptance. The current case list and evidence boundaries are in DOCUMENTS.md and VERIFICATION.md; this explanation is not a second checklist.
+Phase 3 cross-school and navigation checks are recorded as complete at sign-off in [DOCUMENTS.md](DOCUMENTS.md).
 
 Broad date/relationship editing, first-day replacement, undo, promotion and rollover remain outside the existing editors. Agree a support/correction workflow and pilot capacity before real-school use. The earlier mistaken academic-year dates were repaired with approval on 9 October; that repair is historical, not an instruction to alter the current records again.
 
@@ -292,4 +292,4 @@ There are also **Phase 1 live-readiness requirements** still to close before rea
 
 Email remains off during fictional-data development, as agreed. That should be recorded as a live-readiness limitation rather than used to claim either that email is complete or that all academic development must stop.
 
-Those search conversions are complete. The next work is the current Phase 3 review and acceptance checklist; this documentation changes no application code, database records or migration state.
+Both search conversions are complete. See [ROADMAP.md](ROADMAP.md) for work following Phase 2.

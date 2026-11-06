@@ -195,6 +195,8 @@ A changed input invalidates all current dependent outputs, including HTML, summa
 
 ### What is still required from the school
 
+Grade 10 Mathematics for 2027 is the proposed pilot. The applicable programme, calculation rules and worked examples are being researched with a teacher. Record the year and source of each answer before using it to draft a school policy for approval. Use the [teacher questionnaire](TEACHER_REPORTING_POLICY_QUESTIONS.md) for that conversation.
+
 - The first grade/subject/year policy to implement: approved scales, assessment categories, weights/formulas, rounding and precision, bands, absent/exempt resolution, replacement/exclusion rules and required components.
 - Any promotion rules, before promotion is implemented or inferred. A percentage alone is insufficient.
 - Final report header/logo, subject order, required comments, signature presentation and approval labels.

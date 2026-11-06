@@ -4,6 +4,10 @@ Prepared 29 October 2026 from the current checkout. This is the 4.0 design propo
 
 ## What the current code gives us
 
+Implementation update, 4 November. Migrations 022–029 are applied. Migration 028 implements the proposed review-package concept as `assessment_submissions`, `assessment_submission_entries` and `assessment_review_decisions`. Entries reference exact retained mark versions and snapshot placements. Definitions retain the authorised scale. Approval and return bind to one complete submission. Reporting policy configuration and publication remain pending, so these raw review packages have no approved reporting-policy binding yet. The proposed relationships below remain the broader Phase 4 design.
+
+Migration 029 starts the proposed `grading_policies` and `grading_policy_versions` model with draft scope, dates, source references and school-rule notes. Its current fields gather the policy without defining calculation methods. Approved versions, unambiguous applicability, retirement and executable configuration remain later work after the school supplies its rules.
+
 | Existing source | Reuse and important limit |
 | --- | --- |
 | `supabase/migrations/202610010003_academic_structure.sql` | Years, terms, grades, subjects and classes. Terms have a school/year and dates; a term is not a grading formula. |
@@ -16,11 +20,11 @@ Prepared 29 October 2026 from the current checkout. This is the 4.0 design propo
 | `src/app/dashboard/documents/[id]/download/route.ts` | Authenticated private download, no-store headers and PDF integrity checks. Personal reports need their own publication-aware Storage policy. |
 | `tests/homework-database.test.ts`, `tests/helpers/storage-stub.ts` | Disposable PGlite database, ordered migrations, simulated authenticated roles and fictional two-school fixtures. This is not hosted Storage or concurrent-session evidence. |
 
-The working tree was clean at the start of this design task. Migration files currently end at 021. Recheck that before assigning the next migration number. Existing migrations stay unchanged.
+The design started from migrations 001–021. Migrations 022–025 now implement definitions, draft capture, placement amendments and historical correction grants. The diagram below retains the original proposal.
 
 ## Proposed relationships
 
-The diagram groups related version tables for readability. All new records carry school ownership; all IDs below are proposed names, not installed tables.
+The diagram groups proposed relationships. In the implemented draft model, the school/assessment/learner roster entry anchors append-only `assessment_mark_versions`. A version counter and `assessment_roster_amendments` retain placement changes. The separate result identity/current-version pointer shown in the design is not an installed table. Review and publication must bind to exact retained versions.
 
 ```mermaid
 erDiagram
@@ -125,7 +129,7 @@ Use the same school lock for output creation/publication so a report cannot be p
 
 ## File plan and implementation boundaries
 
-Start only with the assessment slice; existing shell/auth helpers are reused. Proposed files:
+The original first-slice file plan is shown below. For actual files and later slices, use the [assessment file map](ASSESSMENTS.md#files-and-responsibilities).
 
 | File | Responsibility |
 | --- | --- |
@@ -134,7 +138,7 @@ Start only with the assessment slice; existing shell/auth helpers are reused. Pr
 | `src/app/dashboard/assessments/actions.ts` | Verified context, parse input, call checked RPC, map errors and revalidate. Follow homework actions without copying its eligibility rule. |
 | `src/components/assessment-panel.tsx`, `assessment-form.tsx` | Existing panel/form patterns, explicit permissions and planning/scale status. |
 | `src/app/dashboard/page.tsx`, existing shell/navigation helpers | One assessment view integrated with existing mode preservation. Do not add a parallel dashboard/router. |
-| Next additive migration | Assessment definitions/scale authorisation, narrow readers/writers and constraints needed for this slice only. Check next number before creation. |
+| Migration 022 | Assessment definitions, scale authorisation, scoped readers and writers. |
 | `tests/assessment-validation.test.ts`, `assessment-actions.test.ts`, `assessment-database.test.ts` | Bounds, caller/action behaviour, actual SQL authorisation and relationships. Names provisional. |
 
 Later marks/review/results/report files follow the existing Phase 4 plan. No new dependency, environment variable, service-role key or cloud resource is required for assessment setup. PDF library choice waits until report work. Read the installed Next.js documentation before application changes.
