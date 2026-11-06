@@ -19,4 +19,4 @@ The following procedure is reference for a fresh investigation, not an instructi
 3. For a fresh project where 006 has not been applied, and only after duplicates are resolved, apply `supabase/migrations/202610010006_grade_name_normalization.sql` once. Do not rerun migrations 001–005.
 4. Test a fictional grade with and without its separator. The second insert should show the existing-name error, and a refresh should show only the first record.
 
-The normalisation is implemented and migration 006 is already applied in this project. Do not infer current duplicates from the old report. Client normalization alone is not a substitute for the database migration.
+The normalisation is implemented and migration 006 is already applied in this project. Do not infer current duplicates from the old report. Client normalisation alone is not a substitute for the database migration.

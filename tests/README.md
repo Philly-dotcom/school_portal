@@ -37,7 +37,7 @@ You do not need the portal server running for those commands. They do not apply 
 
 | Kind | What it tells us | What it does not tell us |
 | --- | --- | --- |
-| Unit and action tests | Validation, authorization decisions and error handling behave as expected. Mocked calls let us simulate failures. | That the real network, Auth service or database returned those responses. |
+| Unit and action tests | Validation, authorisation decisions and error handling behave as expected. Mocked calls let us simulate failures. | That the real network, Auth service or database returned those responses. |
 | Database tests | Real migration SQL, constraints, grants and RLS work in PGlite, a local PostgreSQL engine. Fictional schools and simulated Auth users are created there. | That hosted Supabase configuration, tokens, concurrent sessions or email work. |
 | Browser tests | The disconnected app's preview, layout and guarded routes work in an actual browser. | That your signed-in hosted school workflows work. |
 
@@ -55,12 +55,12 @@ Recent Phase 3 additions are listed here; the existing suites follow below. The 
 | [attendance-database.test.ts](attendance-database.test.ts) | Marks and unmarked rows, dated rosters, school/role denial, stale versions, atomic rollback, transfer guards and pagination. |
 | [attendance-actions.test.ts](attendance-actions.test.ts) | Trusted school and staff mode, input bounds, class search and safe failures. |
 | [attendance-form.test.ts](attendance-form.test.ts) | Initially empty change payload, read-only teacher history and required older-date reasons. |
-| [attendance-validation.test.ts](attendance-validation.test.ts) | Batch/date/status limits and school-local timezone behavior. |
+| [attendance-validation.test.ts](attendance-validation.test.ts) | Batch/date/status limits and school-local timezone behaviour. |
 | [homework-database.test.ts](homework-database.test.ts) | Draft/publication/withdrawal, fixed original audience, transfers, lost assignment rights, two-school isolation, stale versions, rollback and pagination. |
 | [homework-actions.test.ts](homework-actions.test.ts) | Trusted school, forged input rejection, bounded assignment search, conflict handling and safe read errors. |
 | [homework-validation.test.ts](homework-validation.test.ts) | New versus existing versions, field limits, unsupported states and guardian page links. |
 | [homework-panel.test.ts](homework-panel.test.ts) | Escaped text, no learner editor/submission controls, child selection and fixed-assignment staff editor. |
-| [announcements-database.test.ts](announcements-database.test.ts) | School/class publishing, current enrollment after transfers, guardian grants, ended assignments, isolation, denied writes, stale edits, audit rollback and paging. |
+| [announcements-database.test.ts](announcements-database.test.ts) | School/class publishing, current enrolment after transfers, guardian grants, ended assignments, isolation, denied writes, stale edits, audit rollback and paging. |
 | [announcements-actions.test.ts](announcements-actions.test.ts) | Verified school/roles, explicit audience scope, rejected malformed input, search bounds, conflicts, safe failures and read results. |
 | [announcements-panel.test.ts](announcements-panel.test.ts) | Escaped messages, no learner editing, guardian selection and fixed audience/version controls. |
 | [documents-database.test.ts](documents-database.test.ts) | Private bucket configuration, metadata and Storage RLS, transfers, grants, school isolation, denied overwrite/deletion, failed finalization and audit rollback. |
@@ -69,34 +69,34 @@ Recent Phase 3 additions are listed here; the existing suites follow below. The 
 
 Full-migration suites now call `tests/helpers/storage-stub.ts` before loading migrations. PGlite does not ship Supabase's Storage schema, so this test-only helper creates the minimal metadata tables needed to execute the real policies. It does not simulate the Storage HTTP service, bucket enforcement on actual file bytes, signed URLs or physical deletion. Those remain hosted checks in DOCUMENTS.md. Older migration files were not changed.
 
-All files below are in this folder. A test with an expected permission error is passing when the unauthorized operation is refused.
+All files below are in this folder. A test with an expected permission error is passing when the unauthorised operation is refused.
 
 | File | What it checks |
 | --- | --- |
 | [permissions.test.ts](permissions.test.ts) | Checks role parsing and the active admin-context helper used by server actions. Identity, membership and school isolation are checked by the database/action suites. |
-| [database.test.ts](database.test.ts) | Runs the foundation SQL against two fictional schools. Checks RLS, school settings permissions, ownership references and audit behavior. |
-| [academic-actions.test.ts](academic-actions.test.ts) | Checks admin authorization, validated academic input and safe error handling with mocked database calls. |
+| [database.test.ts](database.test.ts) | Runs the foundation SQL against two fictional schools. Checks RLS, school settings permissions, ownership references and audit behaviour. |
+| [academic-actions.test.ts](academic-actions.test.ts) | Checks admin authorisation, validated academic input and safe error handling with mocked database calls. |
 | [academic-pagination.test.ts](academic-pagination.test.ts) | Checks academic records beyond 500, school-scoped queries, page navigation, off-page labels, availability of search-enabled forms, malformed URLs and query failures. Uses synthetic mocked results, not hosted data. |
 | [register-pagination.test.ts](register-pagination.test.ts) | Checks people and histories beyond 500, independent form choices, current inactive links loaded by ID, related labels, capacity boundaries, page links and safe query/RPC failures. Synthetic mocked reads; no hosted records are inserted. |
 | [register-search-forms.test.ts](register-search-forms.test.ts) | Checks that guardian/enrollment forms use the right searches, transfers pass the original year and excluded class, and closed history stays read-only. Initial markup and props only; interactive browser checks are separate. |
-| [planning-pagination.test.ts](planning-pagination.test.ts) | Checks teaching/timetable records beyond 500, server filtering before paging, retained filter links, partial-schedule wording, off-limit labels, history/removal controls, selection limits, school filters and safe failures. Renders the real timetable UI with mocked reads/actions; hosted behavior is not implied. |
-| [record-search.test.ts](record-search.test.ts) | Checks admin-only searches, verified school ownership, bounded pages beyond 500, invalid requests, class/date details, excluded replacement teachers and safe failures. Also checks literal wildcard escaping in local PostgreSQL and the selector's initial required-field markup. Interactive selection/search behavior remains a browser check. |
-| [academic-database.test.ts](academic-database.test.ts) | Runs academic-structure SQL: school isolation, academic relationships, date constraints, duplicate protection and grade normalization. |
+| [planning-pagination.test.ts](planning-pagination.test.ts) | Checks teaching/timetable records beyond 500, server filtering before paging, retained filter links, partial-schedule wording, off-limit labels, history/removal controls, selection limits, school filters and safe failures. Renders the real timetable UI with mocked reads/actions; hosted behaviour is not implied. |
+| [record-search.test.ts](record-search.test.ts) | Checks admin-only searches, verified school ownership, bounded pages beyond 500, invalid requests, class/date details, excluded replacement teachers and safe failures. Also checks literal wildcard escaping in local PostgreSQL and the selector's initial required-field markup. Interactive selection/search behaviour remains a browser check. |
+| [academic-database.test.ts](academic-database.test.ts) | Runs academic-structure SQL: school isolation, academic relationships, date constraints, duplicate protection and grade normalisation. |
 | [register-actions.test.ts](register-actions.test.ts) | Checks person/relationship/enrollment creation handlers reject non-admin calls, forged ownership and malformed inputs. |
-| [register-database.test.ts](register-database.test.ts) | The larger academic workflow suite: registers, teaching assignments, corrections, timetable clashes/removal and enrollment lifecycle, with SQL permission and ownership checks. |
-| [teaching-actions.test.ts](teaching-actions.test.ts) | Checks assignment creation and end/replacement authorization, verified school ownership, validation/confirmation and safe conflict messages. |
+| [register-database.test.ts](register-database.test.ts) | The larger academic workflow suite: registers, teaching assignments, corrections, timetable clashes/removal and enrolment lifecycle, with SQL permission and ownership checks. |
+| [teaching-actions.test.ts](teaching-actions.test.ts) | Checks assignment creation and end/replacement authorisation, verified school ownership, validation/confirmation and safe conflict messages. |
 | [teaching-lifecycle-database.test.ts](teaching-lifecycle-database.test.ts) | Upgrades existing assignments through 014, then checks ending/replacement, roster access dates, preserved history, overlap/timetable rejection, school/role boundaries, stale changes and rollback on audit failure. |
 | [timetable-actions.test.ts](timetable-actions.test.ts) | Checks lesson creation/removal, time conversion, invalid ranges, confirmation and scheduling-error messages. |
-| [correction-actions.test.ts](correction-actions.test.ts) | Checks name/reference correction authorization, grade normalization, version forwarding and stale/duplicate error handling. |
-| [enrollment-actions.test.ts](enrollment-actions.test.ts) | Checks transfer/withdrawal authorization, dates, destination rules, confirmation and stale-form handling. |
-| [grade-name.test.ts](grade-name.test.ts) | Checks standard grade spacing/casing normalization while leaving custom grades and unrelated names alone. |
+| [correction-actions.test.ts](correction-actions.test.ts) | Checks name/reference correction authorisation, grade normalisation, version forwarding and stale/duplicate error handling. |
+| [enrollment-actions.test.ts](enrollment-actions.test.ts) | Checks transfer/withdrawal authorisation, dates, destination rules, confirmation and stale-form handling. |
+| [grade-name.test.ts](grade-name.test.ts) | Checks standard grade spacing/casing normalisation while leaving custom grades and unrelated names alone. |
 | [grade-repair.test.ts](grade-repair.test.ts) | Rehearses the archived one-off Grade 10 repair in a local database: rollback, refusal when dependencies make cleanup unsafe and preservation of valid references. |
 | [account-validation.test.ts](account-validation.test.ts) | Checks permitted roles, matching passwords, safe site origins and accepted invitation/recovery link types. |
 | [access-actions.test.ts](access-actions.test.ts) | Checks admin member/invitation actions, school ownership, version checks and delivery gating. Calls are mocked; no emails are sent. |
 | [account-actions.test.ts](account-actions.test.ts) | Checks recovery, confirmation, password changes, session-revocation failures/retries and invitation acceptance with mocked Auth/database calls. |
 | [account-database.test.ts](account-database.test.ts) | Runs member/invitation SQL: last-admin protection, school boundaries, suspension, expiry, verified-recipient acceptance and controlled delivery claims. |
 | [bulk-invitation.test.ts](bulk-invitation.test.ts) | Checks CSV parsing and rejection of invalid or oversized bulk invitation input before database calls. |
-| [invitation-handler.test.ts](invitation-handler.test.ts) | Tests the isolated email handler with a mocked provider: authorization, claim/delivery failures and outcome handling without sending messages. |
+| [invitation-handler.test.ts](invitation-handler.test.ts) | Tests the isolated email handler with a mocked provider: authorisation, claim/delivery failures and outcome handling without sending messages. |
 | [invitation-pagination.test.ts](invitation-pagination.test.ts) | Checks invitations remain reachable past the old first-100 limit, safe page input and distinguishing accounts with identical names. |
 | [new-actions.test.ts](new-actions.test.ts) | Despite the broad filename, covers a specific group: bulk invitations, delivery reset, register-login linking and guardian grants. The shared admin helper is tested in permissions.test.ts. |
 | [membership-links-database.test.ts](membership-links-database.test.ts) | Runs SQL for linked/unlinked roles, explicit guardian access, school isolation, suspension, stale edits and date-sensitive teacher/student/guardian reads. Also checks verified versus unverified account emails. |
@@ -131,7 +131,7 @@ The [production helper](../scripts/production-e2e-server.mjs) builds and starts 
 
 ## Reading a failure
 
-The file and test title usually identify the behavior that failed. `expected` describes the intended outcome; `received` is what happened. Database errors may have codes such as `42501` (permission denied), `40001` (a stale/conflicting operation here) or `42804` (a type mismatch). Those can be intentional in a test that expects rejection.
+The file and test title usually identify the behaviour that failed. `expected` describes the intended outcome; `received` is what happened. Database errors may have codes such as `42501` (permission denied), `40001` (a stale/conflicting operation here) or `42804` (a type mismatch). Those can be intentional in a test that expects rejection.
 
 For example, the migration 013 regression first expects the old function to fail with `42804`, then checks that the corrected function succeeds while still refusing the wrong school or role. The earlier fixture defined Auth email as `text`; the real column is `varchar(255)`. Correcting that fixture made the test reflect the defect we found.
 

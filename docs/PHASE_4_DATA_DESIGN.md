@@ -1,12 +1,8 @@
 # Phase 4 data design and test plan
 
-Prepared 29 October 2026 from the current checkout. This is the 4.0 design proposal, not an applied schema or an implementation-completion claim. Read [the academic decisions](PHASE_4_ACADEMIC_DECISIONS.md) for product rules and [the implementation plan](PHASE_4_PLAN.md) for sequence. No hosted database was inspected or changed for this design.
+The [29 October design as recorded before reconciliation](https://github.com/Philly-dotcom/school_portal/blob/8a0c5179d7db1b135288aae031a2b3d689028497/docs/PHASE_4_DATA_DESIGN.md#proposed-relationships) preserves the original diagram and provisional names. Status reconciled on 6 November against migrations 022–030. See [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md) for product rules, [the plan](PHASE_4_PLAN.md) for delivery order and [the assessment checklist](ASSESSMENTS.md) for hosted evidence.
 
-## What the current code gives us
-
-Implementation update, 4 November. Migrations 022–029 are applied. Migration 028 implements the proposed review-package concept as `assessment_submissions`, `assessment_submission_entries` and `assessment_review_decisions`. Entries reference exact retained mark versions and snapshot placements. Definitions retain the authorised scale. Approval and return bind to one complete submission. Reporting policy configuration and publication remain pending, so these raw review packages have no approved reporting-policy binding yet. The proposed relationships below remain the broader Phase 4 design.
-
-Migration 029 starts the proposed `grading_policies` and `grading_policy_versions` model with draft scope, dates, source references and school-rule notes. Its current fields gather the policy without defining calculation methods. Approved versions, unambiguous applicability, retirement and executable configuration remain later work after the school supplies its rules.
+## Existing foundations
 
 | Existing source | Reuse and important limit |
 | --- | --- |
@@ -20,78 +16,27 @@ Migration 029 starts the proposed `grading_policies` and `grading_policy_version
 | `src/app/dashboard/documents/[id]/download/route.ts` | Authenticated private download, no-store headers and PDF integrity checks. Personal reports need their own publication-aware Storage policy. |
 | `tests/homework-database.test.ts`, `tests/helpers/storage-stub.ts` | Disposable PGlite database, ordered migrations, simulated authenticated roles and fictional two-school fixtures. This is not hosted Storage or concurrent-session evidence. |
 
-The design started from migrations 001–021. Migrations 022–025 now implement definitions, draft capture, placement amendments and historical correction grants. The diagram below retains the original proposal.
+## Implemented relationships through migration 030
 
-## Proposed relationships
+| Migration | Relationship in the database |
+| --- | --- |
+| 022 | `assessments` and `assessment_versions` retain the definition and authorised scale within the class, term and teaching assignment. |
+| 023–024 | `assessment_rosters` and `assessment_roster_entries` freeze eligible placements. Entries anchor the learner’s retained `assessment_mark_versions`. `assessment_roster_amendments` records reasoned placement changes. |
+| 025–026 | `assessment_correction_grants` scopes historical teacher access to an assessment and optionally a learner. `assessment_definition_amendments` records Admin changes to a frozen date or scale. |
+| 027–028 | `assessment_reviewer_grants` scopes review authority. Each complete `assessment_submissions` record has `assessment_submission_entries` bound to retained mark versions and placement snapshots. `assessment_review_decisions` records approval or return of that exact submission. |
+| 030 | `assessment_review_invalidations` records a reasoned Admin dispute against an existing approval. The original decision remains in history. |
 
-The diagram groups proposed relationships. In the implemented draft model, the school/assessment/learner roster entry anchors append-only `assessment_mark_versions`. A version counter and `assessment_roster_amendments` retain placement changes. The separate result identity/current-version pointer shown in the design is not an installed table. Review and publication must bind to exact retained versions.
+The original design used the working names `assessment_results`, `assessment_result_versions` and `assessment_review_packages`. Use the roster entries, mark versions and submissions above for those responsibilities.
 
-```mermaid
-erDiagram
-    classes ||--o{ assessments : contains
-    academic_terms ||--o{ assessments : schedules
-    teaching_assignments ||--o{ assessment_versions : responsible
-    assessments ||--|{ assessment_versions : defines
-    assessments ||--o{ assessment_rosters : freezes
-    assessment_rosters ||--|{ assessment_roster_entries : contains
-    enrollments ||--o{ assessment_roster_entries : retains
-    students ||--o{ assessment_results : owns
-    assessments ||--o{ assessment_results : records
-    assessment_results ||--|{ assessment_result_versions : revises
-    assessment_rosters ||--o{ assessment_review_packages : submits
-    assessment_review_packages ||--|{ assessment_review_items : includes
-    assessment_result_versions ||--o{ assessment_review_items : binds
-    assessment_review_packages ||--o{ assessment_reviews : receives
-    assessment_result_versions ||--o{ assessment_publications : releases
-    grading_policy_versions ||--o{ assessment_review_packages : governs
-    assessment_publications ||--o{ subject_result_inputs : contributes
-    subject_result_versions ||--|{ subject_result_inputs : records
-    subject_result_versions ||--o{ report_subject_inputs : contributes
-    report_versions ||--|{ report_subject_inputs : records
-    report_versions ||--o{ report_artifacts : renders
-```
+## Partially implemented — reporting policy
 
-Grants are omitted from the diagram: they reference existing `school_memberships` and the precise assessment or year/term/class/subject scope. The sections below define their purpose.
+Migration 029 provides `grading_policies` and `grading_policy_versions` for school/year/grade/subject drafts, effective dates, source references and rule notes. Executable configuration, approval, unambiguous applicability, retirement and adoption into a newly reviewed package remain planned. Existing submissions review raw marks. No school weights or rounding rules have been approved.
 
-## Core records and constraints
+## Proposed relationships — publication and dependent outputs
 
-### Assessment setup — build first
-
-- `assessments`: stable school-owned identity, class/year/subject, current definition pointer and optimistic `record_version`. No hard deletion after a roster exists.
-- `assessment_versions`: immutable definition revisions containing title, instructions, term, effective date, responsible assignment and authorised scale. Store minimum, maximum and allowed decimal precision, scale authoriser and timestamp. A teacher can prepare a proposal; only Admin authorises its scale. Editing scale fields removes the old authorisation from the new version.
-- Assignment/class/year/subject must agree, not merely belong to the same school. The term must belong to that year; the effective date must fit the term, year and responsible assignment. A period-based assessment still has the agreed single effective eligibility date.
-- A class/year/subject change after freezing is not an ordinary edit. Reject it; create a separate assessment rather than moving historical marks. Date/scale/roster amendments use the Admin workflow and invalidate affected versions.
-- Future definitions are allowed. Freeze/capture is not allowed before the effective school-local date. Admin is subject to the same rule.
-- Do not require a completed grading formula to save a definition or an authorised scale. Keep official calculation/publication disabled without the applicable approved policy.
-
-### Frozen eligibility and marks — second slice
-
-- `assessment_rosters`: immutable roster revisions linked to the exact assessment definition, freeze/amend actor, time and reason.
-- `assessment_roster_entries`: one learner per roster revision, existing enrolment ID, captured placement dates/version and class/year. Preserve removed entries in previous revisions. Store only the historical fields needed to establish eligibility, not full personal profiles.
-- `assessment_results`: stable unique `(school_id, assessment_id, student_id)` identity, current result-version pointer. This identity survives roster amendments; a learner does not get duplicate results because the roster version changed.
-- `assessment_result_versions`: immutable score/state revisions linked to the applicable roster entry and definition. Store decimal score, state, actor and correction reference; staff reasons remain staff-only. `scored` requires a valid score; all other states require a null score. Zero is a real scored value. Reject NaN/infinity, excess precision and out-of-scale numbers.
-- An unenrolled late entrant is not silently inserted by save. Admin must amend eligibility explicitly. Revoked guardian grants do not alter historical result ownership, only current access.
-- A frozen roster records evidence. Later date changes to an enrolment do not silently recalculate it. If staff discover wrong historical eligibility, use the amendment workflow and audit it.
-
-### Policy versions and scoped grants
-
-- `grading_policies` plus `grading_policy_versions`: school/year/grade/subject applicability, effective period, source reference, approval and validated method configuration. Expand a phase-wide policy into explicit grade applicability rather than matching grade names at runtime. Prevent ambiguous effective applicability; retain old versions for historical references.
-- Policy retirement stops new adoption, not historical evidence. Corrections must explicitly identify the applicable retained or replacement policy version. Approving a new policy alone does not recalculate earlier results.
-- Use typed numeric fields/validated configuration for supported methods. No SQL or JavaScript formulas supplied by users. Formula-specific tables/configuration wait for the first actual school policy; do not invent weights now.
-- `assessment_reviewer_grants`: membership, year, term, class, subject, validity dates, issuer/revocation. Both teacher and Admin need a matching grant to review.
-- `assessment_correction_grants`: teacher membership, named assessment and optional named learner, validity dates, reason and issuer/revocation. This does not grant review/publication.
-- `academic_output_review_grants`: Admin membership, year, reporting period and class. Annual scope is explicit; a null term must not accidentally mean all periods.
-- Every grant uses composite same-school references. Revocation is retained, not deletion. User IDs and membership IDs are distinct; resolve the caller through the existing helpers.
-
-### Review packages and learner publications
-
-- `assessment_review_packages`: immutable submission for a complete roster revision and definition/policy version, based on the current aggregate version.
-- `assessment_review_items`: exact result-version reference for each eligible learner and a changed/unchanged indicator for correction packages. No Missing entries. Validate package completeness in the database, not by trusting the visible form page.
-- `assessment_reviews`: append-only approve/return/invalidate decisions, actor, grant evidence and package ID. Self-review remains visible in the audit. Approval belongs to the submitted content, never a mutable assessment ID alone.
-- `assessment_publications`: learner-safe immutable release payload tied to result version, package and approval, with publication/withdrawal metadata. At most one current release per assessment/learner. Store no staff comments or correction allegations in the learner-facing payload.
-- Use separate row/column exposure for learner releases and staff revisions. RLS is row-level: it cannot by itself hide a staff-only reason column in an otherwise readable row.
-- Initial publication releases the eligible roster atomically. A correction package releases changed eligible versions only. Unchanged current publications do not point to a newly invalid package and do not disappear because another learner changes.
-- Review can prepare raw work before formula policy is available, but official publication cannot. Bind any later adopted reporting policy to a fresh package and review rather than attaching it silently to an old approval.
+- A learner release would bind the exact mark version, submission and approval. Only School Admin may publish. Private review reasons stay out of learner payloads.
+- Initial publication would release the eligible roster atomically. A correction would withdraw the affected release and dependent reports until fresh review and explicit republication. Unaffected learners retain their releases.
+- Output review would require a separate scoped grant for the reporting period and class. Existing assessment reviewer and correction grants serve different purposes.
 
 ### Subject results and reports — later Phase 4 slices
 
@@ -103,7 +48,7 @@ Grants are omitted from the diagram: they reference existing `school_memberships
 - `report_artifacts`: private path, exact report version, checksum, size and generation state. A ready PDF is not automatically a published report. Generation failure leaves the report/artifact unavailable as appropriate, never resurrects a withdrawn version.
 - Report availability is determined by current publication plus current caller access on every request, including direct Storage download. No public bucket or reusable signed URL for reports. Bytes already delivered cannot be recalled.
 
-These later records explain dependencies now; do not create all of them in the assessment-setup migration.
+These are design names for future outputs. No learner publication, subject calculation or report generation is implemented through migration 030.
 
 ## Integrity and access enforcement
 
@@ -115,21 +60,21 @@ Learner readers require the existing linked Student or selected Guardian child c
 
 Reuse the current school-row lock order for related writes: authenticate, lock school, recheck authority, lock assessment/output, validate expected version, write revisions/dependencies/audit, commit. Existing membership, guardian-link, enrolment and assignment changes already participate in that school-lock pattern. New grant revocation must do so too. Keep transactions short; no PDF rendering or network requests while locks are held. Measure contention before changing the established lock strategy.
 
-## Correction transaction and dependency invalidation
+## Planned correction transaction for published outputs
 
 1. Validate identity, current editing authority, reason and expected aggregate version.
 2. Acquire locks in the same order as publication/grant changes and recheck authorisation/version.
 3. Record Begin correction and append the new draft result version; preserve the old record.
 4. Withdraw the affected current learner release. Invalidate pending package approval for changed content.
 5. Follow typed dependency links to subject outputs, annual outputs and report versions. Mark all affected current publications unavailable in this transaction, even if recomputation may produce the same number.
-6. Retain artifact metadata but make Storage/HTML/download authorisation reject invalidated report versions immediately. Roll back everything if any required database step fails.
+6. Retain artefact metadata but make Storage/HTML/download authorisation reject invalidated report versions immediately. Roll back everything if any required database step fails.
 7. After commit, show a neutral unavailable message. Later review, calculation and PDF generation cannot restore visibility automatically; Admin publishes explicitly.
 
 Use the same school lock for output creation/publication so a report cannot be published concurrently from an input being withdrawn. Downloads recheck eligibility at request time; a response already authorised/in flight cannot be retroactively recalled. Avoid cross-request caches of permissions or current publication. Independent concurrent database sessions must test both correction/publish orderings.
 
 ## File plan and implementation boundaries
 
-The original first-slice file plan is shown below. For actual files and later slices, use the [assessment file map](ASSESSMENTS.md#files-and-responsibilities).
+The October first-slice file plan is shown below as a historical reference. For actual files and later slices, use the [assessment file map](ASSESSMENTS.md#files-and-responsibilities).
 
 | File | Responsibility |
 | --- | --- |
@@ -153,7 +98,7 @@ Choose existing participants for Admin, assigned teacher, teacher without review
 
 ## Acceptance matrix
 
-Every item below is planned and unchecked; no new tests were run for this document.
+These scenarios are the original design criteria, not a second progress tracker. See [ASSESSMENTS.md](ASSESSMENTS.md) for individual results and outstanding checks.
 
 | ID | Scenario | Expected evidence |
 | --- | --- | --- |
@@ -172,13 +117,11 @@ Every item below is planned and unchecked; no new tests were run for this docume
 | P4-D13 | Anonymous, School B and other learner direct reads/writes | Denied across RPC, table access, route and Storage. Hosted evidence separate from mocked/unit checks. |
 | P4-D14 | Policy missing, overlaps, approved replacement, unsupported formula | Calculation/publication blocked appropriately; historical policy not silently replaced. |
 | P4-D15 | Subject/report review, incomplete mandatory input, changed comment | Output-review grant required; incomplete report blocked; changed version requires fresh approval/publication. |
-| P4-D16 | PDF failure/retry, old path, long names and multi-page report | Exact snapshot only; private access; stale artifact never becomes current; layout verified. |
+| P4-D16 | PDF failure/retry, old path, long names and multi-page report | Exact snapshot only; private access; stale artefact never becomes current; layout verified. |
 | P4-D17 | Existing portal regression and performance | Mode/child context retained; no assessment history in profile menu; bounded queries; lint/types/full tests/build then scoped browser checks. |
 
 For each implemented slice, record local SQL tests, hosted API/RLS tests and browser evidence separately in VERIFICATION.md. Never turn these design checkboxes into passes merely because a migration applies.
 
-## Ready to start and remaining gates
+## Remaining gates
 
-The relationship proposal and test scenarios are ready for review. The first implementation slice is assessment definitions, authorised scales and staff planning UI, with no learner publication or calculation engine. Its concrete migration must be checked against the above constraints before application. The model deliberately leaves school-specific numerical policy configuration and report presentation outstanding.
-
-No schema migration, account, fixture or application file was created by this design task. No tests/build or hosted verification ran. Actual fixture bindings remain a read-only preflight at hosted-testing time.
+Continue from [the current handover](RESUME.md) and the unchecked assessment cases. Approval of the school’s numerical policy and binding it to a newly reviewed package must precede official calculation and publication. Local SQL tests, applied migrations and hosted acceptance are recorded separately in [VERIFICATION.md](VERIFICATION.md).

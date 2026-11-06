@@ -129,7 +129,7 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) lists the i
 - [ ] On correction, atomically withdraw affected learner-visible results and dependent report visibility, reset approval and retain history.
 - [ ] Test simultaneous entry/review/publication, reviewer revocation, teacher replacement and invalidated approvals.
 
-Keep review/publication operations beside the marks feature unless they grow enough to justify a separate module. UI buttons are convenience; SQL must reject unauthorized transitions.
+Keep review/publication operations beside the marks feature unless they grow enough to justify a separate module. UI buttons are convenience; SQL must reject unauthorised transitions.
 
 ### 4.4 — Learner and Guardian results
 
@@ -146,7 +146,7 @@ Reuse the portal actor and navigation helpers. Add a results view to the existin
 - [ ] Approve one sample report layout and exact calculation rules before building generation.
 - [ ] Produce a versioned report snapshot from approved/published data; store the policy version and the source result versions used.
 - [ ] Render an HTML report first. Then evaluate PDF generation with the existing dependency list; add a library only if justified and approved.
-- [ ] Keep PDFs private with per-learner authorization on every new download request. Do not expose reports as school-wide documents or reusable public URLs.
+- [ ] Keep PDFs private with per-learner authorisation on every new download request. Do not expose reports as school-wide documents or reusable public URLs.
 - [ ] Add explicit Admin output-review grants and version-specific review before report publication.
 - [ ] Hide old report downloads when an underlying published result is corrected, and require deliberate publication of the new report version.
 - [ ] Test PDF content, rounding, page breaks, long names, incomplete data, repeated generation and stale report access.
@@ -157,7 +157,7 @@ Proposed files: `src/lib/report-data.ts`, `src/components/report-card.tsx`, and 
 
 - [ ] Add only agreed subject/term performance summaries, calculated from the same versioned grading policy as the report.
 - [ ] Scope staff summaries to authorised responsibilities and learner summaries to published results. Do not introduce ranking or predictive AI by assumption.
-- [ ] Check query counts, database indexes, bounded lists and representative school-size behavior.
+- [ ] Check query counts, database indexes, bounded lists and representative school-size behaviour.
 - [ ] Run lint, TypeScript, focused tests, the full suite and production build.
 - [ ] Complete ordinary-session School A/B denied reads and writes, independent concurrent saves, role switching, historical placement and report downloads.
 - [ ] Review the completed workflow together before Phase 4 sign-off.
@@ -169,9 +169,9 @@ Proposed files: `src/lib/report-data.ts`, `src/components/report-card.tsx`, and 
 - Enforce score bounds, allowed transitions, reviewer scope, publication permission and concurrency in PostgreSQL as well as validating form input.
 - Keep future-year planning separate from result eligibility and publication. Preserve historical enrolments and assignments.
 - Use decimal-safe calculation and a versioned policy once rounding/weighting is decided; the browser must not be the authority for totals.
-- Recheck permissions on every mutation and sensitive read. No cross-request authorization cache.
+- Recheck permissions on every mutation and sensitive read. No cross-request authorisation cache.
 - Audit the acting user, action, affected version and agreed correction/review reason without logging credentials or full learner records.
-- Keep correction visibility consistent across results, summaries, cached artifacts and PDFs. Avoid partial publication if one part of the transaction fails.
+- Keep correction visibility consistent across results, summaries, cached artefacts and PDFs. Avoid partial publication if one part of the transaction fails.
 - Use only fictional data while testing. All existing migrations stay intact.
 
 ## Deferred session controls — Phase 6
@@ -180,4 +180,4 @@ The user explicitly postponed this work on 27 October. Do not implement it in Ph
 
 Proposals to revisit: 30-minute inactivity timeout, a warning two minutes beforehand, a Stay signed in action, a 12-hour maximum session, shared activity/logout across tabs, wake-from-sleep checks and protection against silent loss of unsaved work. These durations are not approved settings.
 
-Before implementation, confirm role-specific policy, hosted Supabase plan/settings, server-enforced expiry and browser warning behavior. A browser timer alone is not an authorization boundary, and access-token expiry is not the same as session expiry. Leave existing authentication behavior unchanged until this work is explicitly resumed.
+Before implementation, confirm role-specific policy, hosted Supabase plan/settings, server-enforced expiry and browser warning behaviour. A browser timer alone is not an authorisation boundary, and access-token expiry is not the same as session expiry. Leave existing authentication behaviour unchanged until this work is explicitly resumed.

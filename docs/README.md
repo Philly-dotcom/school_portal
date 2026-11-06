@@ -31,7 +31,7 @@ RESUME.md is the current handover. VERIFICATION.md separates local and hosted ev
 | [ACCOUNT_MANAGEMENT.md](ACCOUNT_MANAGEMENT.md) | Memberships, invitations, email setup, recovery and delivery controls. Email instructions are future setup steps while delivery is off. |
 | [AUTH_AND_PRIVACY.md](AUTH_AND_PRIVACY.md) | Auth configuration, MFA limits, browser security headers and the controlled privacy-cleanup procedure. |
 | [ACADEMIC_SETUP.md](ACADEMIC_SETUP.md) | Years, terms, grades, subjects and classes. |
-| [SCHOOL_REGISTERS.md](SCHOOL_REGISTERS.md) | Students, teachers, guardians, relationships and initial enrollment. |
+| [SCHOOL_REGISTERS.md](SCHOOL_REGISTERS.md) | Students, teachers, guardians, relationships and initial enrolment. |
 | [LOGIN_LINKS.md](LOGIN_LINKS.md) | Connecting school records to accounts and deliberately granting guardian access. |
 | [TEACHING_ASSIGNMENTS.md](TEACHING_ASSIGNMENTS.md) | Teacher, subject and class responsibilities with dates. |
 | [TIMETABLE.md](TIMETABLE.md) | Weekly lesson planning, date ranges and clash checks. |

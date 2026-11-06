@@ -33,6 +33,6 @@ Duplicate names are rejected within their scope, ignoring capitalization and sur
 
 ## Next increments
 
-Registers, guardian links, dated enrollment, teaching assignments and timetable foundations now exist. Phase 3 daily operations and dashboards also exist. Use ROADMAP.md and the combined checklist for remaining acceptance, rather than rebuilding these modules.
+Registers, guardian links, dated enrolment, teaching assignments and timetable foundations now exist. Phase 3 daily operations and dashboards also exist. Use ROADMAP.md and the combined checklist for remaining acceptance, rather than rebuilding these modules.
 
 Hosted write/RLS checks and signed-in browser validation remain necessary after activation. Local database tests exercise real SQL with fictional schools; they do not verify hosted configuration.

@@ -8,7 +8,7 @@ The [Phase 3 checklist](#remaining-phase-3-checklist) below is the signed-off ac
 
 **Documents** is a separate library in the dashboard. School Admin uploads school-wide or class PDFs. Teachers upload PDFs for classes they currently teach. Students and guardians can download published documents but cannot upload.
 
-Class documents follow current enrollment, just like announcements: a learner joining the class gains access to earlier published PDFs, and leaving removes access. Guardians need an explicit grant for the selected learner. Teachers lose class management access when their assignment ends. School Admin can still manage those documents.
+Class documents follow current enrolment, just like announcements: a learner joining the class gains access to earlier published PDFs, and leaving removes access. Guardians need an explicit grant for the selected learner. Teachers lose class management access when their assignment ends. School Admin can still manage those documents.
 
 Homework attachments are not included. They need homework's original-recipient rules, so they must not be added by simply linking a current-class document.
 
@@ -19,13 +19,13 @@ Homework attachments are not included. They need homework's original-recipient r
 3. Upload it. A successful upload creates a staff-only draft.
 4. Open the entry, download and review the file, then change its visibility to **Published**.
 
-The file, title and audience are fixed after upload. To replace a document, upload a new entry and withdraw the old one. Files are never overwritten in place. Withdrawal hides an entry from learners and guardians; authorized staff retain access. It does not erase the stored file or copies someone already downloaded.
+The file, title and audience are fixed after upload. To replace a document, upload a new entry and withdraw the old one. Files are never overwritten in place. Withdrawal hides an entry from learners and guardians; authorised staff retain access. It does not erase the stored file or copies someone already downloaded.
 
 ## If an upload is interrupted
 
 The app reserves a document record first, uploads the bytes, then finishes the draft. These are separate operations because PostgreSQL and Storage are separate services.
 
-If the upload fails or its result is uncertain, the list keeps an **uploading** entry visible to authorized staff only. Open it and save it as a draft. The app checks whether the stored PDF exists and matches the original size and hash. If that succeeds, you can review and publish it. If the bytes are missing or do not match, withdraw the unfinished entry and upload a new copy.
+If the upload fails or its result is uncertain, the list keeps an **uploading** entry visible to authorised staff only. Open it and save it as a draft. The app checks whether the stored PDF exists and matches the original size and hash. If that succeeds, you can review and publish it. If the bytes are missing or do not match, withdraw the unfinished entry and upload a new copy.
 
 Check the list before retrying after a connection failure. The first request may have succeeded even if the browser did not receive its result. There is no automatic physical cleanup job in this release. Withdrawn and unfinished files count toward storage usage and need an agreed retention policy before live use. When physical cleanup is needed, use the Storage API or dashboard, not SQL deletes against `storage.objects`; SQL removes metadata without deleting the underlying file. [Supabase storage schema guidance](https://supabase.com/docs/guides/storage/schema/design)
 
@@ -42,7 +42,7 @@ Bucket restrictions and RLS follow [Supabase's bucket configuration](https://sup
 
 ## How access is enforced
 
-Document records carry school ownership and an optional class. A generated path contains the school UUID and document UUID; the user's original filename is not used as a storage path. Table reads, upload reservations, publication changes and Storage reads each check access. A prepared row authorizes only its creator to upload to that exact path while the entry is unfinished.
+Document records carry school ownership and an optional class. A generated path contains the school UUID and document UUID; the user's original filename is not used as a storage path. Table reads, upload reservations, publication changes and Storage reads each check access. A prepared row authorises only its creator to upload to that exact path while the entry is unfinished.
 
 Downloads pass through an authenticated route under `/dashboard/documents/`. It checks the requested mode and selected learner, fetches the private file with the user's credentials, checks its size and hash, and returns an attachment with private/no-store headers. The app does not create public or signed download links. Direct Storage access still follows the account's actual combined permissions; the portal's selected-role feed and download route apply the narrower selected role.
 
@@ -61,7 +61,7 @@ The upload form checks the PDF filename/type, size, header and end marker. These
 | `src/components/document-form.tsx`                   | Upload form and fixed-file visibility controls.                                                                                                                                        |
 | `src/components/document-panel.tsx`                  | Staff management and learner/guardian library feeds.                                                                                                                                   |
 | `tests/documents-database.test.ts`                   | Fictional school isolation, transfers, guardian grants, Storage policies, failed uploads and atomic audit checks.                                                                      |
-| `tests/documents-actions.test.ts`                    | File validation, upload failures, hash mismatches, download authorization and response headers.                                                                                        |
+| `tests/documents-actions.test.ts`                    | File validation, upload failures, hash mismatches, download authorisation and response headers.                                                                                        |
 | `tests/documents-panel.test.ts`                      | Escaped titles, learner restrictions, guardian selection and visibility controls.                                                                                                      |
 | `tests/helpers/storage-stub.ts`                      | Minimal Storage metadata tables for PGlite. Existing full-migration suites now use this fixture too. It is test-only and does not model the Storage HTTP service or actual file bytes. |
 
@@ -151,7 +151,7 @@ Teacher publication and permitted student/guardian reads have recorded passes. R
 The user has now marked the reader, lifecycle and concurrency checks below complete. The detailed rules remain in [ANNOUNCEMENTS.md](ANNOUNCEMENTS.md).
 
 - [x] **P3-22 School notice readers:** reuse the labelled school-wide notice. Check draft/withdrawn states are hidden from teacher, student and selected-guardian readers, and Published is readable. Teachers must not edit a school-wide notice. Check new requests after each visibility change.
-- [x] **P3-23 Class notice:** as a currently assigned teacher, publish a fictional class notice. Unrelated classes must not be selectable or accepted through a forged request. Only eligible class learners and their explicitly authorized guardians may read it.
+- [x] **P3-23 Class notice:** as a currently assigned teacher, publish a fictional class notice. Unrelated classes must not be selectable or accepted through a forged request. Only eligible class learners and their explicitly authorised guardians may read it.
 - [x] **P3-24 Current-class audience:** after a dated fictional transfer takes effect, old-class notices must disappear and earlier published new-class notices must become readable. Revoking the guardian grant must remove that guardian's access. Do not apply homework's original-recipient rule here.
 - [x] **P3-25 Lost teacher responsibility:** after the relevant assignment ends, the teacher must lose class-notice management access, even if they wrote the notice. Admin retains management. Respect existing lesson dependencies.
 - [x] **P3-26 Roles, stale saves and audit:** check the combined teacher/guardian account stays within the selected workspace. Try competing notice edits from two tabs and independent sessions. Expect conflicts rather than overwrites and audit entries for successful changes. Plain-text messages must display as text, not execute HTML.
@@ -168,7 +168,7 @@ The user has now marked the reader, lifecycle and concurrency checks below compl
 On 26 October, the user reported completing School B setup and the cross-school checks and marked DOC-B, P3-31 and P3-32 passed. These are user-reported hosted results, not agent-observed results.
 
 - [x] **P3-31 School B setup — user-reported complete:** agree a small second fictional-school security fixture and its cleanup/retention plan first. This is a test fixture, not a request to build SaaS registration or a platform-owner dashboard. No second school is created by this checklist.
-- [x] **P3-32 Cross-school reads and writes — user-reported passed:** use ordinary School A and School B sessions to try each other's learner IDs, classes, assignments, attendance, homework, notices and documents. Test reads and writes, forged school IDs, direct RPC/table calls and file paths. Every cross-school request must fail or return no unauthorized rows, with no changed data. Complete DOC-B above as part of this test and record both directions.
+- [x] **P3-32 Cross-school reads and writes — user-reported passed:** use ordinary School A and School B sessions to try each other's learner IDs, classes, assignments, attendance, homework, notices and documents. Test reads and writes, forged school IDs, direct RPC/table calls and file paths. Every cross-school request must fail or return no unauthorised rows, with no changed data. Complete DOC-B above as part of this test and record both directions.
 
 ### 8. Development work to finish after testing
 
@@ -230,7 +230,7 @@ The focused run passed 76 tests in nine files. The first sandbox run failed to l
 
 The menu regression tests measure zero extra client/profile-loader calls for a ready Teacher or Student actor. Routing tests prove Student module requests do not eagerly load enrolment history, while the explicit profile view does. This is not a claim about whole-page latency: the existing overview summary still reads enrolments and the authorised profile view still reads full history.
 
-No schema, RLS, authentication, account, dependency or environment configuration change was needed. Reused StudentProfile/TeacherProfile and their existing school-scoped readers; no new API or client-side authorization was added.
+No schema, RLS, authentication, account, dependency or environment configuration change was needed. Reused StudentProfile/TeacherProfile and their existing school-scoped readers; no new API or client-side authorisation was added.
 
 - [x] Agent browser: Teacher menu shows identity/reference, opens the linked subject list, and retains Teacher mode. Switching to Guardian keeps the session and requires explicit learner selection.
 - [x] Agent browser: Student menu shows ST-003 identity and the history link; Overview retains Grade 12 / 12A - 2026 / 2026. The profile view shows current 2026 and upcoming 2027 enrolments with their dates.

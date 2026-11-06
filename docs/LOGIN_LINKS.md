@@ -9,9 +9,9 @@ School registers (`students`, `teachers`, `guardians`) are separate from sign-in
 | Role | Sees |
 | --- | --- |
 | Any active member | Academic years, terms, grades, subjects of their own school |
-| Teacher | Their own teacher record and assignments; classes they teach **today**; students on those rosters; those enrollments; lessons they teach |
-| Guardian | Their own record; explicitly authorized child relationships; those children's enrollment history and current-placement lessons |
-| Student | Their own record, enrollment history and class labels; current-placement lessons |
+| Teacher | Their own teacher record and assignments; classes they teach **today**; students on those rosters; those enrolments; lessons they teach |
+| Guardian | Their own record; explicitly authorised child relationships; those children's enrolment history and current-placement lessons |
+| Student | Their own record, enrolment history and class labels; current-placement lessons |
 
 Access is re-evaluated on every query. Removing a role removes access derived from that role; suspending the member or deactivating the school blocks school access. An ended assignment removes its current class/roster grant; a teacher can still read their own assignment and lesson history. "Today" uses the school's timezone (falling back to UTC if the stored timezone is invalid).
 
@@ -33,7 +33,7 @@ Migration 010 is user-confirmed applied, followed by 013's email-return-type fix
 
 Guardian relationships remain historical family records. New and existing rows have `access_enabled=false`; login linking alone does not grant access to children. The School Admin explicitly grants/revokes child access through the versioned, audited `set_guardian_access` RPC and the Guardian links form. Removing that grant preserves the relationship and immediately removes derived child access. Reactivation restores only still-granted relationships.
 
-Teacher rosters and enrollment reads require today's school-local date within BOTH the teaching assignment and enrollment. A future transfer keeps access with the existing teacher until its effective date. Students/authorized guardians retain their own enrollment history and class labels, but lessons require a current placement and an actual lesson occurrence overlapping that placement. History is not deleted to implement current access.
+Teacher rosters and enrolment reads require today's school-local date within BOTH the teaching assignment and enrolment. A future transfer keeps access with the existing teacher until its effective date. Students/authorised guardians retain their own enrolment history and class labels, but lessons require a current placement and an actual lesson occurrence overlapping that placement. History is not deleted to implement current access.
 
 ## Searchable account choices — migration 015
 

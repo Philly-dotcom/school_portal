@@ -14,7 +14,7 @@ The original scope was students, teachers, grades, classes, subjects, guardian l
 - Which guardians are linked to a learner, and which are allowed to see that learner's information?
 - When are classes scheduled, and does the timetable contain clashes?
 
-Academic years, enrollment dates and teaching history support those answers. They are part of making academic setup reliable. Attendance was subsequently implemented in Phase 3; marks and fees still belong to later phases.
+Academic years, enrolment dates and teaching history support those answers. They are part of making academic setup reliable. Attendance was subsequently implemented in Phase 3; marks and fees still belong to later phases.
 
 The design remains **one school first, with school ownership built in**. We have not added a platform-owner dashboard, subscriptions or automated school onboarding.
 
@@ -47,9 +47,9 @@ Academic setup now supports creating and listing these records, with school owne
 
 **Why:** a class name such as “10A” can recur in different years. Keeping the year as a separate relationship avoids confusing this year's class with last year's history. Terms and date bounds also give later attendance, assessments and reports a consistent academic calendar.
 
-I replaced confusing generic labels with labels such as **Grade name**, **Subject name** and **Class name**. Grade names are normalized so variations such as `Grade10` and `Grade 10` do not create separate versions of the same grade. Custom grade labels remain possible; normalization should not guess what an unrelated label means.
+I replaced confusing generic labels with labels such as **Grade name**, **Subject name** and **Class name**. Grade names are normalised so variations such as `Grade10` and `Grade 10` do not create separate versions of the same grade. Custom grade labels remain possible; normalisation should not guess what an unrelated label means.
 
-The earlier duplicate Grade 10 test-data repair preserved the valid class and its enrollment and teaching links. That record-specific repair is archived as history. It is not a script to rerun routinely.
+The earlier duplicate Grade 10 test-data repair preserved the valid class and its enrolment and teaching links. That record-specific repair is archived as history. It is not a script to rerun routinely.
 
 **Current limit:** the correction interface supports agreed name fields. It is not a general editor for changing academic dates, moving classes between grades or rewriting year relationships.
 
@@ -85,16 +85,16 @@ This is a conceptual diagram. One person does not need all three record types. T
 
 Account-link and guardian-access changes include confirmation, version checks and audit records. Changing a link does not silently provision a new account.
 
-### Enrollment, transfers and withdrawals
+### Enrolment, transfers and withdrawals
 
-An enrollment records a student's class placement for a date range. The admin can transfer a student to another class in the same year or record a withdrawal while preserving the earlier placement.
+An enrolment records a student's class placement for a date range. The admin can transfer a student to another class in the same year or record a withdrawal while preserving the earlier placement.
 
 For example, suppose a fictional learner is enrolled in 10A from 1 January to 31 December. A transfer to 10B starting on 1 July produces two records:
 
 | Placement | Dates |
 | --- | --- |
-| Original 10A enrollment | 1 January–30 June |
-| New 10B enrollment | 1 July–31 December |
+| Original 10A enrolment | 1 January–30 June |
+| New 10B enrolment | 1 July–31 December |
 
 **Why:** simply replacing the class ID would make the old class disappear from the student's history. Later attendance and reporting would then have the wrong context.
 
@@ -157,9 +157,9 @@ History preserves previous values where required, with restricted admin access. 
 
 ### Pagination and searchable choices
 
-All Phase 2 display lists now have pagination, generally **50 records per page**. This includes academic records, registers, guardian relationships, enrollments, teaching assignments and timetable entries.
+All Phase 2 display lists now have pagination, generally **50 records per page**. This includes academic records, registers, guardian relationships, enrolments, teaching assignments and timetable entries.
 
-Academic, teaching, guardian-link and enrollment forms use searchable choices with **25 results per search page**. Selected choices stay selected while browsing other results. Class choices include academic context, and selecting a class provides its year and date bounds. Transfer searches restrict destinations to the enrollment's year and exclude its current class.
+Academic, teaching, guardian-link and enrolment forms use searchable choices with **25 results per search page**. Selected choices stay selected while browsing other results. Class choices include academic context, and selecting a class provides its year and date bounds. Transfer searches restrict destinations to the enrolment's year and exclude its current class.
 
 **Why:** displaying records and choosing a related record are different tasks. A paginated student list is useful, but it does not fix a dropdown that only contains the first 500 students. Both paths need to reach the required records.
 
@@ -175,7 +175,7 @@ flowchart TD
     YEAR --> TERM[Terms]
     YEAR --> CLASS[Class]
     GRADE[Grade] --> CLASS
-    STUDENT[Student] --> ENROLL[Enrollment with dates]
+    STUDENT[Student] --> ENROLL[Enrolment with dates]
     CLASS --> ENROLL
     TEACHER[Teacher] --> ASSIGN[Teaching assignment with dates]
     SUBJECT[Subject] --> ASSIGN
@@ -196,12 +196,12 @@ Migrations are the ordered history of schema and permission changes. They remain
 | Migration | Purpose |
 | --- | --- |
 | 003 — academic structure | Years, terms, grades, subjects and classes. |
-| 004 — registers | Students, teachers, guardians, relationships and enrollments. |
+| 004 — registers | Students, teachers, guardians, relationships and enrolments. |
 | 005 — teaching assignments | Dated teacher/subject/class responsibilities. |
-| 006 — grade-name normalization | Prevent equivalent grade spellings becoming separate grades. |
+| 006 — grade-name normalisation | Prevent equivalent grade spellings becoming separate grades. |
 | 007 — record corrections | Controlled corrections and stale-update protection. |
 | 008 — timetable | Basic recurring lessons and scheduling safeguards. |
-| 009 — enrollment lifecycle | History-preserving transfers and withdrawals. |
+| 009 — enrolment lifecycle | History-preserving transfers and withdrawals. |
 | 010 — register membership links | Explicit account links, guardian access and role-scoped reads. |
 | 011 — invitation bulk and reset | Supporting account-management work from Phase 1. |
 | 012 — audit history and cleanup | Restricted correction history and audit/privacy maintenance. |
@@ -224,18 +224,18 @@ The project keeps UI, server actions, data reads and database rules in separate 
 | --- | --- |
 | [Dashboard page](../src/app/dashboard/page.tsx) | Checks context and loads the selected admin view and its pages. |
 | [Academic actions](../src/app/dashboard/academic/actions.ts) | Handles academic-structure creation. |
-| [Register actions](../src/app/dashboard/registers/actions.ts) | Creates people, relationships and enrollments. |
-| [Enrollment lifecycle actions](../src/app/dashboard/registers/lifecycle-actions.ts) | Validates requests to transfer or withdraw learners. |
+| [Register actions](../src/app/dashboard/registers/actions.ts) | Creates people, relationships and enrolments. |
+| [Enrolment lifecycle actions](../src/app/dashboard/registers/lifecycle-actions.ts) | Validates requests to transfer or withdraw learners. |
 | [Account-link actions](../src/app/dashboard/registers/link-actions.ts) | Handles explicit login links and guardian access changes. |
 | [Correction actions](../src/app/dashboard/corrections/actions.ts) | Handles the allowed record corrections. |
 | [Teaching actions](../src/app/dashboard/teaching/actions.ts) | Creates, ends and replaces teaching assignments. |
 | [Timetable actions](../src/app/dashboard/timetable/actions.ts) | Handles lesson creation and removal. |
-| [Search actions](../src/app/dashboard/search/actions.ts) | Returns permitted school-scoped choices after server-side authorization. |
+| [Search actions](../src/app/dashboard/search/actions.ts) | Returns permitted school-scoped choices after server-side authorisation. |
 | [Components](../src/components) | Forms, panels, editors and reusable search/pagination controls. |
 | [Register data](../src/lib/register-data.ts) and [planning data](../src/lib/planning-data.ts) | Fetch paged records and resolve related labels, including off-page references. |
-| [Shared pagination](../src/lib/list-pagination.ts) and [search validation](../src/lib/record-search.ts) | Keep page limits, input validation and search behavior consistent. |
+| [Shared pagination](../src/lib/list-pagination.ts) and [search validation](../src/lib/record-search.ts) | Keep page limits, input validation and search behaviour consistent. |
 | [Migrations](../supabase/migrations) | Defines persistent tables, constraints, permissions and controlled database operations. |
-| [Tests](../tests) and [browser tests](../e2e) | Checks behavior at different layers; explained below. |
+| [Tests](../tests) and [browser tests](../e2e) | Checks behaviour at different layers; explained below. |
 | [Archive](../archive) | Keeps obsolete one-off scripts as history, outside the active workflow. |
 
 For a broader file-by-file reference, see [FILE_GUIDE.md](FILE_GUIDE.md). This document focuses on why the Phase 2 pieces exist and what they deliver.
@@ -247,7 +247,7 @@ Some work during this period repaired or maintained the foundation:
 - Invitation preparation, retry/reset handling and password/session handling belong to account management from Phase 1.
 - Environment cleanup clarified the purpose of the private local settings file and the shareable example template. Credentials do not belong in documentation or source control.
 - Old one-off scripts were archived; migrations were preserved.
-- Documentation, test explanations and verification notes were updated to distinguish implemented behavior from unverified hosted behavior.
+- Documentation, test explanations and verification notes were updated to distinguish implemented behaviour from unverified hosted behaviour.
 
 Email remains disabled by agreement. Saving SMTP settings did not make delivery ready: a registered, verified sending domain and delivery testing are still needed. General school notifications have not been completed early under the account-management work.
 
@@ -258,10 +258,10 @@ At the 5 October checkpoint, the full check passed **lint, TypeScript, 206 tests
 | Check | What it helps establish | What it does not establish |
 | --- | --- | --- |
 | Lint and TypeScript | Code consistency and type correctness. | Correct school workflows by themselves. |
-| Validation, action and rendering tests | Input handling, authorization paths, safe errors and expected component behavior. | A complete real-browser session against hosted Supabase. |
-| Data-query tests | Page boundaries, filters, search behavior and related-record loading. | Real-school performance at an unmeasured size. |
-| Embedded PostgreSQL tests using PGlite | Actual SQL behavior with synthetic schools, role contexts, constraints, denied operations and history rules. | Every hosted Auth/RLS configuration or independent-session race. |
-| Disconnected browser tests | Preview/application behavior without live school data. | Hosted enrollment, account-linking or school-isolation acceptance. |
+| Validation, action and rendering tests | Input handling, authorisation paths, safe errors and expected component behaviour. | A complete real-browser session against hosted Supabase. |
+| Data-query tests | Page boundaries, filters, search behaviour and related-record loading. | Real-school performance at an unmeasured size. |
+| Embedded PostgreSQL tests using PGlite | Actual SQL behaviour with synthetic schools, role contexts, constraints, denied operations and history rules. | Every hosted Auth/RLS configuration or independent-session race. |
+| Disconnected browser tests | Preview/application behaviour without live school data. | Hosted enrolment, account-linking or school-isolation acceptance. |
 
 The last recorded production-mode browser run on 4 October passed all six tests. The ordinary browser-test mode intentionally skips one production-only security-header test. That skip is not evidence that a Phase 2 workflow is broken. A Windows test-server teardown issue was also recorded; passing assertions and clean process shutdown are separate outcomes.
 
@@ -282,7 +282,7 @@ Phase 3 development was authorised without declaring every earlier live-readines
 | Later phase or decision | Work deliberately left for later |
 | --- | --- |
 | Phase 3 — Daily Operations | Attendance, role-facing timetables, view-only homework, announcements and private PDF documents. Upload rules are now confirmed: Admin school/class PDFs, assigned Teachers class PDFs; learners and permitted Guardians download only. |
-| Phase 4 — Academic Performance | Assessments, marks, authorized review, School Admin publication, report cards and performance summaries. |
+| Phase 4 — Academic Performance | Assessments, marks, authorised review, School Admin publication, report cards and performance summaries. |
 | Phase 5 — Finance and Communication | Fees, payment records, balances, parent communication and chosen notification channels. Online payment collection needs its own scope decision. |
 | Phase 6 — Smart Features | n8n automation, AI assistance and advanced analytics after the core workflows are stable. |
 | Later multi-school platform | Platform-owner administration, onboarding, subscriptions, domains and tenant provisioning. |

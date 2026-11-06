@@ -42,7 +42,7 @@ The Supabase-hosted function reads these in its own runtime:
 | `SCHOOL_PORTAL_INVITATION_DELIVERY_ENABLED` | Function-side delivery switch. Keep off until delivery is ready. Missing also leaves delivery disabled. |
 | `SCHOOL_PORTAL_SITE_URL` | The trusted callback origin, configured for that runtime. |
 | `SUPABASE_URL` | Supabase backend URL supplied to the function. |
-| `SUPABASE_ANON_KEY` | Used for the caller's user-scoped authorization checks. |
+| `SUPABASE_ANON_KEY` | Used for the caller's user-scoped authorisation checks. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Privileged Auth invitation operation, isolated in the function runtime. Never copy it into `.env.local` or the app template. |
 
 The sender remains unverified and email is disabled. SMTP credentials belong in Supabase's email configuration, not in the Next.js app. No Resend API key is used directly by the current application.

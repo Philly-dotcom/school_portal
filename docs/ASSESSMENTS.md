@@ -45,7 +45,7 @@ In the School Admin workspace, open **Assessments** and find the teacher’s pro
 | `tests/assessment-actions.test.ts` | Checks trusted school context, forged roles, invalid inputs, stale-save feedback and authentication redirects. |
 | `tests/workspace-navigation.test.ts` | Checks explicit Teacher/Admin assessment links and no Guardian assessment link. |
 
-No existing authorization policy was weakened. Direct writes to the new tables are denied for normal accounts. Definitions are readable only within permitted staff scope. Migration 023 locks ordinary definition edits once staff freeze the roster.
+No existing authorisation policy was weakened. Direct writes to the new tables are denied for normal accounts. Definitions are readable only within permitted staff scope. Migration 023 locks ordinary definition edits once staff freeze the roster.
 
 ## Local verification
 

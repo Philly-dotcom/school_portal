@@ -191,7 +191,7 @@ Use a limited set of supported calculation methods with validated configuration 
 
 Subject-term outputs and term/annual reports have their own draft, reviewed and published versions. An explicitly output-authorised Admin reviews the complete snapshot, completeness, calculations, comments and policy/source versions; School Admin then deliberately publishes. Those may be the same person, but remain separate recorded actions. Approval never implies a handwritten or digital signature.
 
-A changed input invalidates all current dependent outputs, including HTML, summaries and PDF download access, in the same database transaction. Keep dependency references even where the resulting number happens not to change. Unrelated learners' outputs remain valid. Recalculation and PDF creation can occur later, but the old artifact must already be inaccessible to learner downloads. A failed calculation or PDF job cannot restore visibility. Historical artifacts remain staff-only within authorised scope.
+A changed input invalidates all current dependent outputs, including HTML, summaries and PDF download access, in the same database transaction. Keep dependency references even where the resulting number happens not to change. Unrelated learners' outputs remain valid. Recalculation and PDF creation can occur later, but the old artefact must already be inaccessible to learner downloads. A failed calculation or PDF job cannot restore visibility. Historical artefacts remain staff-only within authorised scope.
 
 ### What is still required from the school
 

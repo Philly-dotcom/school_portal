@@ -2,7 +2,7 @@
 
 ## Current handover — Phase 4.3 approval invalidation
 
-Migrations 001–030 are applied. Staff can plan assessments, authorise scales, freeze eligible rosters and capture private draft marks. School Admin can amend frozen placements and grant a teacher dated access to one learner or a whole frozen assessment. The latest local check passed lint, TypeScript, 683 tests in 60 files and the production build.
+Migrations 001–030 are applied. Staff can plan assessments, authorise scales, freeze eligible rosters and capture private draft marks. School Admin can amend frozen placements and grant a teacher dated access to one learner or a whole frozen assessment. The 4 November full local check passed lint, TypeScript, 683 tests in 60 files and the production build.
 
 Migration 029 is user-confirmed applied. The Subject Workspace idea is on hold. Phase 4.3 continues with migration 030, which lets School Admin invalidate a current disputed approval with a reason while retaining its original decision. You confirmed 030 was applied on 6 November. Hosted checks remain open. The school reporting rules are still outstanding. Policy configuration/approval, adoption into a fresh review package and School Admin publication remain pending. Use the existing fictional assessments and accounts for the unchecked [hosted cases](ASSESSMENTS.md). The [Phase 4 plan](PHASE_4_PLAN.md) and [academic decisions](PHASE_4_ACADEMIC_DECISIONS.md) govern that work.
 
@@ -59,7 +59,7 @@ Keep the 2027 planning records intact. The approved 9 October repair corrected t
 
 ## Boundaries
 
-No cross-request authorization cache, elevated application credential or new authentication system was introduced. Mutations and RLS still enforce access. The measured 17-to-6 read reduction concerns the earlier context/actor/profile loader path, not the complete current dashboard or hosted latency.
+No cross-request authorisation cache, elevated application credential or new authentication system was introduced. Mutations and RLS still enforce access. The measured 17-to-6 read reduction concerns the earlier context/actor/profile loader path, not the complete current dashboard or hosted latency.
 
 Email remains off; live recovery, admin security policy, backups, monitoring, deployment and real-school approval are separate launch gates. Preserve migrations, local configuration and user work. Leave the user's dev server running unless asked otherwise.
 
@@ -80,4 +80,4 @@ The 10 profile tests passed, including new empty-access and selected-learner cas
 
 ## REVIEW-01/02 browser follow-up - 26 October
 
-Teacher identity and on-demand subjects passed in the existing combined Teacher/Guardian session. Switching back to Guardian required explicit learner selection. Student identity/history passed, with current 2026 and upcoming 2027 labels and the existing overview summary retained. Admin sidebar/quick links and timetable filter/clear-filter retained explicit Admin mode. No school records or configuration were changed. Pagination and multi-role Admin legacy-link behavior passed automated tests; those two scenarios were not repeated in a hosted browser session. The full local check passed 524 tests in 57 files, lint, TypeScript and production build. Both review fixes are implemented; final Phase 3 sign-off remains a separate decision.
+Teacher identity and on-demand subjects passed in the existing combined Teacher/Guardian session. Switching back to Guardian required explicit learner selection. Student identity/history passed, with current 2026 and upcoming 2027 labels and the existing overview summary retained. Admin sidebar/quick links and timetable filter/clear-filter retained explicit Admin mode. No school records or configuration were changed. Pagination and multi-role Admin legacy-link behaviour passed automated tests; those two scenarios were not repeated in a hosted browser session. The full local check passed 524 tests in 57 files, lint, TypeScript and production build. Both review fixes are implemented; final Phase 3 sign-off remains a separate decision.

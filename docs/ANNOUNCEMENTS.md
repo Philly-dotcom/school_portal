@@ -8,15 +8,15 @@ Added on 8 October 2026 as part of Phase 3. You subsequently confirmed applying 
 
 School Admin can create a notice for the whole school or one class. A teacher can create class notices while they have a current teaching assignment for that class. Both publish directly, without a review queue.
 
-Class notices are a current noticeboard. Learners joining a class can read its earlier published notices; learners leaving the class lose access. Guardians need an explicit grant for the selected learner. This is different from homework, which follows the original publication-date enrollment.
+Class notices are a current noticeboard. Learners joining a class can read its earlier published notices; learners leaving the class lose access. Guardians need an explicit grant for the selected learner. This is different from homework, which follows the original publication-date enrolment.
 
-School-wide published notices appear in the teacher, linked student and authorized guardian workspaces. Guardians select a permitted learner before opening their feed. A teacher cannot edit a school-wide notice. Switching modes on a combined teacher/guardian account does not turn class roster access into guardian access.
+School-wide published notices appear in the teacher, linked student and authorised guardian workspaces. Guardians select a permitted learner before opening their feed. A teacher cannot edit a school-wide notice. Switching modes on a combined teacher/guardian account does not turn class roster access into guardian access.
 
 ## How staff use it
 
 Open **Announcements** in the sidebar. Create a notice, choose the audience, and enter a title and message. The title allows 160 characters and the message allows 10,000. Messages are plain text; line breaks are preserved.
 
-New notices start as drafts. Selecting **Published** and saving makes the notice visible immediately in the portal. No email, SMS or WhatsApp message is sent. Withdrawal hides the notice from its readers, while authorized staff can still manage it. Previously published notices cannot be turned back into drafts.
+New notices start as drafts. Selecting **Published** and saving makes the notice visible immediately in the portal. No email, SMS or WhatsApp message is sent. Withdrawal hides the notice from its readers, while authorised staff can still manage it. Previously published notices cannot be turned back into drafts.
 
 The audience stays fixed after creation. To address another class or the whole school, create a new notice. This prevents an edit from unexpectedly widening who can read an existing message. Current teachers of the class share management access; authorship does not keep access after an assignment ends. School Admin can still manage those notices.
 
@@ -44,9 +44,9 @@ The dashboard, sidebar and role overview link to this module. It uses the existi
 - As Admin, create a school-wide draft. It should stay hidden from teachers, students and guardians until published.
 - Publish it. Check each linked role can read it and only Admin can edit it.
 - As a teacher, create and publish a notice for a class you currently teach. A different class must not be available to you.
-- Check a current learner and an explicitly authorized guardian can read the class notice. An unrelated learner or guardian must not see it.
+- Check a current learner and an explicitly authorised guardian can read the class notice. An unrelated learner or guardian must not see it.
 - Test a combined teacher/guardian account in both modes. Guardian mode must not reveal other learners from the teacher's roster.
-- Transfer a fictional learner using dated enrollment. Once the transfer takes effect, the old class notice disappears and the new class's published notices become readable.
+- Transfer a fictional learner using dated enrolment. Once the transfer takes effect, the old class notice disappears and the new class's published notices become readable.
 - End a test teaching assignment, respecting existing timetable constraints. That teacher must lose class-notice editing access; Admin must retain it.
 - Withdraw a notice, confirm it disappears for readers, then republish it.
 - Edit the same notice in two tabs. The stale save must fail without overwriting the first change.

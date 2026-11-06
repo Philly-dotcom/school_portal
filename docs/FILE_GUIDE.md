@@ -1,6 +1,6 @@
 # File guide
 
-Updated 25 October 2026. This is a map of the current checkout, not a proposed new folder structure. Start with the part you are working on; you do not have to read every file in order.
+Updated 6 November 2026. This is a map of the current checkout, not a proposed new folder structure. Start with the part you are working on; you do not have to read every file in order.
 
 A `.tsx` file can contain screen markup and TypeScript. A `.ts` file contains TypeScript without that markup. `page.tsx` makes a route; our `actions.ts` files handle form submissions on the server. A migration is a saved SQL change to the database. An RPC is a database function the app calls. RLS means row-level security: the database checks which rows the signed-in account may read or change.
 
@@ -10,15 +10,22 @@ When you create a grade, `src/app/dashboard/page.tsx` selects the Academic setup
 
 A **register record** is a student, teacher or guardian entry. An **Auth account** is a sign-in. A **membership** connects that account to a school and roles. Keeping those separate is why the login-link files exist.
 
-## Phase 4 planning documents
+## Phase 4 implementation and planning
 
-The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the dashboard, server actions, validation and database tests for Phases 4.1–4.2.
+Start with the [assessment file map](ASSESSMENTS.md#files-and-responsibilities) for dashboard components, server actions, readers, validation and tests. Follow the links below for the later additions.
+
+| Migrations | Where to find the implementation |
+| --- | --- |
+| 022–026 | [Assessment setup and draft marks](ASSESSMENTS.md#files-and-responsibilities), including frozen roster amendments and historical correction access. |
+| 027–028 | [Reviewer grants](ASSESSMENTS.md#assign-an-assessment-reviewer) and [submission and review files](ASSESSMENTS.md#files-added-for-submission-and-review). |
+| 029 | [Policy draft files](ASSESSMENTS.md#policy-setup-files). |
+| 030 | [Disputed approvals](ASSESSMENTS.md#invalidate-a-disputed-approval), including the migration, Admin control and reviewer view. |
 
 | File | Purpose |
 | --- | --- |
 | [PHASE_4_PLAN.md](PHASE_4_PLAN.md) | Implementation order, reuse points, remaining school inputs and acceptance work. Proposed code paths are not existing files. |
 | [PHASE_4_ACADEMIC_DECISIONS.md](PHASE_4_ACADEMIC_DECISIONS.md) | The user's policy report, reconciled workflow details and action/role matrix in Section 10. |
-| [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md) | Proposed data relationships and constraints, staged file plan and test scenarios. It is not an applied schema. |
+| [PHASE_4_DATA_DESIGN.md](PHASE_4_DATA_DESIGN.md) | Implemented relationships through 030, draft policy support and proposed publication/report dependencies. |
 | [RESUME.md](RESUME.md) | Latest checkpoint and the next implementation and verification work. Older dated sections are historical. |
 
 ## Root files and tooling
@@ -26,7 +33,7 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 | File | What it does |
 | --- | --- |
 | [README.md](../README.md) | The starting point: current progress, how to run the app and where to read next. |
-| [AGENTS.md](../AGENTS.md) | Project rules for coding assistants: keep the project isolated, preserve permissions and use the agreed stack. |
+| `AGENTS.md` (local, gitignored) | Project rules for coding assistants: keep the project isolated, preserve permissions and use the agreed stack. |
 | [package.json](../package.json) | Lists dependencies and the commands behind npm run dev, check, build and test:e2e. |
 | [package-lock.json](../package-lock.json) | Records the exact dependency versions npm ci installs. Keep it with package.json. |
 | [.env.example](../.env.example) | A blank configuration template. It contains variable names, not your actual credentials. |
@@ -56,11 +63,11 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 | [src/app/login/page.tsx](../src/app/login/page.tsx) | Displays sign-in and handles the unconfigured-app state. |
 | [src/app/login/actions.ts](../src/app/login/actions.ts) | Handles password sign-in and sign-out on the server. |
 | [src/app/dashboard/page.tsx](../src/app/dashboard/page.tsx) | Verifies school membership, resolves the authorised active role, shows the multi-role chooser and selects the requested panel. Reuses actor/profile reads within the render. |
-| [src/app/dashboard/actions.ts](../src/app/dashboard/actions.ts) | Validates and saves the school name and timezone for an authorized admin. |
+| [src/app/dashboard/actions.ts](../src/app/dashboard/actions.ts) | Validates and saves the school name and timezone for an authorised admin. |
 | [src/app/dashboard/academic/actions.ts](../src/app/dashboard/academic/actions.ts) | Handles creation of academic years, terms, grades, subjects and classes. |
-| [src/app/dashboard/registers/actions.ts](../src/app/dashboard/registers/actions.ts) | Handles student, teacher and guardian creation, family links and initial class enrollment. |
+| [src/app/dashboard/registers/actions.ts](../src/app/dashboard/registers/actions.ts) | Handles student, teacher and guardian creation, family links and initial class enrolment. |
 | [src/app/dashboard/registers/link-actions.ts](../src/app/dashboard/registers/link-actions.ts) | Handles explicit login links and guardian child-access changes, including confirmation/version checks. |
-| [src/app/dashboard/registers/lifecycle-actions.ts](../src/app/dashboard/registers/lifecycle-actions.ts) | Handles an enrollment transfer or withdrawal through the database lifecycle function. |
+| [src/app/dashboard/registers/lifecycle-actions.ts](../src/app/dashboard/registers/lifecycle-actions.ts) | Handles an enrolment transfer or withdrawal through the database lifecycle function. |
 | [src/app/dashboard/teaching/actions.ts](../src/app/dashboard/teaching/actions.ts) | Handles assignment creation and validated, confirmed end/replacement requests using the verified school. |
 | [src/app/dashboard/timetable/actions.ts](../src/app/dashboard/timetable/actions.ts) | Handles lesson creation and deliberate removal. |
 | [src/app/dashboard/corrections/actions.ts](../src/app/dashboard/corrections/actions.ts) | Handles name/reference corrections; takes school ownership from verified context, not the submitted form. |
@@ -81,10 +88,10 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 | [src/components/settings-form.tsx](../src/components/settings-form.tsx) | School name/timezone inputs and save feedback. |
 | [src/components/academic-panel.tsx](../src/components/academic-panel.tsx) | Server-rendered academic lists; loads options and places the create/edit forms on the page. |
 | [src/components/academic-form.tsx](../src/components/academic-form.tsx) | Client form for the chosen type of academic record, with specific field labels. |
-| [src/components/registers-panel.tsx](../src/components/registers-panel.tsx) | Loads register records, relationships, enrollments and linkable accounts, then assembles the admin screen. |
-| [src/components/register-forms.tsx](../src/components/register-forms.tsx) | Forms for people, guardian relationships and initial enrollments. |
+| [src/components/registers-panel.tsx](../src/components/registers-panel.tsx) | Loads register records, relationships, enrolments and linkable accounts, then assembles the admin screen. |
+| [src/components/register-forms.tsx](../src/components/register-forms.tsx) | Forms for people, guardian relationships and initial enrolments. |
 | [src/components/record-editor.tsx](../src/components/record-editor.tsx) | Reusable correction form for a supported record's name/reference. |
-| [src/components/enrollment-editor.tsx](../src/components/enrollment-editor.tsx) | Transfer/withdrawal controls for an existing enrollment. |
+| [src/components/enrollment-editor.tsx](../src/components/enrollment-editor.tsx) | Transfer/withdrawal controls for an existing enrolment. |
 | [src/components/login-link.tsx](../src/components/login-link.tsx) | Account selector for linking or unlinking a register record; includes deliberate confirmation. |
 | [src/components/guardian-access.tsx](../src/components/guardian-access.tsx) | The separate control that grants or revokes access to a child's records. |
 | [src/components/teaching-panel.tsx](../src/components/teaching-panel.tsx) | Loads teacher assignments and the options used by the assignment form. |
@@ -101,7 +108,7 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 
 | File | What it does |
 | --- | --- |
-| [src/proxy.ts](../src/proxy.ts) | Adds a request-specific Content Security Policy nonce, refreshes session cookies and sets private response caching behavior. |
+| [src/proxy.ts](../src/proxy.ts) | Adds a request-specific Content Security Policy nonce, refreshes session cookies and sets private response caching behaviour. |
 | [src/lib/supabase/server.ts](../src/lib/supabase/server.ts) | Creates the server Supabase client using the request's cookies and publishable key. |
 | [src/lib/auth-context.ts](../src/lib/auth-context.ts) | Verifies the Auth user and loads the active configured school, membership and roles. It distinguishes unavailable access from no permission. |
 | [src/lib/permissions.ts](../src/lib/permissions.ts) | Known roles, readable role labels and shared school-admin checks. |
@@ -110,13 +117,13 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 | [src/lib/csp.ts](../src/lib/csp.ts) | Builds the browser script-security policy and generates nonces. |
 | [src/lib/account-validation.ts](../src/lib/account-validation.ts) | Checks membership/invitation/password inputs and allowed link destinations. |
 | [src/lib/academic-validation.ts](../src/lib/academic-validation.ts) | Checks academic record inputs, dates and the choices used by academic forms. |
-| [src/lib/register-validation.ts](../src/lib/register-validation.ts) | Checks register, relationship and enrollment inputs; supplies labels/types used by forms. |
+| [src/lib/register-validation.ts](../src/lib/register-validation.ts) | Checks register, relationship and enrolment inputs; supplies labels/types used by forms. |
 | [src/lib/correction-validation.ts](../src/lib/correction-validation.ts) | Limits which records and fields can be corrected and validates record versions. |
 | [src/lib/enrollment-validation.ts](../src/lib/enrollment-validation.ts) | Checks transfer/withdrawal inputs, confirmation and date/destination rules. |
 | [src/lib/teaching-validation.ts](../src/lib/teaching-validation.ts) | Checks teacher assignment choices and date inputs. |
 | [src/lib/timetable-validation.ts](../src/lib/timetable-validation.ts) | Checks weekday/time/date inputs and removal confirmation; formats lesson times. |
 | [src/lib/link-validation.ts](../src/lib/link-validation.ts) | Checks register-to-account links and guardian access inputs; defines the RPC member result type. |
-| [src/lib/grade-name.ts](../src/lib/grade-name.ts) | Normalizes standard grade names so Grade10 and Grade 10 match, without changing unrelated names. |
+| [src/lib/grade-name.ts](../src/lib/grade-name.ts) | Normalises standard grade names so Grade10 and Grade 10 match, without changing unrelated names. |
 | [src/lib/bulk-invitation.ts](../src/lib/bulk-invitation.ts) | Parses pasted invitation CSV and rejects malformed or oversized input. Duplicate invitation handling is enforced separately in the database. |
 | [src/lib/invitation-pagination.ts](../src/lib/invitation-pagination.ts) | Validates invitation page numbers and calculates page ranges. |
 | [src/lib/academic-pagination.ts](../src/lib/academic-pagination.ts) | Validates each academic list's page number and builds links that retain the other lists' positions. |
@@ -126,7 +133,7 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 | [src/lib/planning-data.ts](../src/lib/planning-data.ts) | Server-only teaching/timetable reads. Loads pages and separate form choices, applies the timetable assignment filter before paging, and resolves missing labels in batches of at most 100 IDs. |
 | [src/lib/planning-pagination.ts](../src/lib/planning-pagination.ts) | Validates timetable filter IDs and builds teaching/timetable page links that preserve the filter. |
 | [src/lib/record-search.ts](../src/lib/record-search.ts) | Allowed search categories, input limits, choice/result types and literal search-pattern escaping. |
-| [src/app/dashboard/search/actions.ts](../src/app/dashboard/search/actions.ts) | Admin-only, school-scoped searches for academic, teaching and register relationship/enrollment choices. Returns small pages, names/references and class year/date details; transfer searches can narrow by year. |
+| [src/app/dashboard/search/actions.ts](../src/app/dashboard/search/actions.ts) | Admin-only, school-scoped searches for academic, teaching and register relationship/enrolment choices. Returns small pages, names/references and class year/date details; transfer searches can narrow by year. |
 | [src/components/record-search-select.tsx](../src/components/record-search-select.tsx) | Search box, native required selector and previous/next result buttons. Keeps the selected record while browsing and reports loading/errors without submitting the containing form. |
 | [src/components/planning-pagination.tsx](../src/components/planning-pagination.tsx) | Shared First, Previous and Next controls for teaching history and timetable lessons. |
 | [src/lib/member-label.ts](../src/lib/member-label.ts) | Builds an account label using display name, verified email and membership ID so similar names are distinguishable. |
@@ -139,9 +146,9 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 | [supabase/migrations/202609290001_foundation.sql](../supabase/migrations/202609290001_foundation.sql) | 001: schools, profiles, memberships, roles, initial audit and access policies. |
 | [supabase/migrations/202609300002_account_management.sql](../supabase/migrations/202609300002_account_management.sql) | 002: controlled member edits and invitations, acceptance, delivery claims and last-admin protection. |
 | [supabase/migrations/202610010003_academic_structure.sql](../supabase/migrations/202610010003_academic_structure.sql) | 003: academic years, terms, grades, subjects and classes with school ownership. |
-| [supabase/migrations/202610010004_registers.sql](../supabase/migrations/202610010004_registers.sql) | 004: student/teacher/guardian records, family relationships and enrollments. |
+| [supabase/migrations/202610010004_registers.sql](../supabase/migrations/202610010004_registers.sql) | 004: student/teacher/guardian records, family relationships and enrolments. |
 | [supabase/migrations/202610010005_teaching_assignments.sql](../supabase/migrations/202610010005_teaching_assignments.sql) | 005: dated teacher/subject/class assignments and relationship constraints. |
-| [supabase/migrations/202610010006_grade_name_normalization.sql](../supabase/migrations/202610010006_grade_name_normalization.sql) | 006: grade-name normalization and duplicate protection. |
+| [supabase/migrations/202610010006_grade_name_normalization.sql](../supabase/migrations/202610010006_grade_name_normalization.sql) | 006: grade-name normalisation and duplicate protection. |
 | [supabase/migrations/202610010007_record_corrections.sql](../supabase/migrations/202610010007_record_corrections.sql) | 007: versioned name/reference corrections and their audit records. |
 | [supabase/migrations/202610010008_timetable.sql](../supabase/migrations/202610010008_timetable.sql) | 008: weekly lessons, teacher/class clash rules and controlled removal. |
 | [supabase/migrations/202610010009_enrollment_lifecycle.sql](../supabase/migrations/202610010009_enrollment_lifecycle.sql) | 009: transfer/withdrawal history, overlap protection and version checks. |
@@ -150,10 +157,10 @@ The [assessment file map](ASSESSMENTS.md#files-and-responsibilities) covers the 
 | [supabase/migrations/202610020012_audit_history_and_cleanup.sql](../supabase/migrations/202610020012_audit_history_and_cleanup.sql) | 012: append-only audit protections, correction snapshots and an owner-only school-member privacy procedure. |
 | [supabase/migrations/202610030013_linkable_members_email_type.sql](../supabase/migrations/202610030013_linkable_members_email_type.sql) | 013: fixes the register-login query's email return type. It replaces one function without changing stored records. |
 | [supabase/migrations/202610040014_teaching_assignment_lifecycle.sql](../supabase/migrations/202610040014_teaching_assignment_lifecycle.sql) | 014: assignment end/replacement history, non-overlapping periods, stale-form checks and timetable date protection. Hosted application is user-confirmed. |
-| [supabase/checks/grade_name_duplicates.sql](../supabase/checks/grade_name_duplicates.sql) | Read-only check for names that would collide after grade normalization. |
+| [supabase/checks/grade_name_duplicates.sql](../supabase/checks/grade_name_duplicates.sql) | Read-only check for names that would collide after grade normalisation. |
 | [archive/2026-10/review_grade10_typo.sql](../archive/2026-10/review_grade10_typo.sql) | The archived one-off Grade 10 repair. The regression test still reads this copy; it is not an active setup step. |
 | [supabase/functions/invite-school-user/index.ts](../supabase/functions/invite-school-user/index.ts) | Supabase Edge Function entry point; reads its runtime configuration and supplies clients to the handler. It is outside the Next.js app. |
-| [supabase/functions/invite-school-user/handler.ts](../supabase/functions/invite-school-user/handler.ts) | Verifies an invitation-send request, claims authorized work and records the provider outcome. Tests mock the provider; live delivery is still disabled. |
+| [supabase/functions/invite-school-user/handler.ts](../supabase/functions/invite-school-user/handler.ts) | Verifies an invitation-send request, claims authorised work and records the provider outcome. Tests mock the provider; live delivery is still disabled. |
 | [supabase/functions/invite-school-user/deno.json](../supabase/functions/invite-school-user/deno.json) | Runtime/import configuration for the Supabase function. |
 
 ## Test files
@@ -189,9 +196,9 @@ This inventory covers the maintained project files, not every dependency or gene
 
 - [search/member-actions.ts](../src/app/dashboard/search/member-actions.ts) validates the request, derives the school from the verified admin context, calls the bounded SQL search and returns safe labels/errors.
 - [Migration 015](../supabase/migrations/202610050015_register_member_search.sql) adds read-only, admin-only eligibility search. It excludes accounts linked elsewhere before paging. Hosted application of 015 is user-confirmed.
-- [member-search.test.ts](../tests/member-search.test.ts) checks server authorization/input handling, bounded output, private errors and preservation of the current login in the form payload. The membership database suite checks actual SQL eligibility and isolation beyond 500 records.
+- [member-search.test.ts](../tests/member-search.test.ts) checks server authorisation/input handling, bounded output, private errors and preservation of the current login in the form payload. The membership database suite checks actual SQL eligibility and isolation beyond 500 records.
 
-`login-link.tsx` now uses the shared search selector. `register-data.ts` loads only current links for visible people; it no longer preloads complete person/member catalogs. Use DOCUMENTS.md for current browser results and remaining regressions.
+`login-link.tsx` now uses the shared search selector. `register-data.ts` loads only current links for visible people; it no longer preloads complete person/member catalogues. Use DOCUMENTS.md for current browser results and remaining regressions.
 
 ## Timetable search added on 5 October
 
@@ -205,7 +212,7 @@ The existing dashboard route and portal shell connect these modules. They still 
 | --- | --- |
 | `src/lib/portal-validation.ts` | Role-view types, child ID validation, labels and links. A valid mode is not permission. |
 | `src/lib/portal-data.ts` | Resolves the signed-in account's linked school record. Guardian choices come only from explicit grants, even for teacher/guardian accounts. |
-| `src/components/child-selector.tsx` | Lets a guardian choose an authorized learner while keeping the current module and clearing old pagination. |
+| `src/components/child-selector.tsx` | Lets a guardian choose an authorised learner while keeping the current module and clearing old pagination. |
 | `src/components/role-overview.tsx` | Shows the linked person's workspace, access errors and links to available daily modules. |
 | `src/lib/student-profile-data.ts` | Reads the signed-in student's own enrolments and their year/class/grade labels under existing RLS. Uses the school date and keeps failed reads separate from an empty history. |
 | `src/components/student-profile.tsx` | Shows the student's read-only profile and current, upcoming and past enrolment cards on Overview. |
@@ -213,7 +220,7 @@ The existing dashboard route and portal shell connect these modules. They still 
 | `src/components/staff-profile.tsx` | Displays teacher and admin profiles on their overviews. Guardian details use the already verified actor in `role-overview.tsx`. |
 | `src/lib/my-timetable-data.ts` | Calls the narrow personal timetable RPC and validates its response. |
 | `src/components/my-timetable-panel.tsx` | Shows current-week lessons without scheduling controls. |
-| `src/lib/school-date.ts` | Supplies a school-local default date for the attendance picker. SQL independently authorizes dates. |
+| `src/lib/school-date.ts` | Supplies a school-local default date for the attendance picker. SQL independently authorises dates. |
 | `src/lib/attendance-validation.ts` | Attendance status, batch and response schemas, types and page links. Explicit null clears a mark; omitted learners remain unchanged. |
 | `src/lib/attendance-data.ts` | Reads staff registers or a permitted learner's attendance history. Failures remain distinct from empty results. |
 | `src/app/dashboard/attendance/actions.ts` | Validates a staff save, derives the school and calls the atomic attendance RPC. |
@@ -222,13 +229,13 @@ The existing dashboard route and portal shell connect these modules. They still 
 | `src/components/attendance-form.tsx` | Collects changed marks, maintains the loaded version, asks for older-date reasons and shows conflicts. |
 | `src/components/attendance-panel.tsx` | Chooses the staff register or learner/guardian history screen and handles pagination. |
 | `src/lib/homework-validation.ts` | Homework field limits, states, version rules, read types and links. |
-| `src/lib/homework-data.ts` | Reads an authorized homework page or a specific item for editing. |
+| `src/lib/homework-data.ts` | Reads an authorised homework page or a specific item for editing. |
 | `src/app/dashboard/homework/actions.ts` | Validates staff input and calls the versioned save/publication/withdrawal RPC. |
 | `src/app/dashboard/homework/search-actions.ts` | Searches permitted teaching assignments with bounded results. |
 | `src/components/homework-form.tsx` | Staff editor for title, plain-text instructions, due date and visibility. Existing assignment ownership is fixed. |
 | `src/components/homework-panel.tsx` | Staff management and read-only learner/guardian feeds. Text is escaped; there are no learner submission controls. |
 | `supabase/migrations/202610070017_role_read_models.sql` | Personal timetable projection with role, school, child and date checks. User-confirmed applied. |
-| `supabase/migrations/202610080018_attendance.sql` | Attendance tables, RLS, save/read/search RPCs, audits and enrollment-history guard. User-confirmed applied. |
+| `supabase/migrations/202610080018_attendance.sql` | Attendance tables, RLS, save/read/search RPCs, audits and enrolment-history guard. User-confirmed applied. |
 | `supabase/migrations/202610080019_homework.sql` | Homework table, assignment ownership, RLS, immutable publication audience and staff/read RPCs. User-confirmed applied; homework is working and remaining tests are in progress. |
 | `supabase/migrations/202610080020_announcements.sql` | Announcement ownership, current-class readers, RLS, class search and audited/versioned saves. User-confirmed applied. |
 | `src/lib/announcement-validation.ts` | Announcement limits, explicit audience scope, types and links. |
@@ -258,7 +265,7 @@ The existing dashboard route and portal shell connect these modules. They still 
 | `src/lib/document-file.ts` | Server-only PDF header/end-marker, size and content-hash checks. |
 | `src/lib/document-data.ts` | Role-aware metadata reads with bounded pagination. |
 | `src/app/dashboard/documents/actions.ts` | Uploads drafts, checks stored files, finishes interrupted uploads and changes visibility. |
-| `src/app/dashboard/documents/[id]/download/route.ts` | Downloads an authorized PDF as a private, non-cached attachment. |
+| `src/app/dashboard/documents/[id]/download/route.ts` | Downloads an authorised PDF as a private, non-cached attachment. |
 | `src/components/document-form.tsx` | Staff upload and fixed-file visibility controls. |
 | `src/components/document-panel.tsx` | Staff and reader document feeds with guardian selection. |
 | `tests/helpers/storage-stub.ts` | Minimal test-only Storage metadata schema for full-migration PGlite suites. Hosted document results are recorded separately in DOCUMENTS.md; School B isolation remains open. |
@@ -270,7 +277,7 @@ See [ANNOUNCEMENTS.md](ANNOUNCEMENTS.md) for the workflow, permission rules and 
 The [test guide](../tests/README.md) explains each corresponding test file. The [temporary Phase 3 guide](../archive/2026-10/docs/TEMP_PHASE_3_IMPLEMENTATION_GUIDE.md) and archived working-checkpoint document are historical planning aids. Use RESUME.md for current progress and DOCUMENTS.md for the working checklist.
 - [Search actions](../src/app/dashboard/search/actions.ts) now accept `teaching_assignments` and return assignment date bounds alongside labels. Unsupported filters are rejected by `record-search.ts`.
 - [Timetable](../src/components/timetable.tsx) uses searchable choices for its GET filter and lesson form. Hidden fields preserve selected IDs during search; date inputs follow the selected assignment.
-- [Planning data](../src/lib/planning-data.ts) reads only the assignment labels required by visible lessons and the active filter. It no longer loads capped reference catalogs.
+- [Planning data](../src/lib/planning-data.ts) reads only the assignment labels required by visible lessons and the active filter. It no longer loads capped reference catalogues.
 - [Timetable search form tests](../tests/timetable-search-forms.test.ts) check search wiring, preserved filter IDs, empty results and page reset. Actual SQL search/isolation tests are in `register-database.test.ts`; action tests are in `record-search.test.ts`.
 
 
@@ -293,7 +300,7 @@ The [test guide](../tests/README.md) explains each corresponding test file. The 
 | `src/app/dashboard/error.tsx` | Unexpected-error retry preserving the current URL; warns against repeating uncertain saves. |
 | `src/app/globals.css` | Existing palette, cards, sidebar groups, dropdown, focus and responsive styles. |
 
-These components reuse module readers, actions, school-date helpers and grants. No new service, dependency, authentication system, schema or RLS change was needed. Teacher/Student history opens on demand through a non-prefetched menu link, rather than loading inside a closed dropdown on each module page. Context reuse is per render, not a persistent authorization cache.
+These components reuse module readers, actions, school-date helpers and grants. No new service, dependency, authentication system, schema or RLS change was needed. Teacher/Student history opens on demand through a non-prefetched menu link, rather than loading inside a closed dropdown on each module page. Context reuse is per render, not a persistent authorisation cache.
 
 Relevant tests: dashboard-overview.test.ts covers guarded cards and links; portal-routing.test.ts covers role entry and denial; workspace-navigation.test.ts covers sidebar URLs and authorised chooser destinations; staff-profile.test.ts and student-profile.test.ts cover scoped identity/history and shared reads; profile-request-count.test.ts measures the earlier loader path and fresh access checks. The Phase 3 sign-off run passed all 524 tests in 57 files and production build. It is not a new browser or hosted-isolation result.
 

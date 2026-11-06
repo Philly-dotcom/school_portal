@@ -11,7 +11,7 @@ Refresh Academic setup or School registers (restart/rebuild if using a productio
 ## Test with fictional records
 
 1. Correct a subject or class name, save and refresh; confirm the revised label persists.
-2. Correct a student's name or admission number. Confirm the guardian link and enrollment still refer to that student.
+2. Correct a student's name or admission number. Confirm the guardian link and enrolment still refer to that student.
 3. Correct a teacher name and check Teaching assignments reflects the same teacher's revised label.
 4. Attempt a duplicate grade name (including Grade10 versus Grade 10) or duplicate person reference. Expect an error and no saved change.
 5. Open the same record in two browser tabs. Save an edit in the first tab, then submit the unchanged second tab. Expect a reload/review message rather than an overwrite.
@@ -19,10 +19,10 @@ Refresh Academic setup or School registers (restart/rebuild if using a productio
 
 ## Boundaries
 
-These are typo corrections to the same record. Do not rename a person to replace them with someone else, rename a year to perform rollover, or rename a class to simulate a transfer. Dates, ownership, academic year/grade relationships, enrollment, teaching assignments and guardian relationships are not editable here. Deletion/archiving and lifecycle changes still need separate workflows.
+These are typo corrections to the same record. Do not rename a person to replace them with someone else, rename a year to perform rollover, or rename a class to simulate a transfer. Dates, ownership, academic year/grade relationships, enrolment, teaching assignments and guardian relationships are not editable here. Deletion/archiving and lifecycle changes still need separate workflows.
 
 The database RPC validates active admin access, an allowlisted record type, school ownership, field lengths and an expected record version. The atomic update increments that version; stale or unavailable records produce the same generic conflict. Direct table updates remain denied. Unique indexes retain their existing school/year/grade scopes.
 
 Audit events record actor, record ID, field names and version numbers; they do not copy names or references into logs. This is traceability, not a complete version-history/undo feature.
 
-At the time this correction feature was introduced, local checks passed lint, TypeScript, 79 tests across 15 files and production build. For the current 510-test baseline and remaining hosted checks, see [VERIFICATION.md](VERIFICATION.md). Database tests exercise all eight record types and preserve full enrollment, teaching assignment and guardian-link rows across edits. Preserve the user-reported editor checks. Cross-school RPC/RLS acceptance remains open; see the current combined checklist.
+At the time this correction feature was introduced, local checks passed lint, TypeScript, 79 tests across 15 files and production build. For the current 510-test baseline and remaining hosted checks, see [VERIFICATION.md](VERIFICATION.md). Database tests exercise all eight record types and preserve full enrolment, teaching assignment and guardian-link rows across edits. Preserve the user-reported editor checks. Cross-school RPC/RLS acceptance remains open; see the current combined checklist.

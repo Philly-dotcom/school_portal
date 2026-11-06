@@ -14,7 +14,7 @@ Migration 008 introduced the timetable. Hosted creation and persistence were che
 2. Choose a weekday, local start/end time, and inclusive date range within the assignment. The selected weekday must actually occur in the date range.
 3. Add the lesson and find it under its weekday, using the page controls if needed. Choose an assignment and press **Apply filter** to search its lessons across the whole school schedule. Changing the filter starts at page one; page links retain it. **Clear filter** returns to all assignments.
 4. Reload to verify persistence. Try an overlapping lesson for the same teacher or class; expect a clash error. Back-to-back lessons, different weekdays and non-overlapping recurring occurrences are allowed.
-5. To correct a planned lesson, open **Remove recurring lesson**, explicitly confirm removal for its entire date range, then add the corrected lesson. This removes the schedule entry, not the teaching assignment or enrollment. Removal stores the schedule's IDs/times/dates in the admin-only audit trail.
+5. To correct a planned lesson, open **Remove recurring lesson**, explicitly confirm removal for its entire date range, then add the corrected lesson. This removes the schedule entry, not the teaching assignment or enrolment. Removal stores the schedule's IDs/times/dates in the admin-only audit trail.
 
 Use fictional records for testing. Creating register data, assignments and lessons does not create Auth accounts or send email.
 
@@ -42,4 +42,4 @@ Migrations 015 and 016 are user-confirmed applied. Do not rerun `202610050016_ti
 
 The page loads only referenced assignment labels, including the active filter even when it has no lessons. **Apply filter** starts at page one; page links retain it. Hidden ID fields preserve choices if submitted while search is busy. **All assignments** and **Clear filter** remove the filter deliberately. Removal still requires confirmation. A missing search function shows a safe error rather than an incomplete dropdown.
 
-Remaining browser checks are tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). Using the existing fictional fixture, check search → select → browse another page, date bounds, filter persistence with empty results, clear filter, and save/conflict/removal behavior using fictional records only.
+Remaining browser checks are tracked in [DOCUMENTS.md](DOCUMENTS.md#remaining-phase-3-checklist). Using the existing fictional fixture, check search → select → browse another page, date bounds, filter persistence with empty results, clear filter, and save/conflict/removal behaviour using fictional records only.
