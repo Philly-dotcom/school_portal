@@ -12,7 +12,12 @@ import { z } from "zod";
 import type { ReadySchoolContext } from "@/lib/auth-context";
 import { assessmentMode, assessmentHref } from "@/lib/assessment-validation";
 import { loadAssessments } from "@/lib/assessment-data";
-import { AssessmentForm, AuthoriseScaleButton } from "@/components/assessment-form";
+import {
+  AssessmentForm,
+  AuthoriseScaleButton,
+} from "@/components/assessment-form";
+
+
 export type AssessmentParams = {
   policy?: string | string[];
   policyPage?: string | string[];
@@ -58,54 +63,157 @@ export async function AssessmentPanel({
       </p>
     );
   if (params.policy !== undefined || params.policyPage !== undefined) {
-    const policy = z.union([z.literal("list"), z.literal("new"), z.uuid()]).safeParse(params.policy ?? "list");
-    const index = z.string().regex(/^[1-9]\d{0,5}$/).transform(Number).pipe(z.number().max(100000)).safeParse(params.policyPage ?? "1");
-    if (role.data !== "school_admin" || !policy.success || !index.success ||
-        (policy.data === "new" && index.data !== 1) || edit !== undefined || params.assessmentPage !== undefined ||
-        params.review !== undefined || params.reviewPage !== undefined || params.reviewersPage !== undefined ||
-        params.marks !== undefined || params.marksPage !== undefined || params.grantPage !== undefined || params.rosterChanges !== undefined)
+    const policy = z
+      .union([z.literal("list"), z.literal("new"), z.uuid()])
+      .safeParse(params.policy ?? "list");
+    const index = z
+      .string()
+      .regex(/^[1-9]\d{0,5}$/)
+      .transform(Number)
+      .pipe(z.number().max(100000))
+      .safeParse(params.policyPage ?? "1");
+    if (
+      role.data !== "school_admin" ||
+      !policy.success ||
+      !index.success ||
+      (policy.data === "new" && index.data !== 1) ||
+      edit !== undefined ||
+      params.assessmentPage !== undefined ||
+      params.review !== undefined ||
+      params.reviewPage !== undefined ||
+      params.reviewersPage !== undefined ||
+      params.marks !== undefined ||
+      params.marksPage !== undefined ||
+      params.grantPage !== undefined ||
+      params.rosterChanges !== undefined
+    )
       return <p role="alert">Invalid School Admin policy link.</p>;
-    return <GradingPolicyPanel school={context.school.id} policy={policy.data} page={index.data} />;
+    return (
+      <GradingPolicyPanel
+        school={context.school.id}
+        policy={policy.data}
+        page={index.data}
+      />
+    );
   }
   if (params.review !== undefined || params.reviewPage !== undefined) {
     const id = z.uuid().optional().safeParse(params.review);
-    const index = z.string().regex(/^[1-9]\d{0,5}$/).transform(Number).pipe(z.number().max(100000)).safeParse(params.reviewPage ?? "1");
-    if (!id.success || !index.success || edit !== undefined || params.marks !== undefined ||
-        params.reviewersPage !== undefined || params.grantPage !== undefined || params.rosterChanges !== undefined || params.marksPage !== undefined)
+    const index = z
+      .string()
+      .regex(/^[1-9]\d{0,5}$/)
+      .transform(Number)
+      .pipe(z.number().max(100000))
+      .safeParse(params.reviewPage ?? "1");
+    if (
+      !id.success ||
+      !index.success ||
+      edit !== undefined ||
+      params.marks !== undefined ||
+      params.reviewersPage !== undefined ||
+      params.grantPage !== undefined ||
+      params.rosterChanges !== undefined ||
+      params.marksPage !== undefined
+    )
       return <p role="alert">Invalid assessment review link.</p>;
-    return <AssessmentReviewPanel school={context.school.id} mode={role.data} id={id.data} page={index.data} />;
+    return (
+      <AssessmentReviewPanel
+        school={context.school.id}
+        mode={role.data}
+        id={id.data}
+        page={index.data}
+      />
+    );
   }
   if (params.reviewersPage !== undefined) {
-    const index = z.string().regex(/^[1-9]\d{0,5}$/).transform(Number).pipe(z.number().max(100000)).safeParse(params.reviewersPage);
-    if (!index.success || role.data !== "school_admin" || edit !== undefined || params.marks !== undefined ||
-        params.rosterChanges !== undefined || params.grantPage !== undefined || params.marksPage !== undefined)
+    const index = z
+      .string()
+      .regex(/^[1-9]\d{0,5}$/)
+      .transform(Number)
+      .pipe(z.number().max(100000))
+      .safeParse(params.reviewersPage);
+    if (
+      !index.success ||
+      role.data !== "school_admin" ||
+      edit !== undefined ||
+      params.marks !== undefined ||
+      params.rosterChanges !== undefined ||
+      params.grantPage !== undefined ||
+      params.marksPage !== undefined
+    )
       return <p role="alert">Invalid School Admin reviewer grant link.</p>;
     return <ReviewerGrantList school={context.school.id} page={index.data} />;
   }
   if (params.grantPage !== undefined) {
-    const index = z.string().regex(/^[1-9]\d{0,4}$/).transform(Number).safeParse(params.grantPage);
+    const index = z
+      .string()
+      .regex(/^[1-9]\d{0,4}$/)
+      .transform(Number)
+      .safeParse(params.grantPage);
     const id = z.uuid().optional().safeParse(params.marks);
-    if (!index.success || !id.success || edit || params.rosterChanges || params.marksPage ||
-        (role.data === "school_admin") !== Boolean(id.data)) return <p role="alert">Invalid correction access link.</p>;
-    return <CorrectionGrantPanel school={context.school.id} mode={role.data} assessment={id.data} page={index.data} />;
+    if (
+      !index.success ||
+      !id.success ||
+      edit ||
+      params.rosterChanges ||
+      params.marksPage ||
+      (role.data === "school_admin") !== Boolean(id.data)
+    )
+      return <p role="alert">Invalid correction access link.</p>;
+    return (
+      <CorrectionGrantPanel
+        school={context.school.id}
+        mode={role.data}
+        assessment={id.data}
+        page={index.data}
+      />
+    );
   }
-  if (params.marks !== undefined || params.marksPage !== undefined || params.rosterChanges !== undefined) {
+  if (
+    params.marks !== undefined ||
+    params.marksPage !== undefined ||
+    params.rosterChanges !== undefined
+  ) {
     const id = z.uuid().safeParse(params.marks);
-    const index = z.string().regex(/^[1-9]\d{0,5}$/).transform(Number).pipe(z.number().max(100000)).safeParse(params.marksPage ?? "1");
+    const index = z
+      .string()
+      .regex(/^[1-9]\d{0,5}$/)
+      .transform(Number)
+      .pipe(z.number().max(100000))
+      .safeParse(params.marksPage ?? "1");
     if (!id.success || !index.success || edit !== undefined)
       return <p role="alert">Invalid assessment roster link.</p>;
     if (params.rosterChanges !== undefined) {
-      if (role.data !== "school_admin" || params.rosterChanges !== "1") return <p role="alert">School Admin access required.</p>;
-      return <RosterAmendmentPanel school={context.school.id} id={id.data} page={index.data} />;
+      if (role.data !== "school_admin" || params.rosterChanges !== "1")
+        return <p role="alert">School Admin access required.</p>;
+      return (
+        <RosterAmendmentPanel
+          school={context.school.id}
+          id={id.data}
+          page={index.data}
+        />
+      );
     }
-    return <MarksPanel school={context.school.id} mode={role.data} id={id.data} page={index.data} />;
+    return (
+      <MarksPanel
+        school={context.school.id}
+        mode={role.data}
+        id={id.data}
+        page={index.data}
+      />
+    );
   }
   if (edit === "new")
     return (
       <section className="content-panel">
         <h2>Plan an assessment</h2>
         {role.data === "school_admin" && (
-          <p>To authorise an existing proposal, <Link href={assessmentHref(role.data)}>open the assessment list</Link> and choose Authorise scale.</p>
+          <p>
+            To authorise an existing proposal,{" "}
+            <Link href={assessmentHref(role.data)}>
+              open the assessment list
+            </Link>{" "}
+            and choose Authorise scale.
+          </p>
         )}
         <AssessmentForm mode={role.data} />
       </section>
@@ -133,9 +241,15 @@ export async function AssessmentPanel({
           mode={role.data}
           item={item}
         />
-        {role.data === "school_admin" && <details><summary>Reviewer access for this scope</summary>
-          <ReviewerGrantForm key={item.id + ":" + item.record_version} item={item} />
-        </details>}
+        {role.data === "school_admin" && (
+          <details>
+            <summary>Reviewer access for this scope</summary>
+            <ReviewerGrantForm
+              key={item.id + ":" + item.record_version}
+              item={item}
+            />
+          </details>
+        )}
       </section>
     ) : (
       <p role="alert">Assessment unavailable.</p>
@@ -144,13 +258,23 @@ export async function AssessmentPanel({
   return (
     <section className="content-panel">
       <h2>Assessment planning</h2>
-      {role.data === "school_admin" && <Link href={gradingPolicyHref()}>Reporting policy drafts</Link>}{" "}
-      <Link href={assessmentHref(role.data)+"&reviewPage=1"}>Assessment reviews</Link>{" "}
-      {role.data === "school_admin" && <Link href={assessmentHref(role.data)+"&reviewersPage=1"}>Manage assessment reviewer grants</Link>}
-      {role.data === "teacher" && <Link href={assessmentHref(role.data)+"&grantPage=1"}>My historical correction access</Link>}
-      <p>
-        Plan assessments, authorise scales and capture private draft marks.
-      </p>
+      {role.data === "school_admin" && (
+        <Link href={gradingPolicyHref()}>Reporting policy drafts</Link>
+      )}{" "}
+      <Link href={assessmentHref(role.data) + "&reviewPage=1"}>
+        Assessment reviews
+      </Link>{" "}
+      {role.data === "school_admin" && (
+        <Link href={assessmentHref(role.data) + "&reviewersPage=1"}>
+          Manage assessment reviewer grants
+        </Link>
+      )}
+      {role.data === "teacher" && (
+        <Link href={assessmentHref(role.data) + "&grantPage=1"}>
+          My historical correction access
+        </Link>
+      )}
+      <p>Plan assessments, authorise scales and capture private draft marks.</p>
       <Link className="button primary" href={assessmentHref(role.data, "new")}>
         Plan assessment
       </Link>
@@ -161,7 +285,10 @@ export async function AssessmentPanel({
         {rows.rows.map((item) => (
           <li key={item.id}>
             <Link href={assessmentHref(role.data, item.id)}>{item.title}</Link>
-            {" · "}<Link href={marksHref(role.data, item.id)}>Roster and draft marks</Link>
+            {" · "}
+            <Link href={marksHref(role.data, item.id)}>
+              Roster and draft marks
+            </Link>
             <p>
               {item.assignment_label} · {item.term_label} ·{" "}
               {item.effective_date}
@@ -175,7 +302,14 @@ export async function AssessmentPanel({
               · Version {item.record_version}
             </p>
             {role.data === "school_admin" && !item.scale_authorised && (
-              <AuthoriseScaleButton key={item.record_version} item={{ id: item.id, title: item.title, record_version: item.record_version }} />
+              <AuthoriseScaleButton
+                key={item.record_version}
+                item={{
+                  id: item.id,
+                  title: item.title,
+                  record_version: item.record_version,
+                }}
+              />
             )}
           </li>
         ))}

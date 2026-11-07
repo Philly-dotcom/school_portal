@@ -1,0 +1,446 @@
+/* Campus sign-in. Scoped to .campus-signin so the dashboard and preview keep
+   their own styles. No external font or image request is made. */
+
+.campus-signin {
+  --si-bg: oklch(0.97 0.01 230);
+  --si-ink: oklch(0.22 0.03 250);
+  --si-primary: oklch(0.52 0.15 240);
+  --si-primary-fg: oklch(0.99 0.005 230);
+  --si-muted: oklch(0.95 0.012 230);
+  --si-muted-ink: oklch(0.5 0.03 250);
+  --si-border: oklch(0.91 0.014 230);
+  --si-blue: oklch(0.6 0.15 240);
+  --si-green: oklch(0.65 0.15 155);
+  --si-orange: oklch(0.72 0.15 60);
+  --signin-body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --signin-display: "Space Grotesk", "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100svh;
+  background: var(--si-bg);
+  color: var(--si-ink);
+  font-family: var(--signin-body), Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.campus-signin *,
+.campus-signin *::before,
+.campus-signin *::after {
+  box-sizing: border-box;
+}
+
+.campus-signin :is(h1, h2, h3) {
+  font-family: var(--signin-display), Arial, sans-serif;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.campus-signin :is(button, input) {
+  font: inherit;
+}
+
+.campus-signin :is(a, button, input):focus-visible {
+  outline: 3px solid var(--si-primary);
+  outline-offset: 4px;
+}
+
+/* Brand story */
+
+.signin-story {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+  overflow: hidden;
+  padding: 40px;
+  background: linear-gradient(
+    120deg,
+    var(--si-primary),
+    oklch(0.62 0.13 215)
+  );
+  color: var(--si-primary-fg);
+}
+
+.signin-story::before,
+.signin-story::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: oklch(0.97 0.01 230 / 10%);
+}
+
+.signin-story::before {
+  width: 288px;
+  height: 288px;
+  top: -96px;
+  right: -96px;
+}
+
+.signin-story::after {
+  width: 320px;
+  height: 320px;
+  bottom: -128px;
+  left: -64px;
+}
+
+.signin-story > * {
+  position: relative;
+}
+
+.signin-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  color: inherit;
+}
+
+.signin-brand-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: var(--si-green);
+  color: white;
+}
+
+.signin-brand strong {
+  display: block;
+  font-family: var(--signin-display), Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.signin-brand small {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.signin-story-copy {
+  max-width: 448px;
+}
+
+.signin-story-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.campus-signin .signin-story h2 {
+  margin: 16px 0 0;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.signin-story-description {
+  max-width: 42ch;
+  margin: 20px 0 0;
+  font-size: 16px;
+  opacity: 0.85;
+}
+
+.signin-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 32px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.signin-highlights li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 8px 8px;
+  border-radius: 999px;
+  background: oklch(0.97 0.01 230 / 10%);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.signin-highlight-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: white;
+}
+
+.signin-highlight-icon.blue {
+  background: var(--si-blue);
+}
+
+.signin-highlight-icon.green {
+  background: var(--si-green);
+}
+
+.signin-highlight-icon.orange {
+  background: var(--si-orange);
+}
+
+.signin-story-footer {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.signin-story a:focus-visible {
+  outline-color: white;
+}
+
+/* Form panel */
+
+.signin-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px;
+}
+
+.signin-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 44px;
+  color: var(--si-muted-ink);
+  font-weight: 500;
+}
+
+.signin-back:hover {
+  color: var(--si-ink);
+}
+
+.signin-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 448px;
+  margin: auto;
+  padding: 40px 0;
+}
+
+.signin-eyebrow {
+  margin: 0;
+  color: var(--si-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.campus-signin .signin-card h1 {
+  margin: 12px 0 0;
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.signin-description {
+  margin: 8px 0 0;
+  color: var(--si-muted-ink);
+}
+
+/* The existing LoginForm structure is styled here; its logic is unchanged. */
+
+.campus-signin .login-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin-top: 32px;
+}
+
+.campus-signin .login-form label {
+  margin: 0;
+  color: var(--si-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.campus-signin .login-form label:not(:first-child) {
+  margin-top: 14px;
+}
+
+.campus-signin .login-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 12px 16px;
+  border: 1px solid var(--si-border);
+  border-radius: 16px;
+  background: white;
+  color: var(--si-ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campus-signin .login-form input:focus-visible {
+  border-color: var(--si-primary);
+}
+
+.campus-signin .login-form input:disabled {
+  background: var(--si-muted);
+  color: var(--si-muted-ink);
+}
+
+.campus-signin .login-form .button.primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 50px;
+  margin-top: 14px;
+  padding: 14px 20px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--si-primary);
+  color: var(--si-primary-fg);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 8px 18px -10px oklch(0.3 0.08 240 / 45%);
+}
+
+.campus-signin .login-form .button.primary:hover:not(:disabled) {
+  background: oklch(0.47 0.14 240);
+  transform: translateY(-1px);
+}
+
+.campus-signin .login-form .button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.campus-signin .login-form .text-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 44px;
+  margin-top: 6px;
+  color: var(--si-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.campus-signin .login-form .text-link:hover {
+  text-decoration: underline;
+}
+
+.campus-signin .login-form > p.muted.small {
+  margin: 14px 0 0;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: var(--si-muted);
+  color: var(--si-muted-ink);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.campus-signin .login-form .error-message {
+  margin: 10px 0 0;
+  color: #a01828;
+  font-size: 14px;
+}
+
+.signin-setup-notice {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px solid var(--si-border);
+  border-radius: 16px;
+  background: white;
+}
+
+.signin-setup-notice strong {
+  font-size: 14px;
+}
+
+.signin-setup-notice p {
+  margin: 0;
+  color: var(--si-muted-ink);
+  font-size: 13px;
+}
+
+.signin-setup-notice a {
+  width: fit-content;
+  color: var(--si-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.signin-footer {
+  margin: 0;
+  padding-top: 4px;
+  color: var(--si-muted-ink);
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .signin-panel {
+    padding: 24px 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .campus-signin {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .signin-story {
+    display: flex;
+  }
+}
+
+@media (min-width: 1280px) {
+  .signin-story {
+    padding: 56px;
+  }
+
+  .campus-signin .signin-story h2 {
+    font-size: 60px;
+  }
+}
+
+@media (max-width: 399px) {
+  .signin-panel {
+    padding: 16px;
+  }
+
+  .campus-signin .signin-card h1 {
+    font-size: 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-signin *,
+  .campus-signin *::before,
+  .campus-signin *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .campus-signin .login-form .button.primary:hover:not(:disabled) {
+    transform: none;
+  }
+}

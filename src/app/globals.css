@@ -2262,10 +2262,19 @@ tbody td {
 .header-profile > summary {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #f1f5f9;
   cursor: pointer;
   list-style: none;
-  min-height: 44px;
+}
+.header-profile > summary:hover,
+.header-profile[open] > summary {
+  border-color: #e1e9f1;
+  background: #e9f0f7;
 }
 .header-profile > summary::-webkit-details-marker {
   display: none;
@@ -2273,26 +2282,47 @@ tbody td {
 .header-avatar {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
   border-radius: 50%;
-  color: var(--green-dark);
-  background: #e3eee4;
+  color: #1763a3;
+  background: #d9ecff;
+  font-size: 14px;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 .header-profile-name {
   display: grid;
-  gap: 3px;
+  gap: 1px;
   max-width: 180px;
   overflow-wrap: anywhere;
 }
 .header-profile-name strong {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.25;
 }
 .header-profile-name small {
-  font-size: 11px;
   color: var(--muted);
+  font-size: 11px;
+  line-height: 1.25;
+}
+.header-profile > summary > svg {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+@media (max-width: 639px) {
+  .header-profile-name {
+    display: none;
+  }
+  .header-profile > summary {
+    min-height: 48px;
+    padding: 4px;
+  }
+  .header-avatar {
+    width: 38px;
+    height: 38px;
+  }
 }
 .header-profile-popover {
   position: absolute;
@@ -2379,8 +2409,8 @@ tbody td {
 }
 .header-profile > summary:focus-visible {
   outline: 2px solid var(--green-dark);
-  outline-offset: 5px;
-  border-radius: 8px;
+  outline-offset: 3px;
+  border-radius: 999px;
 }
 
 /* Guardian Overview — role-specific layout, shared daily widgets */

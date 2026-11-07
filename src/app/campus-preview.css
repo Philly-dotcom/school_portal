@@ -1,0 +1,710 @@
+/* Campus preview. Every rule is scoped to .campus-preview so the
+   authenticated dashboard, sign-in and School Admin shell stay unchanged. */
+
+.campus-preview {
+  --cp-bg: oklch(0.97 0.01 230);
+  --cp-ink: oklch(0.22 0.03 250);
+  --cp-blue: oklch(0.52 0.15 240);
+  --cp-blue-light: oklch(0.93 0.04 235);
+  --cp-muted: oklch(0.5 0.03 250);
+  --cp-border: oklch(0.91 0.014 230);
+  --cp-yellow: oklch(0.86 0.15 88);
+  --cp-yellow-ink: oklch(0.3 0.06 70);
+  --cp-green: oklch(0.65 0.15 155);
+  --cp-purple: oklch(0.55 0.15 295);
+  --cp-orange: oklch(0.72 0.15 60);
+  --cp-shadow: 0 1px 2px oklch(0.3 0.05 240 / 5%),
+    0 10px 24px -16px oklch(0.3 0.08 240 / 25%);
+  /* Map existing preview components to the isolated palette. */
+  --ink: var(--cp-ink);
+  --text: var(--cp-ink);
+  --muted: var(--cp-muted);
+  --green: var(--cp-blue);
+  --green-dark: oklch(0.42 0.13 240);
+  --green-soft: var(--cp-blue-light);
+  --line: var(--cp-border);
+  --paper: var(--cp-bg);
+  --preview-body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --preview-display: "Space Grotesk", "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+  --sans: var(--preview-body), Arial, sans-serif;
+  min-height: 100vh;
+  background: var(--cp-bg);
+  color: var(--cp-ink);
+  font: 14px/1.5 var(--sans);
+}
+
+.campus-preview *,
+.campus-preview *::before,
+.campus-preview *::after {
+  box-sizing: border-box;
+}
+
+.campus-preview :is(h1, h2, h3) {
+  font-family: var(--preview-display), Arial, sans-serif;
+  color: var(--cp-ink);
+  line-height: 1.2;
+}
+
+.campus-preview
+  :is(a, button, summary, input, select):focus-visible {
+  outline: 3px solid var(--cp-blue);
+  outline-offset: 4px;
+}
+
+/* Header and navigation */
+
+.cp-header {
+  background: white;
+  border-bottom: 1px solid var(--cp-border);
+}
+
+.cp-header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  max-width: 1152px;
+  margin: auto;
+  padding: 16px 24px;
+}
+
+.cp-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--cp-ink);
+}
+
+.cp-brand-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--cp-blue);
+  color: white;
+}
+
+.cp-brand strong {
+  display: block;
+  font-family: var(--preview-display), Arial, sans-serif;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.cp-brand small {
+  display: block;
+  font-size: 11px;
+  color: var(--cp-muted);
+}
+
+.cp-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.cp-preview-badge {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cp-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--cp-blue);
+  color: white;
+  font-weight: 600;
+}
+
+.cp-signin:hover {
+  background: oklch(0.47 0.14 240);
+}
+
+.cp-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 1152px;
+  margin: auto;
+  padding: 0 24px 12px;
+}
+
+.cp-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: var(--cp-muted);
+  font-size: 14px;
+}
+
+.cp-navigation a:is(:hover, [aria-current="page"]) {
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+.cp-navigation a[aria-current="page"] {
+  font-weight: 700;
+}
+
+/* Page canvas */
+
+.cp-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1152px;
+  min-width: 0;
+  margin: auto;
+  padding: 32px 24px;
+}
+
+.campus-preview .page-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+}
+
+.campus-preview .page-heading h1 {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.campus-preview .page-description {
+  max-width: 60ch;
+  margin-top: 10px;
+  color: var(--cp-muted);
+}
+
+.campus-preview .eyebrow {
+  color: var(--cp-blue);
+}
+
+.campus-preview .preview-notice {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--cp-border);
+  border-radius: 14px;
+  background: white;
+  color: var(--cp-muted);
+  font-size: 12px;
+}
+
+.campus-preview .preview-notice strong {
+  color: var(--cp-ink);
+}
+
+.campus-preview .notice-icon {
+  width: 24px;
+  height: 24px;
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+.campus-preview .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cp-green);
+}
+
+/* Welcome banner */
+
+.campus-preview .welcome-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  min-height: 300px;
+  margin: 0;
+  padding: 32px;
+  overflow: hidden;
+  border-radius: 22px;
+  background: linear-gradient(
+    120deg,
+    var(--cp-blue),
+    oklch(0.62 0.13 215)
+  );
+  color: white;
+}
+
+.campus-preview .welcome-copy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+.campus-preview .welcome-tag {
+  color: white;
+  opacity: 0.85;
+}
+
+.campus-preview .welcome-tag .status-dot {
+  background: var(--cp-yellow);
+}
+
+.campus-preview .welcome-panel h2 {
+  margin: 18px 0;
+  color: white;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.campus-preview .welcome-panel p {
+  color: white;
+  opacity: 0.85;
+}
+
+.campus-preview .welcome-panel .button.light {
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--cp-yellow);
+  color: var(--cp-yellow-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.campus-preview .welcome-panel a:focus-visible {
+  outline-color: white;
+}
+
+.campus-preview .school-illustration {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.campus-preview .illustration-school {
+  border-color: transparent;
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+.campus-preview .floating-label {
+  border-color: var(--cp-border);
+  background: white;
+  color: var(--cp-blue);
+}
+
+.campus-preview .orbit {
+  border-color: oklch(1 0 0 / 12%);
+}
+
+.campus-preview .illustration-dot {
+  background: var(--cp-yellow);
+}
+
+/* Feature pills and cards */
+
+.campus-preview .foundation-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.campus-preview .foundation-stats > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--cp-shadow);
+}
+
+.campus-preview .foundation-stats strong {
+  display: block;
+  color: var(--cp-ink);
+}
+
+.campus-preview .foundation-stats > div > div > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--cp-muted);
+  font-size: 12px;
+}
+
+.campus-preview .stat-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+/* "Start with the essentials" shortcuts */
+
+.campus-preview .section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.campus-preview .section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.campus-preview .starter-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.campus-preview .starter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--cp-shadow);
+  transition: transform 0.15s ease;
+}
+
+.campus-preview .starter:hover {
+  transform: translateY(-2px);
+}
+
+.campus-preview .starter-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--cp-orange);
+  color: white;
+}
+
+.campus-preview .starter:nth-child(2) .starter-icon {
+  background: var(--cp-purple);
+}
+
+.campus-preview .starter:nth-child(3) .starter-icon {
+  background: var(--cp-green);
+}
+
+.campus-preview .starter h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.campus-preview .starter p {
+  margin: 0;
+  color: var(--cp-muted);
+  font-size: 13px;
+}
+
+.campus-preview .starter .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 8px;
+  color: var(--cp-blue);
+  font-weight: 600;
+}
+
+.campus-preview .starter-arrow {
+  display: none;
+}
+
+/* Roadmap */
+
+.campus-preview .roadmap-panel {
+  margin: 0;
+  padding: 24px;
+  border: 1px solid var(--cp-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--cp-shadow);
+}
+
+.campus-preview .phase-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campus-preview .phase-list::before,
+.campus-preview .phase-list li::before,
+.campus-preview .phase-list li::after {
+  display: none;
+}
+
+.campus-preview .phase-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
+  padding: 12px;
+  border: 1px solid var(--cp-border);
+  border-radius: 12px;
+}
+
+.campus-preview .phase-list li.current {
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+.campus-preview .phase-number {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+.campus-preview .phase-list li.current .phase-number {
+  background: var(--cp-blue);
+  color: white;
+}
+
+.campus-preview .phase-list small {
+  display: block;
+  margin-top: 4px;
+  color: var(--cp-muted);
+}
+
+.campus-preview .phase-list .status-dot {
+  margin-left: auto;
+  background: var(--cp-green);
+}
+
+/* Existing inner preview pages */
+
+.campus-preview
+  :is(.content-panel, .module-card, .setup-aside, .quiet-note) {
+  border-color: var(--cp-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--cp-shadow);
+}
+
+.campus-preview .module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.campus-preview :is(.module-icon, .large-monogram) {
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+.campus-preview .phase-tag {
+  border-color: var(--cp-border);
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+.campus-preview .button {
+  min-height: 44px;
+  border-radius: 12px;
+}
+
+.campus-preview .button.primary {
+  background: var(--cp-blue);
+  color: white;
+}
+
+.campus-preview .button.secondary {
+  border-color: var(--cp-border);
+  background: white;
+  color: var(--cp-blue);
+}
+
+.campus-preview .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.campus-preview .settings-list > div {
+  border-color: var(--cp-border);
+}
+
+.campus-preview .setup-number {
+  background: var(--cp-blue-light);
+  color: var(--cp-blue);
+}
+
+/* Footer */
+
+.cp-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 1152px;
+  margin: auto;
+  padding: 20px 24px;
+  border-top: 1px solid var(--cp-border);
+  color: var(--cp-muted);
+  font-size: 12px;
+}
+
+.cp-footer > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Responsive */
+
+@media (max-width: 1023px) {
+  .campus-preview .foundation-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .campus-preview .phase-list,
+  .campus-preview .module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .campus-preview .starter-list {
+    grid-template-columns: 1fr;
+  }
+
+  .campus-preview .starter {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 639px) {
+  .cp-header-inner {
+    padding: 16px;
+  }
+
+  .cp-header-actions {
+    margin-left: 0;
+  }
+
+  .cp-navigation {
+    gap: 4px;
+    padding: 0 12px 12px;
+  }
+
+  .cp-navigation a {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .cp-main {
+    gap: 20px;
+    padding: 24px 16px;
+  }
+
+  .campus-preview .page-heading h1 {
+    font-size: 28px;
+  }
+
+  .campus-preview .welcome-panel {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 24px;
+  }
+
+  .campus-preview .welcome-panel h2 {
+    font-size: 30px;
+  }
+
+  .campus-preview .school-illustration {
+    display: none;
+  }
+
+  .campus-preview .welcome-panel .button.light {
+    width: 100%;
+  }
+
+  .campus-preview .phase-list,
+  .campus-preview .module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campus-preview .starter {
+    padding: 16px;
+  }
+
+  .campus-preview .starter-icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+  }
+
+  .campus-preview .setup-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .campus-preview .approval-flow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cp-footer {
+    padding: 20px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-preview *,
+  .campus-preview *::before,
+  .campus-preview *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .campus-preview .starter:hover {
+    transform: none;
+  }
+}

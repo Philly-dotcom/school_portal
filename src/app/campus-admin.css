@@ -1,0 +1,691 @@
+/* Campus Administrator. Scoped to .campus-admin so the public preview,
+   sign-in and non-Admin dashboards keep their own layout. */
+
+.campus-admin {
+  --ca-bg: oklch(0.97 0.01 230);
+  --ca-ink: oklch(0.22 0.03 250);
+  --ca-muted: oklch(0.5 0.03 250);
+  --ca-blue: oklch(0.52 0.15 240);
+  --ca-soft: oklch(0.93 0.04 235);
+  --ca-border: oklch(0.91 0.014 230);
+  --ca-yellow: oklch(0.86 0.15 88);
+  --ca-yellow-ink: oklch(0.3 0.06 70);
+  --ca-shadow: 0 1px 2px oklch(0.3 0.05 240 / 5%),
+    0 10px 24px -16px oklch(0.3 0.08 240 / 25%);
+  --ink: var(--ca-ink);
+  --text: var(--ca-ink);
+  --muted: var(--ca-muted);
+  --green: var(--ca-blue);
+  --green-dark: oklch(0.42 0.13 240);
+  --green-soft: var(--ca-soft);
+  --line: var(--ca-border);
+  --paper: var(--ca-bg);
+  --admin-body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --admin-display: "Space Grotesk", "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+  --sans: var(--admin-body), Arial, sans-serif;
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  background: var(--ca-bg);
+  color: var(--ca-ink);
+  font: 14px/1.5 var(--sans);
+}
+
+.campus-admin *,
+.campus-admin *::before,
+.campus-admin *::after {
+  box-sizing: border-box;
+}
+
+.campus-admin[data-collapsed="true"] {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.campus-admin :is(h1, h2, h3) {
+  font-family: var(--admin-display), Arial, sans-serif;
+  color: var(--ca-ink);
+  line-height: 1.2;
+}
+
+.campus-admin
+  :is(a, button, summary, input, select, textarea):focus-visible {
+  outline: 3px solid var(--ca-blue);
+  outline-offset: 3px;
+}
+
+.campus-admin button {
+  font: inherit;
+}
+
+/* Header */
+
+.ca-header {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--ca-border);
+  background: white;
+}
+
+.ca-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  color: var(--ca-ink);
+}
+
+.ca-brand-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--ca-blue);
+  color: white;
+}
+
+.ca-brand strong {
+  display: block;
+  font-family: var(--admin-display), Arial, sans-serif;
+  font-size: 18px;
+}
+
+.ca-brand small,
+.ca-school small {
+  display: block;
+  margin-top: 2px;
+  color: var(--ca-muted);
+  font-size: 11px;
+}
+
+.ca-school {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding-left: 16px;
+  border-left: 1px solid var(--ca-border);
+}
+
+.ca-school strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.ca-account {
+  margin-left: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ca-mobile-menu {
+  display: none;
+}
+
+/* Sidebar */
+
+.ca-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding: 12px 10px;
+  border-right: 1px solid var(--ca-border);
+  background: white;
+}
+
+.ca-collapse {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ca-bg);
+  color: var(--ca-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ca-sidebar-scroll {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.ca-navigation-groups {
+  display: grid;
+  gap: 14px;
+}
+
+.ca-nav-group {
+  display: grid;
+  gap: 2px;
+}
+
+.ca-group-heading {
+  margin: 0 8px 4px;
+  color: var(--ca-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ca-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 5px 8px;
+  border-radius: 10px;
+  color: var(--ca-ink);
+  font-size: 12px;
+}
+
+.ca-nav-link:hover {
+  background: var(--ca-bg);
+}
+
+.ca-nav-link[aria-current="page"] {
+  background: var(--ca-soft);
+  color: var(--ca-blue);
+  font-weight: 700;
+  box-shadow: inset 3px 0 var(--ca-blue);
+}
+
+.ca-nav-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.ca-nav-label {
+  overflow-wrap: anywhere;
+}
+
+.ca-settings-nav {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.ca-nav-icon.blue {
+  background: #e5f1fc;
+  color: #1763a3;
+}
+
+.ca-nav-icon.green {
+  background: #e3f3e9;
+  color: #236344;
+}
+
+.ca-nav-icon.orange {
+  background: #fff0de;
+  color: #945114;
+}
+
+.ca-nav-icon.coral {
+  background: #fce7e8;
+  color: #a53443;
+}
+
+.ca-nav-icon.purple {
+  background: #f0e9fa;
+  color: #6c419d;
+}
+
+.ca-nav-icon.teal {
+  background: #def3f2;
+  color: #176d70;
+}
+
+.campus-admin[data-collapsed="true"] .ca-sidebar .ca-nav-label,
+.campus-admin[data-collapsed="true"] .ca-sidebar .ca-group-heading {
+  display: none;
+}
+
+.campus-admin[data-collapsed="true"] .ca-sidebar .ca-nav-link,
+.campus-admin[data-collapsed="true"] .ca-collapse {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.campus-admin[data-collapsed="true"] .ca-navigation-groups {
+  gap: 10px;
+}
+
+/* Main content */
+
+.ca-main {
+  width: 100%;
+  max-width: 1500px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.ca-overview {
+  display: grid;
+  gap: 24px;
+}
+
+/* Banner */
+
+.ca-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 22px;
+  background: linear-gradient(
+    120deg,
+    var(--ca-blue),
+    oklch(0.62 0.13 215)
+  );
+  color: white;
+}
+
+.ca-hero > div {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.ca-hero time {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.campus-admin .ca-hero h1 {
+  margin: 6px 0;
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.ca-hero p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.ca-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: var(--ca-yellow);
+  color: var(--ca-yellow-ink);
+  font-weight: 700;
+}
+
+.ca-hero a:focus-visible {
+  outline-color: white;
+}
+
+/* Statistics */
+
+.campus-admin .ca-overview .daily-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.campus-admin .ca-overview .daily-stat {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  padding: 18px;
+  border: 1px solid var(--ca-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--ca-shadow);
+}
+
+.campus-admin .ca-overview .daily-stat h2 {
+  color: var(--ca-muted);
+  font: 12px var(--sans);
+}
+
+.campus-admin .ca-overview .daily-stat strong {
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+/* Quick actions */
+
+.ca-section-title {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.ca-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ca-actions > a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 88px;
+  padding: 16px;
+  border: 1px solid var(--ca-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--ca-shadow);
+  font-size: 13px;
+}
+
+.ca-actions strong {
+  overflow-wrap: anywhere;
+}
+
+.ca-action-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  color: white;
+}
+
+.ca-action-icon.green {
+  background: oklch(0.65 0.15 155);
+}
+
+.ca-action-icon.blue {
+  background: oklch(0.6 0.15 240);
+}
+
+.ca-action-icon.orange {
+  background: oklch(0.72 0.15 60);
+}
+
+.ca-action-icon.purple {
+  background: oklch(0.55 0.15 295);
+}
+
+/* Feeds */
+
+.ca-feed-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.ca-secondary-feeds {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.ca-card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--ca-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--ca-shadow);
+}
+
+.ca-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.ca-card-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.ca-card-heading a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ca-blue);
+  font-size: 12px;
+}
+
+.campus-admin .ca-card .daily-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campus-admin .ca-card .daily-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ca-border);
+}
+
+.campus-admin .ca-card .daily-list li > div {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.campus-admin .ca-card .daily-list :is(a, p) {
+  overflow-wrap: anywhere;
+}
+
+.campus-admin .ca-card .daily-list p {
+  color: var(--ca-muted);
+  font-size: 12px;
+}
+
+.campus-admin .ca-card .daily-tag {
+  background: var(--ca-soft);
+  color: var(--ca-blue);
+  font-size: 11px;
+}
+
+.campus-admin .ca-card .daily-message {
+  margin-top: 12px;
+  color: var(--ca-muted);
+  font-size: 12px;
+}
+
+/* Existing feature pages inside the Admin shell */
+
+.campus-admin .ca-main .content-panel {
+  border-color: var(--ca-border);
+  border-radius: 16px;
+  background: white;
+  box-shadow: var(--ca-shadow);
+}
+
+.campus-admin .ca-main .page-heading {
+  flex-wrap: wrap;
+}
+
+.campus-admin .ca-main .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Mobile drawer */
+
+.ca-drawer:not([open]) {
+  display: none;
+}
+
+.ca-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(320px, calc(100vw - 32px));
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: white;
+  color: var(--ca-ink);
+  overflow-y: auto;
+}
+
+.ca-drawer::backdrop {
+  background: rgb(15 30 45 / 45%);
+}
+
+.ca-drawer-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ca-drawer-heading h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.ca-drawer-heading button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ca-soft);
+  color: var(--ca-blue);
+  cursor: pointer;
+}
+
+.ca-drawer .ca-nav-link {
+  min-height: 44px;
+  font-size: 14px;
+}
+
+/* Responsive */
+
+@media (max-width: 1279px) {
+  .ca-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .campus-admin,
+  .campus-admin[data-collapsed="true"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ca-sidebar {
+    display: none;
+  }
+
+  .ca-mobile-menu {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--ca-soft);
+    color: var(--ca-blue);
+    cursor: pointer;
+  }
+
+  .ca-school {
+    flex-basis: 180px;
+  }
+}
+
+@media (max-width: 767px) {
+  .ca-header {
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .ca-school {
+    order: 4;
+    flex-basis: 100%;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .ca-account {
+    margin-left: auto;
+  }
+
+  .ca-main {
+    padding: 16px;
+  }
+
+  .campus-admin .ca-overview .daily-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .campus-admin .ca-overview .daily-stat {
+    min-height: 80px;
+  }
+
+  .ca-feed-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ca-hero {
+    padding: 20px;
+  }
+
+  .campus-admin .ca-hero h1 {
+    font-size: 25px;
+  }
+
+  .ca-primary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 399px) {
+  .ca-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-admin *,
+  .campus-admin *::before,
+  .campus-admin *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

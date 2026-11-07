@@ -1,4 +1,4 @@
-import { PortalShell } from "@/components/portal-shell";
+import { CampusPreviewShell } from "@/components/campus-preview-shell";
 import {
   Access,
   Modules,
@@ -14,6 +14,7 @@ const views = {
   settings: SettingsPreview,
   setup: SetupGuide,
 };
+
 export default async function Preview({
   searchParams,
 }: {
@@ -26,8 +27,8 @@ export default async function Preview({
       : "overview";
   const Content = views[view];
   return (
-    <PortalShell view={view}>
+    <CampusPreviewShell view={view}>
       <Content />
-    </PortalShell>
+    </CampusPreviewShell>
   );
 }

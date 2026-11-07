@@ -54,15 +54,33 @@ export async function authoriseAssessmentScale(
   if (!isSchoolAdminContext(context))
     return { error: "School Admin access is required.", saved: false };
 
-  if (!z.uuid().safeParse(id).success || !Number.isSafeInteger(expectedVersion) || expectedVersion < 1)
-    return { error: "Choose a saved assessment.", saved: false };
+  if (
+    !z.uuid().safeParse(id).success ||
+    !Number.isSafeInteger(expectedVersion) ||
+    expectedVersion < 1
+  )
+    return { error: "Choose a saved assessment.", 
+      saved: false };
 
-  const result = await loadAssessments(context.school.id, "school_admin", 1, id);
+  const result = await loadAssessments(
+    context.school.id,
+    "school_admin",
+    1,
+    id,
+  );
   const item = result?.rows[0];
   if (!item || item.id !== id)
-    return { error: "The assessment could not be loaded. Refresh the list and try again.", saved: false };
+    return {
+      error:
+        "The assessment could not be loaded. Refresh the list and try again.",
+      saved: false,
+    };
   if (item.record_version !== expectedVersion || item.scale_authorised)
-    return { error: "This assessment changed. Refresh the list and check its current scale.", saved: false };
+    return {
+      error:
+        "This assessment changed. Refresh the list and check its current scale.",
+      saved: false,
+    };
 
   // Copy the stored proposal. The RPC checks the expected version again under lock.
   return persistAssessment(context.school.id, {
@@ -105,18 +123,27 @@ async function persistAssessment(
     if (error || typeof data !== "string") {
       // Some gateways replace database errors. Check the visible definition before
       // reporting a generic failure; a lost response could also follow a committed save.
-      if (v.id && error && !["40001", "PT409", "55000", "42501", "22023"].includes(error.code)) {
+      if (
+        v.id &&
+        error &&
+        !["40001", "PT409", "55000", "42501", "22023"].includes(error.code)
+      ) {
         const latest = await loadAssessments(schoolId, v.mode, 1, v.id);
-        const current = latest?.rows.find(row => row.id === v.id);
+        const current = latest?.rows.find((row) => row.id === v.id);
         if (current && current.record_version !== v.version)
-          return { error: "The saved assessment version changed. Reload and check the saved definition before retrying.", saved: false };
+          return {
+            error:
+              "The saved assessment version changed. Reload and check the saved definition before retrying.",
+            saved: false,
+          };
       }
       return {
         error:
           error?.code === "40001" || error?.code === "PT409"
             ? "This assessment changed. Reload before saving again."
-            : error?.code === "55000" ? "The roster has been frozen. This assessment definition is locked."
-            : "Assessment could not be saved. Check assignment access, term dates and scale authorisation.",
+            : error?.code === "55000"
+              ? "The roster has been frozen. This assessment definition is locked."
+              : "Assessment could not be saved. Check assignment access, term dates and scale authorisation.",
         saved: false,
       };
     }

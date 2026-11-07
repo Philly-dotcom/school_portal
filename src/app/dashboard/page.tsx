@@ -26,9 +26,9 @@ import {
 } from "@/lib/portal-validation";
 import { loadPortalActor } from "@/lib/portal-data";
 import { RoleOverview } from "@/components/role-overview";
-import { DailyOverview } from "@/components/daily-overview";
+import { CampusAdminOverview } from "@/components/campus-admin-overview";
 import { loadAdminProfile } from "@/lib/staff-profile-data";
-import { AdminProfile, TeacherProfile } from "@/components/staff-profile";
+import { TeacherProfile } from "@/components/staff-profile";
 import { StudentProfile } from "@/components/student-profile";
 import { MyTimetablePanel } from "@/components/my-timetable-panel";
 import {
@@ -379,16 +379,10 @@ export default async function Dashboard({
         schoolName={context.school.name}
         view={params.view === "my-timetable" ? "my-timetable" : "overview"}
       >
-        {!(
-          actor.status === "ready" &&
-          (actor.mode === "student" || actor.mode === "guardian") &&
-          params.view !== "my-timetable"
-        ) && (
+        {params.view === "my-timetable" && (
           <PageHeading
             eyebrow="YOUR SCHOOL WORKSPACE"
-            title={
-              params.view === "my-timetable" ? "My timetable" : "Your workspace"
-            }
+            title="My timetable"
             description="Access follows your school role and linked school records."
           />
         )}
@@ -593,17 +587,16 @@ export default async function Dashboard({
       ) : (
         <>
           {admin && (
-            <>
-              <Suspense fallback={<p role="status">Loading your profile...</p>}>
-                <AdminProfile
-                  dashboard
-                  headingOnly
-                  context={context}
-                  profileRead={adminProfileRead}
-                />
-              </Suspense>
-              <DailyOverview context={context} />
-            </>
+            <Suspense
+              fallback={
+                <p role="status">Loading your school overview...</p>
+              }
+            >
+              <CampusAdminOverview
+                context={context}
+                profileRead={adminProfileRead}
+              />
+            </Suspense>
           )}
         </>
       )}

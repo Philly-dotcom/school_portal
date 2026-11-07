@@ -130,6 +130,10 @@ it("does not read admin data for other roles and rejects an identity mismatch", 
 it("shows only the guardian's granted learners without selecting a child automatically", () => {
   const html = renderToStaticMarkup(createElement(RoleOverview, {
     schoolName: "Fictional School", availableModes: ["guardian"],
+    context: {
+      status: "ready", roles: ["guardian"], userId: "user",
+      school: { id: "school", name: "Fictional School", timezone: "Africa/Johannesburg" },
+    },
     actor: {
       status: "ready", mode: "guardian", schoolId: "school",
       person: { id, fullName: "Fictional Guardian", reference: "PRIVATE-GU-REF" },
@@ -137,7 +141,7 @@ it("shows only the guardian's granted learners without selecting a child automat
       selectedChild: null,
     },
   }));
-  for (const value of ["Welcome back, Fictional", "Fictional School", "My children", "Granted Student", "Select a learner to continue"]) {
+  for (const value of ["Hello, Fictional", "My children", "Granted Student", "Select a learner to see"]) {
     expect(html).toContain(value);
   }
   expect(html).not.toContain("PRIVATE-GU-REF");
@@ -148,6 +152,10 @@ it("shows only the guardian's granted learners without selecting a child automat
 it("explains missing guardian grants without offering an impossible learner selection", () => {
   const html = renderToStaticMarkup(createElement(RoleOverview, {
     schoolName: "Fictional School", availableModes: ["guardian"],
+    context: {
+      status: "ready", roles: ["guardian"], userId: "user",
+      school: { id: "school", name: "Fictional School", timezone: "Africa/Johannesburg" },
+    },
     actor: {
       status: "ready", mode: "guardian", schoolId: "school",
       person: { id, fullName: "Fictional Guardian", reference: "PRIVATE-GU-REF" },
@@ -157,7 +165,7 @@ it("explains missing guardian grants without offering an impossible learner sele
   expect(html).toContain("No learner access yet");
   expect(html).toContain("Contact your School Admin");
   expect(html).not.toContain("<select");
-  expect(html).not.toContain("Select a learner to continue");
+  expect(html).not.toContain("Select a learner to see");
   expect(html).not.toContain("view=attendance");
   expect(html).not.toContain("PRIVATE-GU-REF");
 });
@@ -166,6 +174,10 @@ it("keeps the selected learner and guardian workspace in the picker", () => {
   const learner = { id, fullName: "Granted Student", reference: "ST-003", relationship: "Parent" };
   const html = renderToStaticMarkup(createElement(RoleOverview, {
     schoolName: "Fictional School", availableModes: ["guardian"],
+    context: {
+      status: "ready", roles: ["guardian"], userId: "user",
+      school: { id: "school", name: "Fictional School", timezone: "Africa/Johannesburg" },
+    },
     actor: {
       status: "ready", mode: "guardian", schoolId: "school",
       person: { id, fullName: "Fictional Guardian", reference: "PRIVATE-GU-REF" },
@@ -177,6 +189,6 @@ it("keeps the selected learner and guardian workspace in the picker", () => {
   expect(html).toContain('name="mode" value="guardian"');
   expect(html).toContain('name="view" value="overview"');
   expect(html).toContain(`value="${id}" selected=""`);
-  expect(html).not.toContain("Select a learner to continue");
+  expect(html).not.toContain("Select a learner to see");
   expect(html).not.toContain("PRIVATE-GU-REF");
 });

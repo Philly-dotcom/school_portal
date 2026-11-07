@@ -16,31 +16,22 @@ it("groups Admin setup links separately and places the supplied account control 
     profileMenu: "Verified account control",
   };
   const html = renderToStaticMarkup(createElement(PortalShell, props));
-  expect(html).toContain('aria-label="School management"');
-  const management = html
-    .split('aria-label="School management"')[1]
+  expect(html).toContain('aria-label="Administrator sidebar"');
+  expect(html).toContain('aria-label="Academics"');
+  const academics = html
+    .split('aria-label="Academics"')[1]
     .split("</nav>")[0];
-  for (const view of [
-    "academic",
-    "registers",
-    "teaching",
-    "people",
-    "settings",
-  ])
-    expect(management).toContain(`view=${view}`);
-  for (const view of [
-    "academic",
-    "registers",
-    "teaching",
-    "people",
-    "settings",
-  ])
-    expect(management).toContain(`view=${view}&amp;mode=school_admin`);
-  expect(management).not.toContain("view=timetable");
+  for (const view of ["assessments", "academic", "teaching"])
+    expect(academics).toContain(`view=${view}&amp;mode=school_admin`);
+  expect(html).toContain('aria-label="School settings"');
+  expect(html).toContain(
+    'href="/dashboard?view=settings&amp;mode=school_admin"',
+  );
   expect(html.split("<header")[1].split("</header>")[0]).toContain(
     "Verified account control",
   );
-  expect(shell("teacher")).not.toContain('aria-label="School management"');
+  expect(html).not.toContain('aria-label="School management"');
+  expect(shell("teacher")).not.toContain('aria-label="Administrator sidebar"');
 });
 function shell(mode: "teacher" | "guardian", view = "documents") {
   const props = {
@@ -61,8 +52,8 @@ it("retains the selected guardian learner on every daily sidebar link and home",
       `href="${portalHref(view, "guardian", child).replaceAll("&", "&amp;")}"`,
     );
   }
-  expect(html).toContain('aria-label="Active workspace"');
-  expect(html).toContain("Learner: Fictional Child");
+  expect(html).toContain("Viewing learner:");
+  expect(html).toContain("Fictional Child");
 });
 it("offers only authorised workspace destinations and drops learner/edit context", () => {
   const html = renderToStaticMarkup(

@@ -61,7 +61,7 @@ beforeEach(() => {
   });
 });
 it("opens the assigned non-admin workspace by default", async () => {
-  expect(await render()).toContain("Fictional Teacher");
+  expect(await render()).toContain("Hello, Fictional");
   expect(mock.actor).toHaveBeenCalledWith("teacher", undefined, expect.objectContaining({ status: "ready" }));
 });
 it.each([
@@ -76,10 +76,15 @@ it.each([
 });
 it("requires a workspace choice for multiple roles including Admin", async () => {
   context(["school_admin", "teacher"]);
-  expect(await render()).toContain("How would you like to continue?");
-  expect(await render({ mode: "school_admin" })).toContain("Manage school settings");
+  const chooser = await render();
+  expect(chooser).toContain("How would you like to continue?");
+  expect(chooser).toContain('class="campus-root"');
+  expect(chooser).not.toContain('class="app-shell"');
+  expect(await render({ mode: "school_admin" })).toContain(
+    "School administration",
+  );
   expect(mock.actor).not.toHaveBeenCalled();
-  expect(await render({ mode: "teacher" })).toContain("Fictional Teacher");
+  expect(await render({ mode: "teacher" })).toContain("Hello, Fictional");
 });
 it("does not turn role workspace routing into admin access", async () => {
   expect(await render({ view: "timetable", mode: "teacher" })).toContain(

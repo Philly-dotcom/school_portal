@@ -1,15 +1,22 @@
 import { assessmentHref } from "@/lib/assessment-validation";
 import Link from "next/link";
+import { CampusAdminShell } from "@/components/campus-admin-shell";
+import { CampusFrame } from "@/components/campus-frame";
 import { NavigationPending } from "@/components/navigation-pending";
 import {
   ArrowUpRight,
   BookOpen,
+  CalendarDays,
   Check,
   ChevronRight,
+  ClipboardCheck,
+  ClipboardList,
+  FileText,
   GraduationCap,
   LayoutDashboard,
   Layers3,
   LockKeyhole,
+  Megaphone,
   Settings2,
   ShieldCheck,
   Users,
@@ -90,6 +97,98 @@ export function PortalShell({
             ]
           : []),
       ];
+  // School Admin keeps a compact, grouped sidebar; the Campus dashboard uses
+  // its own header and scrollable main area. Feature pages share this shell.
+  if (!preview && admin) {
+    return (
+      <CampusAdminShell
+        schoolName={schoolName}
+        view={view}
+        profileMenu={
+          profileMenu ?? (
+            <form action={signOut}>
+              <button className="button secondary">Sign out</button>
+            </form>
+          )
+        }
+      >
+        {children}
+      </CampusAdminShell>
+    );
+  }
+  // Multi-role accounts without a selected mode see the Campus workspace
+  // chooser: brand, account menu and a single centred card, with no sidebar.
+  if (!preview && !admin && !mode) {
+    return (
+      <CampusFrame
+        schoolName={schoolName}
+        homeHref="/dashboard"
+        profileMenu={
+          profileMenu ?? (
+            <form action={signOut}>
+              <button className="button secondary">Sign out</button>
+            </form>
+          )
+        }
+      >
+        {children}
+      </CampusFrame>
+    );
+  }
+  // Teacher, Student and Guardian use the Campus presentation. The public
+  // preview keeps its own shell; Admin is handled above.
+  if (!preview && !admin && mode) {
+    const activeMode = mode;
+    const campusIcons = {
+      overview: LayoutDashboard,
+      "my-timetable": CalendarDays,
+      attendance: ClipboardCheck,
+      assessments: ClipboardList,
+      homework: BookOpen,
+      announcements: Megaphone,
+      documents: FileText,
+    };
+    const campusNavigation = items.map(
+      ({ view: key, label, icon: FallbackIcon }) => {
+        const Icon =
+          campusIcons[key as keyof typeof campusIcons] ?? FallbackIcon;
+        const href =
+          key === "assessments"
+            ? assessmentHref("teacher")
+            : isPortalView(key)
+              ? portalHref(key, activeMode, child)
+              : `/dashboard?view=${key}&mode=${activeMode}`;
+        return (
+          <Link
+            key={key}
+            href={href}
+            aria-current={view === key ? "page" : undefined}
+          >
+            <Icon size={18} aria-hidden="true" />
+            {label}
+            <NavigationPending />
+          </Link>
+        );
+      },
+    );
+    return (
+      <CampusFrame
+        schoolName={schoolName}
+        homeHref={portalHref("overview", activeMode, child)}
+        learnerName={learnerName}
+        navigation={campusNavigation}
+        profileMenu={
+          profileMenu ?? (
+            <form action={signOut}>
+              <button className="button secondary">Sign out</button>
+            </form>
+          )
+        }
+      >
+        {children}
+      </CampusFrame>
+    );
+  }
   const managementViews = new Set(["academic", "registers", "teaching", "people", "settings"]);
   const groups = !preview && admin ? [{ label: "WORKSPACE", items: items.filter(item => !managementViews.has(item.view)) }, { label: "School management", items: items.filter(item => managementViews.has(item.view)) }] : [{ label: "WORKSPACE", items }];
   return (

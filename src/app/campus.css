@@ -1,0 +1,916 @@
+/* Campus presentation. Every rule is scoped to .campus-root so the
+   School Admin shell and /preview keep their existing design. */
+
+.campus-root {
+  --c-bg: oklch(0.97 0.01 230);
+  --c-ink: oklch(0.22 0.03 250);
+  --c-card: oklch(1 0 0);
+  --c-primary: oklch(0.52 0.15 240);
+  --c-primary-fg: oklch(0.99 0.005 230);
+  --c-muted: oklch(0.95 0.012 230);
+  --c-muted-ink: oklch(0.5 0.03 250);
+  --c-accent: oklch(0.93 0.04 235);
+  --c-border: oklch(0.91 0.014 230);
+  --c-sun: oklch(0.86 0.15 88);
+  --c-sun-ink: oklch(0.3 0.06 70);
+  --c-blue: oklch(0.6 0.15 240);
+  --c-green: oklch(0.65 0.15 155);
+  --c-orange: oklch(0.72 0.15 60);
+  --c-coral: oklch(0.6 0.17 20);
+  --c-purple: oklch(0.55 0.15 295);
+  --c-teal: oklch(0.62 0.11 200);
+  --c-shadow: 0 1px 2px oklch(0.3 0.05 240 / 5%),
+    0 10px 24px -16px oklch(0.3 0.08 240 / 25%);
+  /* Existing panels inherit the Campus palette without changing the admin shell. */
+  --ink: var(--c-ink);
+  --text: var(--c-ink);
+  --muted: var(--c-muted-ink);
+  --green: var(--c-primary);
+  --green-dark: oklch(0.42 0.13 240);
+  --green-soft: var(--c-accent);
+  --line: var(--c-border);
+  --paper: var(--c-bg);
+  --campus-body: "DM Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --campus-display: "Space Grotesk", "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+  --sans: var(--campus-body);
+  min-height: 100vh;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--campus-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.campus-root *,
+.campus-root *::before,
+.campus-root *::after {
+  box-sizing: border-box;
+}
+
+.campus-root :is(h1, h2, h3, h4) {
+  font-family: var(--campus-display);
+  color: var(--c-ink);
+  line-height: 1.2;
+}
+
+.campus-root p {
+  line-height: 1.55;
+}
+
+.campus-root :is(a, button, summary, input, select, textarea):focus-visible {
+  outline: 3px solid var(--c-primary);
+  outline-offset: 3px;
+}
+
+.campus-root :is(select, textarea, button, input) {
+  font: inherit;
+}
+
+/* Header */
+
+.campus-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  min-height: 72px;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-card);
+  background: color-mix(in oklch, var(--c-card) 96%, var(--c-bg));
+  backdrop-filter: blur(12px);
+}
+
+.campus-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  color: var(--c-ink);
+}
+
+.campus-brand-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: var(--c-primary);
+  color: white;
+}
+
+.campus-brand-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.campus-brand-copy strong {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.campus-brand-copy small {
+  color: var(--c-muted-ink);
+  font-size: 11px;
+}
+
+.campus-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.campus-menu {
+  position: relative;
+}
+
+.campus-menu > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--c-muted);
+  color: var(--c-ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.campus-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.campus-menu[open] > summary {
+  border-color: var(--c-border);
+  background: var(--c-accent);
+}
+
+.campus-menu:not([open]) > nav {
+  display: none;
+}
+
+.campus-menu nav {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 50;
+  display: grid;
+  gap: 3px;
+  width: min(300px, calc(100vw - 32px));
+  max-height: 65vh;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  background: var(--c-card);
+  box-shadow: var(--c-shadow);
+}
+
+.campus-menu nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.campus-menu nav a:hover,
+.campus-menu nav a[aria-current="page"] {
+  background: var(--c-accent);
+  color: var(--c-primary);
+}
+
+.campus-menu nav a svg {
+  flex-shrink: 0;
+}
+
+.campus-menu nav [role="status"] {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--c-muted-ink);
+}
+
+.campus-learner-context {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--c-muted-ink);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.campus-learner-context strong {
+  color: var(--c-ink);
+}
+
+/* The existing profile menu is reused; only its popover surface is adapted. */
+.campus-header .header-profile-popover {
+  z-index: 60;
+  border-color: var(--c-border);
+  border-radius: 16px;
+  box-shadow: var(--c-shadow);
+}
+
+/* Main canvas */
+
+.campus-main {
+  width: 100%;
+  max-width: 1280px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  scroll-margin-top: 90px;
+}
+
+.campus-overview {
+  display: grid;
+  gap: 24px;
+}
+
+/* Welcome banner */
+
+.campus-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  min-height: 150px;
+  padding: 28px;
+  border-radius: 22px;
+  background: linear-gradient(
+    118deg,
+    var(--c-primary),
+    oklch(0.62 0.13 215)
+  );
+  color: var(--c-primary-fg);
+  box-shadow: 0 18px 40px -28px oklch(0.35 0.12 240 / 70%);
+}
+
+.campus-hero-copy {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.campus-hero time {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  opacity: 0.88;
+}
+
+.campus-root .campus-hero h1 {
+  margin: 7px 0;
+  color: inherit;
+  font-size: clamp(27px, 3vw, 36px);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.campus-hero p {
+  margin: 0;
+  max-width: 56ch;
+  color: inherit;
+  font-size: 14px;
+  opacity: 0.94;
+}
+
+.campus-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 12px 21px;
+  border-radius: 999px;
+  background: var(--c-sun);
+  color: var(--c-sun-ink);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 10px 24px -13px oklch(0.3 0.06 70 / 65%);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campus-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px -12px oklch(0.3 0.06 70 / 75%);
+}
+
+.campus-primary [role="status"] {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.campus-root .campus-primary:focus-visible {
+  outline-color: white;
+}
+
+/* Shortcut tiles */
+
+.campus-shortcuts h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.campus-shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.campus-shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 8px 6px;
+  border-radius: 16px;
+  color: var(--c-ink);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  transition: background 0.15s ease;
+}
+
+.campus-shortcut:hover {
+  background: color-mix(in oklch, var(--c-card) 65%, var(--c-bg));
+}
+
+.campus-tile {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  color: white;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.campus-shortcut:hover .campus-tile {
+  transform: translateY(-2px);
+  box-shadow: var(--c-shadow);
+}
+
+.campus-tile.timetable {
+  background: var(--c-blue);
+}
+
+.campus-tile.attendance {
+  background: var(--c-green);
+}
+
+.campus-tile.assessments {
+  background: var(--c-orange);
+}
+
+.campus-tile.homework {
+  background: var(--c-coral);
+}
+
+.campus-tile.announcements {
+  background: var(--c-purple);
+}
+
+.campus-tile.documents {
+  background: var(--c-teal);
+}
+
+.campus-shortcut [role="status"] {
+  font-size: 10px;
+  color: var(--c-muted-ink);
+}
+
+/* Cards */
+
+.campus-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.campus-card {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--c-border);
+  border-radius: 18px;
+  background: var(--c-card);
+  box-shadow: var(--c-shadow);
+}
+
+.campus-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-bottom: 12px;
+}
+
+.campus-card-heading h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+}
+
+.campus-card-heading a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--c-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.campus-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.campus-section-heading h2 {
+  margin: 2px 0 0;
+  font-size: 18px;
+}
+
+.campus-overline {
+  margin: 0;
+  color: var(--c-muted-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.campus-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.campus-muted {
+  margin: 8px 0 0;
+  color: var(--c-muted-ink);
+  font-size: 13px;
+}
+
+.campus-loading {
+  margin: 0;
+  color: var(--c-muted-ink);
+  font-size: 13px;
+}
+
+.campus-empty {
+  display: grid;
+  gap: 8px;
+}
+
+.campus-empty h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.campus-empty p {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--c-muted-ink);
+}
+
+/* Workspace chooser (multi-role accounts without a selected mode) */
+
+.campus-root .workspace-selection {
+  width: 100%;
+  max-width: 760px;
+  margin: 48px auto;
+  padding: 40px;
+  border: 1px solid var(--c-border);
+  border-radius: 22px;
+  background: var(--c-card);
+  box-shadow: var(--c-shadow);
+}
+
+.campus-root .workspace-selection .eyebrow {
+  color: var(--c-primary);
+  letter-spacing: 0.18em;
+}
+
+.campus-root .workspace-selection h1 {
+  margin: 12px 0;
+  color: var(--c-ink);
+  font-family: var(--campus-display);
+  font-size: clamp(30px, 4vw, 42px);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.campus-root .workspace-selection > p.muted {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--c-muted-ink);
+  font-size: 15px;
+}
+
+.campus-root .workspace-selection .workspace-choices {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.campus-root .workspace-selection .workspace-choices .button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 56px;
+  padding: 14px 18px;
+  border: 1px solid var(--c-border);
+  border-radius: 14px;
+  background: var(--c-card);
+  color: var(--c-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.campus-root .workspace-selection .workspace-choices .button:hover {
+  border-color: var(--c-primary);
+  background: var(--c-accent);
+  color: var(--c-primary);
+}
+
+.campus-root .workspace-selection .workspace-choices .button [role="status"] {
+  margin-left: auto;
+  color: var(--c-muted-ink);
+  font-size: 11px;
+}
+
+.campus-root .workspace-selection > [role="alert"] {
+  margin: 0 0 16px;
+  color: #a01828;
+}
+
+/* Guardian learner context */
+
+.campus-learner-selection .access-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 0;
+}
+
+.campus-learner-selection .access-form > label {
+  flex: 1 1 240px;
+  min-width: 0;
+  margin: 0;
+}
+
+.campus-learner-selection select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 7px;
+  padding: 10px 11px;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  background: white;
+  color: var(--c-ink);
+}
+
+.campus-learner-selection .access-form .button {
+  margin: 0;
+}
+
+.campus-learner-selection [role="status"] {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--c-muted-ink);
+  font-size: 12px;
+}
+
+.campus-selected-child {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: var(--c-accent);
+  color: var(--c-ink);
+  font-size: 13px;
+}
+
+.campus-selected-child p {
+  margin: 0;
+}
+
+.campus-selected-child .campus-overline {
+  margin-bottom: 4px;
+  color: var(--c-primary);
+  font-size: 10px;
+}
+
+/* Student context strip */
+
+.campus-student-context .student-dashboard-profile {
+  margin: 0;
+}
+
+.campus-student-context .student-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin: 0;
+  padding: 18px 22px;
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  background: var(--c-card);
+  box-shadow: var(--c-shadow);
+}
+
+.campus-student-context .student-summary .daily-stat {
+  display: block;
+  flex: 1 1 160px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.campus-student-context .student-summary h2 {
+  margin: 0;
+  color: var(--c-muted-ink);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.campus-student-context .student-summary strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 16px;
+}
+
+/* Daily lists from the existing loaders */
+
+.campus-card .daily-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campus-card .daily-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.campus-card .daily-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.campus-card .daily-list li > div {
+  flex: 1 1 170px;
+  min-width: 0;
+}
+
+.campus-card .daily-list :is(strong, a, p) {
+  overflow-wrap: anywhere;
+}
+
+.campus-card .daily-list p {
+  margin: 3px 0 0;
+  color: var(--c-muted-ink);
+  font-size: 12px;
+}
+
+.campus-card .daily-time {
+  flex-shrink: 0;
+  color: var(--c-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.campus-card .daily-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--c-accent);
+  color: var(--c-primary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.campus-card .daily-message {
+  margin: 8px 0 0;
+  color: var(--c-muted-ink);
+  font-size: 13px;
+}
+
+/* Feature pages wrapped by the frame */
+
+.campus-root .page-heading {
+  margin: 0 0 22px;
+  flex-wrap: wrap;
+}
+
+.campus-root .page-heading h1 {
+  font-size: clamp(26px, 3vw, 34px);
+}
+
+.campus-root .content-panel {
+  padding: 22px;
+  border: 1px solid var(--c-border);
+  border-radius: 18px;
+  background: var(--c-card);
+  box-shadow: var(--c-shadow);
+}
+
+.campus-root .content-panel + .content-panel {
+  margin-top: 16px;
+}
+
+.campus-root .button {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.campus-root .button.primary {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-primary-fg);
+}
+
+.campus-root .button.primary:hover {
+  background: oklch(0.46 0.15 240);
+}
+
+.campus-root .button.secondary {
+  border-color: var(--c-border);
+  background: white;
+  color: var(--c-primary);
+}
+
+.campus-root .access-form {
+  gap: 12px;
+}
+
+.campus-root table {
+  border-color: var(--c-border);
+}
+
+.campus-root :is(th, td) {
+  border-color: var(--c-border);
+}
+
+.campus-root :is(h1, h2, h3) + p {
+  overflow-wrap: anywhere;
+}
+
+/* Footer */
+
+.campus-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px 26px;
+  color: var(--c-muted-ink);
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (min-width: 640px) {
+  .campus-shortcut-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .campus-shortcut-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .campus-content-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 639px) {
+  .campus-header {
+    min-height: 64px;
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .campus-brand {
+    flex: 1 1 170px;
+  }
+
+  .campus-brand-copy small {
+    display: none;
+  }
+
+  .campus-header-actions {
+    gap: 8px;
+  }
+
+  .campus-main {
+    padding: 18px 16px 32px;
+  }
+
+  .campus-hero {
+    min-height: 0;
+    padding: 21px;
+    border-radius: 18px;
+  }
+
+  .campus-root .campus-hero h1 {
+    font-size: 27px;
+  }
+
+  .campus-primary {
+    width: 100%;
+  }
+
+  .campus-card,
+  .campus-root .content-panel {
+    padding: 17px;
+  }
+
+  .campus-tile {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+
+  .campus-shortcut {
+    font-size: 11px;
+  }
+
+  .campus-learner-selection .access-form .button {
+    width: 100%;
+  }
+
+  .campus-student-context .student-summary {
+    padding: 15px 17px;
+  }
+
+  .campus-root .workspace-selection {
+    margin: 24px auto;
+    padding: 24px;
+    border-radius: 18px;
+  }
+
+  .campus-root .workspace-selection h1 {
+    font-size: 28px;
+  }
+
+  .campus-footer {
+    padding: 0 16px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-root *,
+  .campus-root *::before,
+  .campus-root *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .campus-shortcut:hover .campus-tile,
+  .campus-primary:hover {
+    transform: none;
+  }
+}

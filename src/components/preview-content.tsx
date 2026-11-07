@@ -148,6 +148,35 @@ export function Overview() {
           <span className="illustration-dot dot-two" />
         </div>
       </section>
+      <section>
+        <div className="section-heading">
+          <h2>Start with the essentials</h2>
+          <span className="muted small">Your first steps</span>
+        </div>
+        <div className="starter-list">
+          <Starter
+            href="/preview?view=settings"
+            icon={<Settings2 size={21} />}
+            title="Make it your school"
+            text="Review the school profile and configuration."
+            label="School settings"
+          />
+          <Starter
+            href="/preview?view=access"
+            icon={<ShieldCheck size={21} />}
+            title="Give everyone the right access"
+            text="Understand what each role can see and do."
+            label="Explore roles"
+          />
+          <Starter
+            href="/preview?view=modules"
+            icon={<BookOpen size={21} />}
+            title="Plan the school workspace"
+            text="See how academic and daily operations fit together."
+            label="View modules"
+          />
+        </div>
+      </section>
       <div className="foundation-stats">
         <div>
           <span className="stat-icon">
@@ -177,62 +206,31 @@ export function Overview() {
           </div>
         </div>
       </div>
-      <div className="overview-grid">
-        <section>
-          <div className="section-heading">
-            <h2>Start with the essentials</h2>
-            <span className="muted small">Your first steps</span>
-          </div>
-          <div className="starter-list">
-            <Starter
-              href="/preview?view=settings"
-              icon={<Settings2 size={21} />}
-              title="Make it your school"
-              text="Review the school profile and configuration."
-              label="School settings"
-            />
-            <Starter
-              href="/preview?view=access"
-              icon={<ShieldCheck size={21} />}
-              title="Give everyone the right access"
-              text="Understand what each role can see and do."
-              label="Explore roles"
-            />
-            <Starter
-              href="/preview?view=modules"
-              icon={<BookOpen size={21} />}
-              title="Plan the school workspace"
-              text="See how academic and daily operations fit together."
-              label="View modules"
-            />
-          </div>
-        </section>
-        <section className="roadmap-panel">
-          <div className="section-heading">
-            <h2>The path ahead</h2>
-            <span className="small muted">6 phases</span>
-          </div>
-          <ol className="phase-list">
-            {phases.map((phase, i) => (
-              <li key={phase} className={i === 0 ? "current" : ""}>
-                <span className="phase-number">
-                  {i === 0 ? (
-                    <Layers3 size={15} />
-                  ) : (
-                    String(i + 1).padStart(2, "0")
-                  )}
-                </span>
-                <span>
-                  {phase}
-                  {i === 0 && <small>In progress</small>}
-                  {i === 5 && <small>Optional, later</small>}
-                </span>
-                {i === 0 && <span className="status-dot" />}
-              </li>
-            ))}
-          </ol>
-        </section>
-      </div>
+      <section className="roadmap-panel">
+        <div className="section-heading">
+          <h2>The path ahead</h2>
+          <span className="small muted">6 phases</span>
+        </div>
+        <ol className="phase-list">
+          {phases.map((phase, i) => (
+            <li key={phase} className={i === 0 ? "current" : ""}>
+              <span className="phase-number">
+                {i === 0 ? (
+                  <Layers3 size={15} />
+                ) : (
+                  String(i + 1).padStart(2, "0")
+                )}
+              </span>
+              <span>
+                {phase}
+                {i === 0 && <small>In progress</small>}
+                {i === 5 && <small>Optional, later</small>}
+              </span>
+              {i === 0 && <span className="status-dot" />}
+            </li>
+          ))}
+        </ol>
+      </section>
     </>
   );
 }

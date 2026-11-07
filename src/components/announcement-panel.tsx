@@ -83,6 +83,7 @@ export async function AnnouncementPanel({
           actor={actor}
           availableModes={modes}
           schoolName={context.school.name}
+          context={context}
         />
       );
     if (actor.mode === "guardian") {

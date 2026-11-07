@@ -150,7 +150,7 @@ export async function AttendancePanel({
     context,
   );
   if (actor.status !== "ready")
-    return <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} />;
+    return <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} context={context} />;
   const selectedChild =
     actor.mode === "guardian" ? actor.selectedChild?.id : undefined;
   const needsChild = actor.mode === "guardian" && !selectedChild;

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import "./globals.css";
+import "./campus.css";
+import "./campus-sign-in.css";
+import "./campus-preview.css";
+import "./campus-admin.css";
 
 export const metadata: Metadata = {
   title: { default: "School Portal", template: "%s · School Portal" },

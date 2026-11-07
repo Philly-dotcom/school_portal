@@ -69,7 +69,7 @@ export async function HomeworkPanel({ params, verifiedContext, verifiedActor }: 
       context,
     );
     if (actor.status !== "ready")
-      return <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} />;
+      return <RoleOverview actor={actor} availableModes={modes} schoolName={context.school.name} context={context} />;
     if (actor.mode === "guardian") {
       childId = actor.selectedChild?.id;
       selector = (
